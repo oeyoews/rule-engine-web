@@ -1,0 +1,19 @@
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "tailwindcss/theme.css" layer(theme);
+
+/* 支持黑暗模式 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* vue-flow 节点工具栏样式 */
+.vue-flow__node-toolbar {
+	@apply bg-gray-200 px-2 py-1;
+	display: flex;
+	border-radius: 4px;
+}
+
+.vue-flow__minimap {
+	transform: scale(75%);
+	transform-origin: bottom right;
+}
