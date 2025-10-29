@@ -12,17 +12,17 @@ export const formatTimestamp = (date: Date = new Date()): string => {
 /**
  * 生成 DRL 文件头注释
  */
-export const generateDrlHeader = (description?: string): string => {
-  const drlId = uuidv4()
-  const timestamp = formatTimestamp()
+export const generateDrlHeader = (description?: string, drlId?: string, timestamp?: string): string => {
+  const id = drlId || uuidv4()
+  const time = timestamp || formatTimestamp()
   const desc = description || '自动生成的 Drools 规则文件'
 
   let header = `/*\n`
   header += ` * ============================================\n`
   header += ` * DRL 规则文件\n`
   header += ` * ============================================\n`
-  header += ` * 文件ID: ${drlId}\n`
-  header += ` * 创建时间: ${timestamp}\n`
+  header += ` * 文件ID: ${id}\n`
+  header += ` * 创建时间: ${time}\n`
   header += ` * 创建人: System\n`
   header += ` * 描述: ${desc}\n`
   header += ` * ============================================\n`
@@ -38,11 +38,13 @@ export const generateDrlCode = (
   packageName: string,
   globals: string[],
   rules: Rule[],
-  description?: string
+  description?: string,
+  drlId?: string,
+  timestamp?: string
 ): string => {
   const pkg = packageName || 'com.example.rules'
 
-  let code = generateDrlHeader(description)
+  let code = generateDrlHeader(description, drlId, timestamp)
 
   code += `package ${pkg};\n\n`
 
