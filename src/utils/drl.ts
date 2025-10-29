@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import moment from 'moment'
+import { saveAs } from 'file-saver'
 
 /**
  * 格式化时间戳
@@ -88,11 +89,6 @@ export const generateDrlCode = (
  */
 export const downloadFile = (content: string, filename: string): void => {
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
+  saveAs(blob, filename)
 }
 
