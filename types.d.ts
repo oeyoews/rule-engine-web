@@ -2,6 +2,7 @@
 interface Config {
   package: string
   globals: string[]
+  description: string
 }
 
 // 规则接口

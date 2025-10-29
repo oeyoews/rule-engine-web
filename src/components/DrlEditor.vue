@@ -5,11 +5,13 @@ import { Trash2, HelpCircle, Lightbulb, Download, Copy, Check, Plus } from 'luci
 import { useClipboard } from '@vueuse/core'
 import HelpDialog from './HelpDialog.vue'
 import SectionTitle from './SectionTitle.vue'
+import { generateDrlCode, downloadFile } from '../utils/drl'
 
 // 数据定义
 const config = ref<Config>({
   package: '',
-  globals: []
+  globals: [],
+  description: ''
 })
 
 // 包名选项
@@ -102,7 +104,8 @@ const loadSample = () => {
   // 设置全局配置
   config.value = {
     package: 'com.example.rules',
-    globals: ['global org.slf4j.Logger logger;']
+    globals: ['global org.slf4j.Logger logger;'],
+    description: '示例规则文件'
   }
 
   // 设置规则示例
@@ -134,47 +137,7 @@ const loadSample = () => {
  * 生成 DRL 代码
  */
 const generateDRL = (): string => {
-  const pkg = config.value.package || 'com.example.rules'
-  const globals = config.value.globals
-
-  let code = `package ${pkg};\n\n`
-
-  if (globals.length > 0) {
-    globals.forEach(g => {
-      code += `${g}\n`
-    })
-    code += `\n`
-  }
-
-  rules.value.forEach(rule => {
-    code += `rule "${rule.name}"\n`
-    if (rule.enabled !== undefined) {
-      code += `    enabled ${rule.enabled}\n`
-    }
-    if (rule.salience !== undefined) {
-      code += `    salience ${rule.salience}\n`
-    }
-    if (rule.noLoop) {
-      code += `    no-loop true\n`
-    }
-    if (rule.lockOnActive) {
-      code += `    lock-on-active true\n`
-    }
-    code += `when\n`
-    if (rule.when) {
-      code += `${rule.when}\n`
-    }
-    code += `then\n`
-    if (rule.then) {
-      const thenLines = rule.then.split('\n')
-      thenLines.forEach(line => {
-        code += `${line}\n`
-      })
-    }
-    code += `end\n\n`
-  })
-
-  return code
+  return generateDrlCode(config.value.package, config.value.globals, rules.value, config.value.description)
 }
 
 /**
@@ -182,13 +145,8 @@ const generateDRL = (): string => {
  */
 const downloadDRL = () => {
   const code = generateDRL()
-  const blob = new Blob([code], { type: 'text/plain;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `rules-${Date.now()}.drl`
-  a.click()
-  URL.revokeObjectURL(url)
+  const filename = `rules-${Date.now()}.drl`
+  downloadFile(code, filename)
 }
 
 /**
@@ -309,6 +267,16 @@ onMounted(() => {
                     :value="item.value"
                   />
                 </el-select>
+              </el-form-item>
+              <el-form-item label="描述">
+                <el-input
+                  v-model="config.description"
+                  type="textarea"
+                  :rows="2"
+                  placeholder="请输入规则文件的描述信息"
+                  maxlength="200"
+                  show-word-limit
+                />
               </el-form-item>
             </el-form>
           </div>
