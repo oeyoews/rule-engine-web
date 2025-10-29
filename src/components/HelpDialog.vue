@@ -8,9 +8,9 @@ import {
   Lock,
   HelpCircle,
   Zap,
-  Info,
-  AlertTriangle
+  Info
 } from 'lucide-vue-next'
+import SectionTitle from './SectionTitle.vue'
 
 const visible = defineModel<boolean>()
 
@@ -106,10 +106,10 @@ const helpItems = [
     description: '条件满足时执行的操作，使用Java代码',
     example: '$p.setAdult(true); update($p);',
     colors: {
-      bg: 'from-yellow-50 to-yellow-100',
-      border: 'border-yellow-200 hover:border-yellow-300',
-      icon: 'text-yellow-600',
-      iconBg: 'bg-yellow-100'
+      bg: 'from-rose-50 to-pink-100',
+      border: 'border-rose-200 hover:border-pink-300',
+      icon: 'text-rose-600',
+      iconBg: 'bg-rose-100'
     }
   }
 ]
@@ -131,14 +131,14 @@ const helpItems = [
             <Info :size="28" class="text-blue-600" />
           </div>
           <div>
-            <h3 class="text-lg font-bold text-gray-800">DRL 规则编辑器使用指南</h3>
+            <SectionTitle class="mb-1 font-bold! text-gray-800!">DRL 规则编辑器使用指南</SectionTitle>
             <p class="text-xs text-gray-500">了解各个配置项的含义和用法</p>
           </div>
         </div>
       </div>
 
       <!-- 帮助项列表 -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pb-3">
         <div
           v-for="(item, index) in helpItems"
           :key="index"
@@ -162,7 +162,7 @@ const helpItems = [
       </div>
 
       <!-- 底部提示 -->
-      <div class="pt-3 border-t-2 border-gray-200 sticky bottom-0 bg-white">
+      <!-- <div class="pt-3 border-t-2 border-gray-200 sticky bottom-0 bg-white">
         <div class="flex items-start gap-2 text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
           <AlertTriangle :size="16" class="shrink-0 mt-0.5" />
           <div class="text-xs">
@@ -170,7 +170,7 @@ const helpItems = [
             <p>点击"加载示例"可以查看完整的示例规则配置</p>
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
 
   </el-dialog>

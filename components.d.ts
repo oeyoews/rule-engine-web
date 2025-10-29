@@ -27,5 +27,6 @@ declare module 'vue' {
     ElTag: typeof import('element-plus/es')['ElTag']
     HelpDialog: typeof import('./src/components/HelpDialog.vue')['default']
     RuleFlow: typeof import('./src/components/RuleFlow.vue')['default']
+    SectionTitle: typeof import('./src/components/SectionTitle.vue')['default']
   }
 }

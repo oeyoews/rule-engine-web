@@ -12,6 +12,15 @@ const config = ref<Config>({
   globals: []
 })
 
+// 包名选项
+const packageOptions = [
+  { value: 'com.example.rules', label: 'com.example.rules (示例包)' },
+  { value: 'com.company.drools.rules', label: 'com.company.drools.rules (公司规则包)' },
+  { value: 'com.myapp.business.rules', label: 'com.myapp.business.rules (业务规则包)' },
+  { value: 'org.example.rules', label: 'org.example.rules (组织规则包)' },
+  { value: 'cn.example.rules', label: 'cn.example.rules (中文域名包)' }
+]
+
 // 全局变量选项
 const globalOptions = [
   { value: 'global org.slf4j.Logger logger;', label: 'Logger (日志)' },
@@ -267,7 +276,21 @@ onMounted(() => {
             <SectionTitle>全局配置</SectionTitle>
             <el-form :model="config" label-width="140px" label-position="top">
               <el-form-item label="包名">
-                <el-input v-model="config.package" placeholder="com.example.rules"></el-input>
+                <el-select
+                  v-model="config.package"
+                  filterable
+                  allow-create
+                  default-first-option
+                  placeholder="选择或输入包名"
+                  class="w-full"
+                >
+                  <el-option
+                    v-for="item in packageOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select>
               </el-form-item>
               <el-form-item label="全局变量">
                 <el-select
