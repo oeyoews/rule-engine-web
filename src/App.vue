@@ -2,9 +2,7 @@
 </script>
 
 <template>
-  <div>
-    <RuleFlow />
-  </div>
+  <DrlEditor />
 </template>
 
 <style scoped>
