@@ -262,6 +262,7 @@ onMounted(() => {
             <el-button
               class="bg-linear-to-br! from-cyan-50! to-teal-100! text-teal-700! border! border-cyan-200! hover:border-teal-300! hover:shadow-md! transition-all!"
               @click="loadSample"
+              :disabled="advancedMode"
             >
               <Lightbulb :size="16" class="mr-1" />
               加载示例
@@ -290,11 +291,17 @@ onMounted(() => {
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <!-- 左侧：规则配置表单 -->
-        <div class="space-y-4">
+        <div class="space-y-4 relative">
+          <!-- 高级模式禁用提示 -->
+          <div v-if="advancedMode" class="absolute inset-0 bg-slate-200/30 backdrop-blur-[1px] z-10 rounded-lg flex items-center justify-center">
+            <div class="bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-semibold">
+              🔒 高级模式：表单已禁用
+            </div>
+          </div>
           <!-- 全局配置 -->
           <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm p-4 border border-slate-200">
             <SectionTitle>全局配置</SectionTitle>
-            <el-form :model="config" label-width="140px" label-position="top">
+            <el-form :model="config" label-width="140px" label-position="top" :disabled="advancedMode">
               <el-form-item label="包名">
                 <el-select
                   v-model="config.package"
@@ -350,13 +357,14 @@ onMounted(() => {
               <el-button
                 class="bg-linear-to-br! from-sky-50! to-blue-100! text-blue-700! border! border-sky-200! hover:border-blue-300! hover:shadow-md! transition-all!"
                 @click="addRule"
+                :disabled="advancedMode"
               >
                 <Plus :size="16" class="mr-1" />
                 添加规则
               </el-button>
             </div>
             <el-collapse v-model="activeRules" accordion>
-              <el-collapse-item v-for="(rule, index) in rules" :key="index" :name="index">
+              <el-collapse-item v-for="(rule, index) in rules" :key="index" :name="index" :disabled="advancedMode">
                 <template #title>
                   <div class="flex items-center justify-between w-full pr-4 group">
                     <div class="flex items-center gap-3">
@@ -367,12 +375,12 @@ onMounted(() => {
                       <el-tag v-else class="bg-slate-100! text-slate-600! border-slate-200! transition-none!">禁用</el-tag>
                       <el-tag v-if="rule.salience > 0" class="bg-violet-100! text-violet-700! border-violet-200! transition-none!">优先级: {{ rule.salience }}</el-tag>
                     </div>
-                      <Trash2 :size="12" class="group-hover:opacity-100 opacity-0 transition-all duration-200 delay-250 text-red-400 mr-2" @click.stop="confirmRemoveRule(index)" />
+                      <Trash2 v-if="!advancedMode" :size="12" class="group-hover:opacity-100 opacity-0 transition-all duration-200 delay-250 text-red-400 mr-2" @click.stop="confirmRemoveRule(index)" />
                   </div>
                 </template>
-                <el-form :model="rule" label-width="120px" label-position="top" class="pt-2">
+                <el-form :model="rule" label-width="120px" label-position="top" class="pt-2" :disabled="advancedMode">
                   <el-form-item label="规则名称">
-                    <el-input v-model="rule.name" placeholder="规则名称"></el-input>
+                    <el-input v-model="rule.name" maxlength="25" show-word-limit placeholder="规则名称"></el-input>
                   </el-form-item>
                   <el-form-item label="规则选项">
                     <div class="grid grid-cols-3 gap-2">
@@ -426,7 +434,7 @@ onMounted(() => {
 
             <!-- 高级模式：可编辑 -->
             <div v-if="advancedMode">
-              <el-scrollbar max-height="600px" class="bg-linear-to-br from-slate-50 to-slate-100 border border-slate-300 rounded shadow-inner">
+              <el-scrollbar max-height="600px" class="bg-linear-to-br from-slate-50 to-slate-100 border-2! border-red-500! rounded shadow-inner">
                 <el-input
                   v-model="manualDrlCode"
                   type="textarea"
@@ -437,8 +445,8 @@ onMounted(() => {
                   resize="none"
                 />
               </el-scrollbar>
-              <div class="mt-2 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded p-2">
-                ⚠️ 高级模式下，您可以直接编辑代码。修改将影响下载和复制的内容。退出高级模式后将恢复为自动生成。
+              <div class="mt-2 text-xs text-red-700 bg-red-50 border border-red-300 rounded p-2">
+                ⚠️ 高级模式下，您可以直接编辑代码。左侧表单已被禁用，所有修改将通过代码编辑器进行。退出高级模式后将恢复为自动生成。
               </div>
             </div>
 
