@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Trash2, HelpCircle, Lightbulb, Download, Copy, Check, Plus } from 'lucide-vue-next'
 import { useClipboard } from '@vueuse/core'
@@ -38,6 +38,10 @@ const activeRules = ref<number | string>(0)
 
 // 控制帮助弹窗显示
 const showHelpDialog = ref(false)
+
+// 高级模式状态
+const advancedMode = ref(false)
+const manualDrlCode = ref('')
 
 // 使用 VueUse 的 useClipboard (legacy 模式)
 const { copy, copied, isSupported } = useClipboard({ legacy: true })
@@ -137,8 +141,21 @@ const loadSample = () => {
  * 生成 DRL 代码
  */
 const generateDRL = (): string => {
+  if (advancedMode.value) {
+    return manualDrlCode.value
+  }
   return generateDrlCode(config.value.package, config.value.globals, rules.value, config.value.description)
 }
+
+/**
+ * 监听高级模式切换
+ */
+watch(advancedMode, (newValue) => {
+  if (newValue) {
+    // 开启高级模式，同步当前生成的代码
+    manualDrlCode.value = generateDrlCode(config.value.package, config.value.globals, rules.value, config.value.description)
+  }
+})
 
 /**
  * 下载 DRL 文件
@@ -349,8 +366,35 @@ onMounted(() => {
         <!-- 右侧：代码预览和帮助 -->
         <div class="space-y-4">
           <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm p-4 border border-slate-200">
-            <SectionTitle>DRL 代码预览</SectionTitle>
-            <el-scrollbar max-height="600px" class="bg-linear-to-br from-slate-50 to-slate-100 border border-slate-300 rounded shadow-inner">
+            <div class="flex justify-between items-center mb-3">
+              <SectionTitle class="mb-0">DRL 代码预览</SectionTitle>
+              <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-600">高级模式</span>
+                <el-switch
+                  v-model="advancedMode"
+                  active-color="#10b981"
+                  inactive-color="#94a3b8"
+                />
+              </div>
+            </div>
+
+            <!-- 高级模式：可编辑 -->
+            <div v-if="advancedMode">
+              <el-input
+                v-model="manualDrlCode"
+                type="textarea"
+                :rows="28"
+                placeholder="在此手动编辑 DRL 规则代码..."
+                style="font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 13px;"
+                class="drl-editor"
+              />
+              <div class="mt-2 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded p-2">
+                ⚠️ 高级模式下，您可以直接编辑代码。修改将影响下载和复制的内容。退出高级模式后将恢复为自动生成。
+              </div>
+            </div>
+
+            <!-- 普通模式：只读预览 -->
+            <el-scrollbar v-else max-height="600px" class="bg-linear-to-br from-slate-50 to-slate-100 border border-slate-300 rounded shadow-inner">
               <pre class="text-slate-800 p-4 text-sm font-mono min-h-[400px]">{{ generateDRL() }}</pre>
             </el-scrollbar>
           </div>
