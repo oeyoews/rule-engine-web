@@ -37,6 +37,10 @@ const globalOptions = [
 const rules = ref<Rule[]>([])
 const activeRules = ref<number | string>(0)
 
+// 控制折叠面板显示
+const activeConfig = ref<string>('config') // 全局配置折叠状态
+const activeRuleList = ref<string>('ruleList') // 规则列表折叠状态
+
 // 控制帮助弹窗显示
 const showHelpDialog = ref(false)
 
@@ -246,9 +250,9 @@ onMounted(() => {
       <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm p-4 border border-slate-200">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
           <div>
-            <h1 class="text-2xl font-bold bg-linear-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+            <SectionTitle class="mt-0">
               DRL 规则编辑器
-            </h1>
+            </SectionTitle>
             <p class="text-sm text-gray-600">可视化生成 Drools 规则文件</p>
           </div>
           <div class="flex flex-wrap gap-2">
@@ -300,117 +304,132 @@ onMounted(() => {
           </div>
           <!-- 全局配置 -->
           <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm p-4 border border-slate-200">
-            <SectionTitle>全局配置</SectionTitle>
-            <el-form :model="config" label-width="140px" label-position="top" :disabled="advancedMode">
-              <el-form-item label="包名">
-                <el-select
-                  v-model="config.package"
-                  filterable
-                  allow-create
-                  default-first-option
-                  placeholder="选择或输入包名"
-                  class="w-full"
-                >
-                  <el-option
-                    v-for="item in packageOptions"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                  />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="全局变量">
-                <el-select
-                  v-model="config.globals"
-                  multiple
-                  placeholder="选择全局变量"
-                  class="w-full"
-                  collapse-tags
-                  collapse-tags-tooltip
-                  :max-collapse-tags="3"
-                >
-                  <el-option
-                    v-for="item in globalOptions"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                  />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="描述">
-                <el-input
-                  v-model="config.description"
-                  type="textarea"
-                  :rows="2"
-                  placeholder="请输入规则文件的描述信息"
-                  maxlength="200"
-                  show-word-limit
-                />
-              </el-form-item>
-            </el-form>
+            <el-collapse v-model="activeConfig" accordion>
+              <el-collapse-item name="config">
+                <template #title>
+                  <SectionTitle class="mb-0">全局配置</SectionTitle>
+                </template>
+                <el-form :model="config" label-width="140px" label-position="top" :disabled="advancedMode" class="pt-2">
+                  <el-form-item label="包名">
+                    <el-select
+                      v-model="config.package"
+                      filterable
+                      allow-create
+                      default-first-option
+                      placeholder="选择或输入包名"
+                      class="w-full"
+                    >
+                      <el-option
+                        v-for="item in packageOptions"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                      />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="全局变量">
+                    <el-select
+                      v-model="config.globals"
+                      multiple
+                      placeholder="选择全局变量"
+                      class="w-full"
+                      collapse-tags
+                      collapse-tags-tooltip
+                      :max-collapse-tags="3"
+                    >
+                      <el-option
+                        v-for="item in globalOptions"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                      />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="描述">
+                    <el-input
+                      v-model="config.description"
+                      type="textarea"
+                      :rows="2"
+                      placeholder="请输入规则文件的描述信息"
+                      maxlength="200"
+                      show-word-limit
+                    />
+                  </el-form-item>
+                </el-form>
+              </el-collapse-item>
+            </el-collapse>
           </div>
 
           <!-- 规则列表 -->
           <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm p-4 border border-slate-200">
-            <div class="flex justify-between items-center mb-3">
-              <SectionTitle class="mb-0">规则列表</SectionTitle>
-              <el-button
-                class="bg-linear-to-br! from-sky-50! to-blue-100! text-blue-700! border! border-sky-200! hover:border-blue-300! hover:shadow-md! transition-all!"
-                @click="addRule"
-                :disabled="advancedMode"
-              >
-                <Plus :size="16" class="mr-1" />
-                添加规则
-              </el-button>
-            </div>
-            <el-collapse v-model="activeRules" accordion>
-              <el-collapse-item v-for="(rule, index) in rules" :key="index" :name="index" :disabled="advancedMode">
+            <el-collapse v-model="activeRuleList" accordion>
+              <el-collapse-item name="ruleList">
                 <template #title>
-                  <div class="flex items-center justify-between w-full pr-4 group">
-                    <div class="flex items-center gap-3">
-                      <span class="font-semibold text-gray-700">
-                        {{ rule.name || '规则 ' + (index + 1) }}
-                      </span>
-                      <el-tag v-if="rule.enabled" class="bg-emerald-100! text-emerald-700! border-emerald-200! transition-none!">启用</el-tag>
-                      <el-tag v-else class="bg-slate-100! text-slate-600! border-slate-200! transition-none!">禁用</el-tag>
-                      <el-tag v-if="rule.salience > 0" class="bg-violet-100! text-violet-700! border-violet-200! transition-none!">优先级: {{ rule.salience }}</el-tag>
-                    </div>
-                      <Trash2 v-if="!advancedMode" :size="12" class="group-hover:opacity-100 opacity-0 transition-all duration-200 delay-250 text-red-400 mr-2" @click.stop="confirmRemoveRule(index)" />
+                  <div class="flex justify-between items-center w-full pr-4">
+                    <SectionTitle class="mb-0">规则列表</SectionTitle>
+                    <el-button
+                      class="mr-1 bg-linear-to-br! from-sky-50! to-blue-100! text-blue-700! border! border-sky-200! hover:border-blue-300! hover:shadow-md! transition-all!"
+                      @click.stop="addRule"
+                      :disabled="advancedMode"
+                      size="small"
+                    >
+                      <Plus :size="16" class="mr-1" />
+                      添加规则
+                    </el-button>
                   </div>
                 </template>
-                <el-form :model="rule" label-width="120px" label-position="top" class="pt-2" :disabled="advancedMode">
-                  <el-form-item label="规则名称">
-                    <el-input v-model="rule.name" maxlength="25" show-word-limit placeholder="规则名称"></el-input>
-                  </el-form-item>
-                  <el-form-item label="规则选项">
-                    <div class="grid grid-cols-3 gap-2">
-                      <el-checkbox v-model="rule.enabled">启用</el-checkbox>
-                      <el-checkbox v-model="rule.noLoop">循环</el-checkbox>
-                      <el-checkbox v-model="rule.lockOnActive">锁定</el-checkbox>
-                    </div>
-                  </el-form-item>
-                  <el-form-item label="优先级 (salience)">
-                    <el-input-number v-model="rule.salience" :min="0" :max="999"></el-input-number>
-                  </el-form-item>
-                  <el-form-item label="条件">
-                    <el-input
-                      v-model="rule.when"
-                      type="textarea"
-                      :rows="2"
-                      placeholder="例如: $p: Person($age: age >= 18)"
-                      style="font-family: monospace;">
-                    </el-input>
-                  </el-form-item>
-                  <el-form-item label="动作">
-                    <el-input
-                      v-model="rule.then"
-                      type="textarea"
-                      :rows="3"
-                      placeholder="例如: $p.setAdult(true); update($p);"
-                      style="font-family: monospace;">
-                    </el-input>
-                  </el-form-item>
-                </el-form>
+                <div class="pt-2">
+                  <el-collapse v-model="activeRules" accordion>
+                    <el-collapse-item v-for="(rule, index) in rules" :key="index" :name="index" :disabled="advancedMode">
+                      <template #title>
+                        <div class="flex items-center justify-between w-full pr-4 group">
+                          <div class="flex items-center gap-3">
+                            <span class="font-semibold text-gray-700">
+                              {{ rule.name || '规则 ' + (index + 1) }}
+                            </span>
+                            <el-tag v-if="rule.enabled" class="bg-emerald-100! text-emerald-700! border-emerald-200! transition-none!">启用</el-tag>
+                            <el-tag v-else class="bg-slate-100! text-slate-600! border-slate-200! transition-none!">禁用</el-tag>
+                            <el-tag v-if="rule.salience > 0" class="bg-violet-100! text-violet-700! border-violet-200! transition-none!">优先级: {{ rule.salience }}</el-tag>
+                          </div>
+                            <Trash2 v-if="!advancedMode" :size="12" class="group-hover:opacity-100 opacity-0 transition-all duration-200 delay-250 text-red-400 mr-2" @click.stop="confirmRemoveRule(index)" />
+                        </div>
+                      </template>
+                      <el-form :model="rule" label-width="120px" label-position="top" class="pt-2" :disabled="advancedMode">
+                        <el-form-item label="规则名称">
+                          <el-input v-model="rule.name" maxlength="25" show-word-limit placeholder="规则名称"></el-input>
+                        </el-form-item>
+                        <el-form-item label="规则选项">
+                          <div class="grid grid-cols-3 gap-2">
+                            <el-checkbox v-model="rule.enabled">启用</el-checkbox>
+                            <el-checkbox v-model="rule.noLoop">循环</el-checkbox>
+                            <el-checkbox v-model="rule.lockOnActive">锁定</el-checkbox>
+                          </div>
+                        </el-form-item>
+                        <el-form-item label="优先级 (salience)">
+                          <el-input-number v-model="rule.salience" :min="0" :max="999"></el-input-number>
+                        </el-form-item>
+                        <el-form-item label="条件">
+                          <el-input
+                            v-model="rule.when"
+                            type="textarea"
+                            :rows="2"
+                            placeholder="例如: $p: Person($age: age >= 18)"
+                            style="font-family: monospace;">
+                          </el-input>
+                        </el-form-item>
+                        <el-form-item label="动作">
+                          <el-input
+                            v-model="rule.then"
+                            type="textarea"
+                            :rows="3"
+                            placeholder="例如: $p.setAdult(true); update($p);"
+                            style="font-family: monospace;">
+                          </el-input>
+                        </el-form-item>
+                      </el-form>
+                    </el-collapse-item>
+                  </el-collapse>
+                </div>
               </el-collapse-item>
             </el-collapse>
           </div>
