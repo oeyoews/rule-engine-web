@@ -17,3 +17,7 @@
 	transform: scale(75%);
 	transform-origin: bottom right;
 }
+
+.el-dialog {
+	border-radius: 12px !important;
+}

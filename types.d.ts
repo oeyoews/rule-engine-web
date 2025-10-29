@@ -1,9 +1,7 @@
 // 配置接口
 interface Config {
   package: string
-  imports: string
-  globals: string
-  declarations: string
+  globals: string[]
 }
 
 // 规则接口

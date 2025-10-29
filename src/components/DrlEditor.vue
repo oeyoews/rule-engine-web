@@ -1,19 +1,35 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Trash2 } from 'lucide-vue-next'
+import { Trash2, HelpCircle, Lightbulb, Download, Copy, Check, Plus } from 'lucide-vue-next'
+import { useClipboard } from '@vueuse/core'
+import HelpDialog from './HelpDialog.vue'
+import SectionTitle from './SectionTitle.vue'
 
 // 数据定义
 const config = ref<Config>({
-  package: 'com.example.rules',
-  imports: '',
-  globals: '',
-  declarations: ''
+  package: '',
+  globals: []
 })
 
+// 全局变量选项
+const globalOptions = [
+  { value: 'global org.slf4j.Logger logger;', label: 'Logger (日志)' },
+  { value: 'global java.util.Map dataMap;', label: 'Map (数据映射)' },
+  { value: 'global java.util.List resultList;', label: 'List (结果列表)' },
+  { value: 'global com.example.service.RuleService ruleService;', label: 'RuleService (规则服务)' },
+  { value: 'global com.example.util.DateUtils dateUtils;', label: 'DateUtils (日期工具)' },
+  { value: 'global com.example.util.StringUtils stringUtils;', label: 'StringUtils (字符串工具)' }
+]
+
 const rules = ref<Rule[]>([])
-const activeRules = ref<number | null>(0)
-const copyButtonText = ref('复制代码')
+const activeRules = ref<number | string>(0)
+
+// 控制帮助弹窗显示
+const showHelpDialog = ref(false)
+
+// 使用 VueUse 的 useClipboard (legacy 模式)
+const { copy, copied, isSupported } = useClipboard({ legacy: true })
 
 /**
  * 添加新规则
@@ -45,7 +61,6 @@ const confirmRemoveRule = (index: number) => {
       confirmButtonText: '确定删除',
       cancelButtonText: '取消',
       type: 'warning',
-      center: true
     }
   ).then(() => {
     removeRule(index)
@@ -64,10 +79,10 @@ const confirmRemoveRule = (index: number) => {
 const removeRule = (index: number) => {
   rules.value.splice(index, 1)
   // 删除规则后调整 activeRules
-  if (activeRules.value !== null && activeRules.value >= rules.value.length && rules.value.length > 0) {
+  if (typeof activeRules.value === 'number' && activeRules.value >= rules.value.length && rules.value.length > 0) {
     activeRules.value = rules.value.length - 1
   } else if (rules.value.length === 0) {
-    activeRules.value = null
+    activeRules.value = -1
   }
 }
 
@@ -78,9 +93,7 @@ const loadSample = () => {
   // 设置全局配置
   config.value = {
     package: 'com.example.rules',
-    imports: 'import com.example.droolsdemo.model.Person;\nimport com.example.droolsdemo.util.RuleUtils;',
-    globals: 'global org.slf4j.Logger logger;',
-    declarations: ''
+    globals: ['global org.slf4j.Logger logger;']
   }
 
   // 设置规则示例
@@ -113,26 +126,13 @@ const loadSample = () => {
  */
 const generateDRL = (): string => {
   const pkg = config.value.package || 'com.example.rules'
-  const imports = config.value.imports.split('\n').filter(line => line.trim())
-  const globals = config.value.globals.split('\n').filter(line => line.trim())
-  const declarations = config.value.declarations
+  const globals = config.value.globals
 
   let code = `package ${pkg};\n\n`
 
-  if (imports.length > 0) {
-    imports.forEach(imp => {
-      code += `${imp.trim()}\n`
-    })
-    code += `\n`
-  }
-
-  if (declarations) {
-    code += `${declarations}\n\n`
-  }
-
   if (globals.length > 0) {
     globals.forEach(g => {
-      code += `${g.trim()}\n`
+      code += `${g}\n`
     })
     code += `\n`
   }
@@ -186,23 +186,19 @@ const downloadDRL = () => {
  * 复制代码到剪贴板
  */
 const copyCode = async () => {
-  const code = generateDRL()
-  try {
-    await navigator.clipboard.writeText(code)
-    copyButtonText.value = '已复制！'
-    setTimeout(() => {
-      copyButtonText.value = '复制代码'
-    }, 2000)
-  } catch (err) {
-    ElMessage.error('复制失败: ' + err)
+  if (!isSupported.value) {
+    ElMessage.error('当前浏览器不支持复制功能')
+    return
   }
-}
 
-/**
- * 返回首页
- */
-const goHome = () => {
-  window.location.href = '/'
+  const code = generateDRL()
+  await copy(code)
+
+  if (copied.value) {
+    ElMessage.success('复制成功！')
+  } else {
+    ElMessage.error('复制失败')
+  }
 }
 
 // 组件挂载时初始化
@@ -227,20 +223,37 @@ onMounted(() => {
             <p class="text-sm text-gray-600">可视化生成 Drools 规则文件</p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <el-button type="warning" @click="loadSample" >
+            <el-button
+              class="bg-linear-to-br! from-blue-50! to-blue-100! text-blue-700! border! border-blue-200! hover:border-blue-300! hover:shadow-md! transition-all!"
+              @click="showHelpDialog = true"
+            >
+              <HelpCircle :size="16" class="mr-1" />
+              使用帮助
+            </el-button>
+            <el-button
+              class="bg-linear-to-br! from-cyan-50! to-teal-100! text-teal-700! border! border-cyan-200! hover:border-teal-300! hover:shadow-md! transition-all!"
+              @click="loadSample"
+            >
+              <Lightbulb :size="16" class="mr-1" />
               加载示例
             </el-button>
-            <el-button type="success" @click="downloadDRL" >
+            <el-button
+              class="bg-linear-to-br! from-emerald-50! to-green-100! text-green-700! border! border-emerald-200! hover:border-green-300! hover:shadow-md! transition-all!"
+              @click="downloadDRL"
+            >
+              <Download :size="16" class="mr-1" />
               下载 DRL 文件
             </el-button>
             <el-button
-              :type="copyButtonText === '已复制！' ? 'success' : 'primary'"
+              :class="copied
+                ? 'bg-linear-to-br! from-green-50! to-emerald-100! text-emerald-700! border! border-green-200! shadow-sm! transition-all!'
+                : 'bg-linear-to-br! from-purple-50! to-indigo-100! text-indigo-700! border! border-purple-200! hover:border-indigo-300! hover:shadow-md! transition-all!'
+              "
               @click="copyCode"
-              >
-              {{ copyButtonText }}
-            </el-button>
-            <el-button type="info" @click="goHome" >
-              返回首页
+            >
+              <Copy v-if="!copied" :size="16" class="mr-1" />
+              <Check v-else :size="16" class="mr-1" />
+              {{ copied ? '已复制！' : '复制代码' }}
             </el-button>
           </div>
         </div>
@@ -251,37 +264,28 @@ onMounted(() => {
         <div class="space-y-4">
           <!-- 全局配置 -->
           <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm p-4 border border-slate-200">
-            <h2 class="text-lg font-semibold text-gray-700 mb-3">全局配置</h2>
+            <SectionTitle>全局配置</SectionTitle>
             <el-form :model="config" label-width="140px" label-position="top">
-              <el-form-item label="包名(package)">
+              <el-form-item label="包名">
                 <el-input v-model="config.package" placeholder="com.example.rules"></el-input>
               </el-form-item>
-              <el-form-item label="导入语句 (每行一个)">
-                <el-input
-                  v-model="config.imports"
-                  type="textarea"
-                  :rows="4"
-                  placeholder="例如:&#10;import com.example.droolsdemo.model.Person;&#10;import com.example.droolsdemo.util.RuleUtils;&#10;import java.util.List;"
-                  style="font-family: monospace;">
-                </el-input>
-              </el-form-item>
-              <el-form-item label="全局变量 (每行一个)">
-                <el-input
+              <el-form-item label="全局变量">
+                <el-select
                   v-model="config.globals"
-                  type="textarea"
-                  :rows="3"
-                  placeholder="例如:&#10;global org.slf4j.Logger logger;&#10;global java.util.Map dataMap;"
-                  style="font-family: monospace;">
-                </el-input>
-              </el-form-item>
-              <el-form-item label="声明类型 (declare, 可选)">
-                <el-input
-                  v-model="config.declarations"
-                  type="textarea"
-                  :rows="3"
-                  placeholder="例如:&#10;declare Animal&#10;    name: String&#10;    age: int&#10;end"
-                  style="font-family: monospace;">
-                </el-input>
+                  multiple
+                  placeholder="选择全局变量"
+                  class="w-full"
+                  collapse-tags
+                  collapse-tags-tooltip
+                  :max-collapse-tags="3"
+                >
+                  <el-option
+                    v-for="item in globalOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select>
               </el-form-item>
             </el-form>
           </div>
@@ -289,30 +293,28 @@ onMounted(() => {
           <!-- 规则列表 -->
           <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm p-4 border border-slate-200">
             <div class="flex justify-between items-center mb-3">
-              <h2 class="text-lg font-semibold text-gray-700">规则列表</h2>
-              <el-button type="primary" @click="addRule">
-                + 添加规则
+              <SectionTitle class="mb-0">规则列表</SectionTitle>
+              <el-button
+                class="bg-linear-to-br! from-sky-50! to-blue-100! text-blue-700! border! border-sky-200! hover:border-blue-300! hover:shadow-md! transition-all!"
+                @click="addRule"
+              >
+                <Plus :size="16" class="mr-1" />
+                添加规则
               </el-button>
             </div>
             <el-collapse v-model="activeRules" accordion>
               <el-collapse-item v-for="(rule, index) in rules" :key="index" :name="index">
                 <template #title>
-                  <div class="flex items-center justify-between w-full pr-4">
+                  <div class="flex items-center justify-between w-full pr-4 group">
                     <div class="flex items-center gap-3">
                       <span class="font-semibold text-gray-700">
                         {{ rule.name || '规则 ' + (index + 1) }}
                       </span>
-                      <el-tag v-if="rule.enabled" type="success">启用</el-tag>
-                      <el-tag v-else type="info">禁用</el-tag>
-                      <el-tag type="warning" v-if="rule.salience > 0">优先级: {{ rule.salience }}</el-tag>
+                      <el-tag v-if="rule.enabled" class="bg-emerald-100! text-emerald-700! border-emerald-200! transition-none!">启用</el-tag>
+                      <el-tag v-else class="bg-slate-100! text-slate-600! border-slate-200! transition-none!">禁用</el-tag>
+                      <el-tag v-if="rule.salience > 0" class="bg-violet-100! text-violet-700! border-violet-200! transition-none!">优先级: {{ rule.salience }}</el-tag>
                     </div>
-                    <el-button
-                      type="danger"
-                      @click.stop="confirmRemoveRule(index)"
-                      circle
-                      plain>
-                      <Trash2 :size="16" class="text-red-500" />
-                    </el-button>
+                      <Trash2 :size="12" class="group-hover:opacity-100 opacity-0 transition-all duration-200 delay-250 text-red-400 mr-2" @click.stop="confirmRemoveRule(index)" />
                   </div>
                 </template>
                 <el-form :model="rule" label-width="120px" label-position="top" class="pt-2">
@@ -322,14 +324,14 @@ onMounted(() => {
                   <el-form-item label="规则选项">
                     <div class="grid grid-cols-3 gap-2">
                       <el-checkbox v-model="rule.enabled">启用</el-checkbox>
-                      <el-checkbox v-model="rule.noLoop">No-Loop</el-checkbox>
-                      <el-checkbox v-model="rule.lockOnActive">Lock-Active</el-checkbox>
+                      <el-checkbox v-model="rule.noLoop">循环</el-checkbox>
+                      <el-checkbox v-model="rule.lockOnActive">锁定</el-checkbox>
                     </div>
                   </el-form-item>
                   <el-form-item label="优先级 (salience)">
                     <el-input-number v-model="rule.salience" :min="0" :max="999"></el-input-number>
                   </el-form-item>
-                  <el-form-item label="When 条件">
+                  <el-form-item label="条件">
                     <el-input
                       v-model="rule.when"
                       type="textarea"
@@ -338,7 +340,7 @@ onMounted(() => {
                       style="font-family: monospace;">
                     </el-input>
                   </el-form-item>
-                  <el-form-item label="Then 动作">
+                  <el-form-item label="动作">
                     <el-input
                       v-model="rule.then"
                       type="textarea"
@@ -356,32 +358,16 @@ onMounted(() => {
         <!-- 右侧：代码预览和帮助 -->
         <div class="space-y-4">
           <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm p-4 border border-slate-200">
-            <h2 class="text-lg font-semibold text-gray-700 mb-3">DRL 代码预览</h2>
-            <pre class="bg-linear-to-br from-slate-50 to-slate-100 border border-slate-300 text-slate-800 p-4 rounded overflow-x-auto text-sm font-mono min-h-[400px] max-h-[600px] shadow-inner">{{ generateDRL() }}</pre>
-          </div>
-
-          <!-- 帮助说明 -->
-          <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
-            <div class="flex items-start">
-              <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-2 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-              </svg>
-              <div class="text-sm text-blue-800">
-                <p class="font-semibold mb-1">使用提示：</p>
-                <ul class="list-disc list-inside space-y-1 text-xs">
-                  <li><strong>包名 (Package):</strong> 定义规则所属的包</li>
-                  <li><strong>导入 (Import):</strong> 导入需要的Java类</li>
-                  <li><strong>全局变量 (Global):</strong> 定义全局对象，如logger</li>
-                  <li><strong>Salience:</strong> 规则优先级，数值越大越先执行</li>
-                  <li><strong>No-Loop:</strong> 防止规则循环触发</li>
-                  <li><strong>When:</strong> 规则条件（LHS - Left Hand Side）</li>
-                  <li><strong>Then:</strong> 规则动作（RHS - Right Hand Side）</li>
-                </ul>
-              </div>
-            </div>
+            <SectionTitle>DRL 代码预览</SectionTitle>
+            <el-scrollbar max-height="600px" class="bg-linear-to-br from-slate-50 to-slate-100 border border-slate-300 rounded shadow-inner">
+              <pre class="text-slate-800 p-4 text-sm font-mono min-h-[400px]">{{ generateDRL() }}</pre>
+            </el-scrollbar>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- 帮助弹窗组件 -->
+    <HelpDialog v-model="showHelpDialog" />
   </div>
 </template>
