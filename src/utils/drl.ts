@@ -1,6 +1,37 @@
 import { v4 as uuidv4 } from 'uuid'
 import moment from 'moment'
 import { saveAs } from 'file-saver'
+import { extractImportsFromDrl, generateImportStatements } from './classImport'
+
+/**
+ * 规则属性键名常量
+ */
+const RuleAttribute = {
+  ENABLED: 'enabled',
+  SALIENCE: 'salience',
+  NO_LOOP: 'noLoop',
+  LOCK_ON_ACTIVE: 'lockOnActive'
+} as const
+
+/**
+ * 规则属性生成器映射
+ */
+type AttributeGenerator = (rule: Rule) => string | null
+
+const attributeGenerators: Record<string, AttributeGenerator> = {
+  [RuleAttribute.ENABLED]: (rule: Rule) => {
+    return rule.enabled === false ? '    enabled false\n' : null
+  },
+  [RuleAttribute.SALIENCE]: (rule: Rule) => {
+    return rule.salience !== undefined ? `    salience ${rule.salience}\n` : null
+  },
+  [RuleAttribute.NO_LOOP]: (rule: Rule) => {
+    return rule.noLoop ? '    no-loop true\n' : null
+  },
+  [RuleAttribute.LOCK_ON_ACTIVE]: (rule: Rule) => {
+    return rule.lockOnActive ? '    lock-on-active true\n' : null
+  }
+}
 
 /**
  * 格式化时间戳
@@ -32,7 +63,44 @@ export const generateDrlHeader = (description?: string, drlId?: string, timestam
 }
 
 /**
- * 生成 DRL 代码
+ * 生成规则部分代码（不含header和package）
+ */
+function generateRulesCode(rules: Rule[]): string {
+  let code = ''
+
+  rules.forEach(rule => {
+    code += `rule "${rule.name}"\n`
+
+    // 使用枚举映射生成规则属性
+    Object.values(RuleAttribute).forEach(attr => {
+      const generator = attributeGenerators[attr]
+      if (generator) {
+        const attributeCode = generator(rule)
+        if (attributeCode) {
+          code += attributeCode
+        }
+      }
+    })
+
+    code += `when\n`
+    if (rule.when) {
+      code += `${rule.when}\n`
+    }
+    code += `then\n`
+    if (rule.then) {
+      const thenLines = rule.then.split('\n')
+      thenLines.forEach(line => {
+        code += `${line}\n`
+      })
+    }
+    code += `end\n\n`
+  })
+
+  return code
+}
+
+/**
+ * 生成 DRL 代码（同步版本，不自动添加import）
  */
 export const generateDrlCode = (
   packageName: string,
@@ -55,33 +123,54 @@ export const generateDrlCode = (
     code += `\n`
   }
 
-  rules.forEach(rule => {
-    code += `rule "${rule.name}"\n`
-    if (rule.enabled === false) {
-      code += `    enabled false\n`
+  code += generateRulesCode(rules)
+
+  return code
+}
+
+/**
+ * 生成 DRL 代码（异步版本，自动添加import）
+ */
+export const generateDrlCodeWithImports = async (
+  packageName: string,
+  globals: string[],
+  rules: Rule[],
+  description?: string,
+  drlId?: string,
+  timestamp?: string,
+  autoImport: boolean = true
+): Promise<string> => {
+  const pkg = packageName || 'com.example.rules'
+
+  let code = generateDrlHeader(description, drlId, timestamp)
+
+  code += `package ${pkg};\n\n`
+
+  // 自动检测并添加import语句
+  if (autoImport) {
+    const rulesCode = generateRulesCode(rules)
+    const fullCode = code + rulesCode
+
+    try {
+      const imports = await extractImportsFromDrl(fullCode)
+      const importStatements = generateImportStatements(imports)
+
+      if (importStatements) {
+        code += importStatements
+      }
+    } catch (error) {
+      console.error('Failed to generate imports:', error)
     }
-    if (rule.salience !== undefined) {
-      code += `    salience ${rule.salience}\n`
-    }
-    if (rule.noLoop) {
-      code += `    no-loop true\n`
-    }
-    if (rule.lockOnActive) {
-      code += `    lock-on-active true\n`
-    }
-    code += `when\n`
-    if (rule.when) {
-      code += `${rule.when}\n`
-    }
-    code += `then\n`
-    if (rule.then) {
-      const thenLines = rule.then.split('\n')
-      thenLines.forEach(line => {
-        code += `${line}\n`
-      })
-    }
-    code += `end\n\n`
-  })
+  }
+
+  if (globals.length > 0) {
+    globals.forEach(g => {
+      code += `${g}\n`
+    })
+    code += `\n`
+  }
+
+  code += generateRulesCode(rules)
 
   return code
 }

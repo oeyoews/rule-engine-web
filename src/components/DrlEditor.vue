@@ -5,10 +5,12 @@ import {
   Trash2, HelpCircle, Lightbulb, Download, Copy, Check, Plus,
   Code2, Lock, Settings, ClipboardList, FileText, AlertTriangle, Info,
   Package, Globe, FileText as FileDescription, Tag, Target, Search, Zap,
-  CheckCircle, XCircle, Hash, FileCode, ToggleRight, Sparkles
+  CheckCircle, XCircle, Hash, FileCode, ToggleRight, Sparkles, Wand2
 } from 'lucide-vue-next'
 import { useClipboard } from '@vueuse/core'
 import HelpDialog from './HelpDialog.vue'
+import RuleConditionBuilder from './RuleConditionBuilder.vue'
+import RuleActionBuilder from './RuleActionBuilder.vue'
 import { generateDrlCode, downloadFile, formatTimestamp } from '../utils/drl'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -525,6 +527,25 @@ onMounted(() => {
                           <el-input-number v-model="rule.salience" :min="0" :max="999" size="large" :step="5"></el-input-number>
                           <p class="text-xs text-gray-500 mt-1">数值越大，优先级越高</p>
                         </el-form-item>
+                        <!-- 可视化模式切换 -->
+                        <el-form-item>
+                          <template #label>
+                            <div class="flex items-center justify-between w-full">
+                              <div class="flex items-center gap-2 ml-1">
+                                <Wand2 :size="16" class="text-violet-600" />
+                                <span>编辑模式</span>
+                              </div>
+                              <el-switch
+                                v-model="rule.visualMode"
+                                active-text="可视化"
+                                inactive-text="代码"
+                                size="default"
+                              />
+                            </div>
+                          </template>
+                        </el-form-item>
+
+                        <!-- 条件 (when) -->
                         <el-form-item>
                           <template #label>
                             <div class="flex items-center gap-2 ml-1">
@@ -532,7 +553,16 @@ onMounted(() => {
                               <span>条件 (when)</span>
                             </div>
                           </template>
+
+                          <!-- 可视化模式 -->
+                          <RuleConditionBuilder
+                            v-if="rule.visualMode"
+                            v-model="rule.when"
+                          />
+
+                          <!-- 代码模式 -->
                           <el-input
+                            v-else
                             v-model="rule.when"
                             type="textarea"
                             :rows="3"
@@ -541,6 +571,8 @@ onMounted(() => {
                             size="large">
                           </el-input>
                         </el-form-item>
+
+                        <!-- 动作 (then) -->
                         <el-form-item>
                           <template #label>
                             <div class="flex items-center gap-2 ml-1">
@@ -548,7 +580,16 @@ onMounted(() => {
                               <span>动作 (then)</span>
                             </div>
                           </template>
+
+                          <!-- 可视化模式 -->
+                          <RuleActionBuilder
+                            v-if="rule.visualMode"
+                            v-model="rule.then"
+                          />
+
+                          <!-- 代码模式 -->
                           <el-input
+                            v-else
                             v-model="rule.then"
                             type="textarea"
                             :rows="4"

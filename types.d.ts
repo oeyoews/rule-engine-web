@@ -14,4 +14,5 @@ interface Rule {
   lockOnActive: boolean
   when: string
   then: string
+  visualMode?: boolean  // 是否使用可视化模式
 }

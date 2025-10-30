@@ -1,0 +1,411 @@
+{
+  "classes": [
+    {
+      "name": "Person",
+      "fullPath": "com.example.model.Person",
+      "package": "com.example.model",
+      "description": "人员实体类",
+      "methods": [
+        {
+          "name": "getName",
+          "returnType": "String",
+          "params": [],
+          "description": "获取姓名"
+        },
+        {
+          "name": "setName",
+          "returnType": "void",
+          "params": [
+            { "name": "name", "type": "String" }
+          ],
+          "description": "设置姓名"
+        },
+        {
+          "name": "getAge",
+          "returnType": "int",
+          "params": [],
+          "description": "获取年龄"
+        },
+        {
+          "name": "setAge",
+          "returnType": "void",
+          "params": [
+            { "name": "age", "type": "int" }
+          ],
+          "description": "设置年龄"
+        },
+        {
+          "name": "isAdult",
+          "returnType": "boolean",
+          "params": [],
+          "description": "是否成年"
+        },
+        {
+          "name": "setAdult",
+          "returnType": "void",
+          "params": [
+            { "name": "adult", "type": "boolean" }
+          ],
+          "description": "设置是否成年"
+        },
+        {
+          "name": "getSex",
+          "returnType": "String",
+          "params": [],
+          "description": "获取性别"
+        },
+        {
+          "name": "setSex",
+          "returnType": "void",
+          "params": [
+            { "name": "sex", "type": "String" }
+          ],
+          "description": "设置性别"
+        }
+      ],
+      "fields": [
+        { "name": "name", "type": "String", "description": "姓名" },
+        { "name": "age", "type": "int", "description": "年龄" },
+        { "name": "sex", "type": "String", "description": "性别" },
+        { "name": "adult", "type": "boolean", "description": "是否成年" }
+      ]
+    },
+    {
+      "name": "Order",
+      "fullPath": "com.example.model.Order",
+      "package": "com.example.model",
+      "description": "订单实体类",
+      "methods": [
+        {
+          "name": "getOrderId",
+          "returnType": "String",
+          "params": [],
+          "description": "获取订单ID"
+        },
+        {
+          "name": "setOrderId",
+          "returnType": "void",
+          "params": [
+            { "name": "orderId", "type": "String" }
+          ],
+          "description": "设置订单ID"
+        },
+        {
+          "name": "getAmount",
+          "returnType": "BigDecimal",
+          "params": [],
+          "description": "获取订单金额"
+        },
+        {
+          "name": "setAmount",
+          "returnType": "void",
+          "params": [
+            { "name": "amount", "type": "BigDecimal" }
+          ],
+          "description": "设置订单金额"
+        },
+        {
+          "name": "getStatus",
+          "returnType": "String",
+          "params": [],
+          "description": "获取订单状态"
+        },
+        {
+          "name": "setStatus",
+          "returnType": "void",
+          "params": [
+            { "name": "status", "type": "String" }
+          ],
+          "description": "设置订单状态"
+        },
+        {
+          "name": "isValid",
+          "returnType": "boolean",
+          "params": [],
+          "description": "订单是否有效"
+        },
+        {
+          "name": "calculateDiscount",
+          "returnType": "BigDecimal",
+          "params": [
+            { "name": "rate", "type": "double" }
+          ],
+          "description": "计算折扣"
+        }
+      ],
+      "fields": [
+        { "name": "orderId", "type": "String", "description": "订单ID" },
+        { "name": "amount", "type": "BigDecimal", "description": "订单金额" },
+        { "name": "status", "type": "String", "description": "订单状态" },
+        { "name": "createTime", "type": "Date", "description": "创建时间" }
+      ]
+    },
+    {
+      "name": "Product",
+      "fullPath": "com.example.model.Product",
+      "package": "com.example.model",
+      "description": "产品实体类",
+      "methods": [
+        {
+          "name": "getProductId",
+          "returnType": "String",
+          "params": [],
+          "description": "获取产品ID"
+        },
+        {
+          "name": "getProductName",
+          "returnType": "String",
+          "params": [],
+          "description": "获取产品名称"
+        },
+        {
+          "name": "getPrice",
+          "returnType": "BigDecimal",
+          "params": [],
+          "description": "获取价格"
+        },
+        {
+          "name": "setPrice",
+          "returnType": "void",
+          "params": [
+            { "name": "price", "type": "BigDecimal" }
+          ],
+          "description": "设置价格"
+        },
+        {
+          "name": "getStock",
+          "returnType": "int",
+          "params": [],
+          "description": "获取库存"
+        },
+        {
+          "name": "setStock",
+          "returnType": "void",
+          "params": [
+            { "name": "stock", "type": "int" }
+          ],
+          "description": "设置库存"
+        },
+        {
+          "name": "isInStock",
+          "returnType": "boolean",
+          "params": [],
+          "description": "是否有库存"
+        }
+      ],
+      "fields": [
+        { "name": "productId", "type": "String", "description": "产品ID" },
+        { "name": "productName", "type": "String", "description": "产品名称" },
+        { "name": "price", "type": "BigDecimal", "description": "价格" },
+        { "name": "stock", "type": "int", "description": "库存" },
+        { "name": "category", "type": "String", "description": "分类" }
+      ]
+    }
+  ],
+  "utilities": [
+    {
+      "name": "DateUtils",
+      "fullPath": "com.example.util.DateUtils",
+      "package": "com.example.util",
+      "description": "日期工具类",
+      "methods": [
+        {
+          "name": "format",
+          "returnType": "String",
+          "params": [
+            { "name": "date", "type": "Date" },
+            { "name": "pattern", "type": "String" }
+          ],
+          "description": "格式化日期",
+          "static": true
+        },
+        {
+          "name": "parse",
+          "returnType": "Date",
+          "params": [
+            { "name": "dateStr", "type": "String" },
+            { "name": "pattern", "type": "String" }
+          ],
+          "description": "解析日期字符串",
+          "static": true
+        },
+        {
+          "name": "addDays",
+          "returnType": "Date",
+          "params": [
+            { "name": "date", "type": "Date" },
+            { "name": "days", "type": "int" }
+          ],
+          "description": "增加天数",
+          "static": true
+        },
+        {
+          "name": "isBefore",
+          "returnType": "boolean",
+          "params": [
+            { "name": "date1", "type": "Date" },
+            { "name": "date2", "type": "Date" }
+          ],
+          "description": "判断日期1是否在日期2之前",
+          "static": true
+        }
+      ]
+    },
+    {
+      "name": "StringUtils",
+      "fullPath": "com.example.util.StringUtils",
+      "package": "com.example.util",
+      "description": "字符串工具类",
+      "methods": [
+        {
+          "name": "isEmpty",
+          "returnType": "boolean",
+          "params": [
+            { "name": "str", "type": "String" }
+          ],
+          "description": "判断字符串是否为空",
+          "static": true
+        },
+        {
+          "name": "isNotEmpty",
+          "returnType": "boolean",
+          "params": [
+            { "name": "str", "type": "String" }
+          ],
+          "description": "判断字符串是否不为空",
+          "static": true
+        },
+        {
+          "name": "trim",
+          "returnType": "String",
+          "params": [
+            { "name": "str", "type": "String" }
+          ],
+          "description": "去除首尾空格",
+          "static": true
+        },
+        {
+          "name": "equals",
+          "returnType": "boolean",
+          "params": [
+            { "name": "str1", "type": "String" },
+            { "name": "str2", "type": "String" }
+          ],
+          "description": "比较两个字符串",
+          "static": true
+        }
+      ]
+    },
+    {
+      "name": "MathUtils",
+      "fullPath": "com.example.util.MathUtils",
+      "package": "com.example.util",
+      "description": "数学工具类",
+      "methods": [
+        {
+          "name": "add",
+          "returnType": "BigDecimal",
+          "params": [
+            { "name": "a", "type": "BigDecimal" },
+            { "name": "b", "type": "BigDecimal" }
+          ],
+          "description": "精确加法",
+          "static": true
+        },
+        {
+          "name": "subtract",
+          "returnType": "BigDecimal",
+          "params": [
+            { "name": "a", "type": "BigDecimal" },
+            { "name": "b", "type": "BigDecimal" }
+          ],
+          "description": "精确减法",
+          "static": true
+        },
+        {
+          "name": "multiply",
+          "returnType": "BigDecimal",
+          "params": [
+            { "name": "a", "type": "BigDecimal" },
+            { "name": "b", "type": "BigDecimal" }
+          ],
+          "description": "精确乘法",
+          "static": true
+        },
+        {
+          "name": "divide",
+          "returnType": "BigDecimal",
+          "params": [
+            { "name": "a", "type": "BigDecimal" },
+            { "name": "b", "type": "BigDecimal" },
+            { "name": "scale", "type": "int" }
+          ],
+          "description": "精确除法",
+          "static": true
+        }
+      ]
+    }
+  ],
+  "services": [
+    {
+      "name": "RuleService",
+      "fullPath": "com.example.service.RuleService",
+      "package": "com.example.service",
+      "description": "规则服务类",
+      "methods": [
+        {
+          "name": "execute",
+          "returnType": "void",
+          "params": [
+            { "name": "ruleName", "type": "String" }
+          ],
+          "description": "执行指定规则"
+        },
+        {
+          "name": "validate",
+          "returnType": "boolean",
+          "params": [
+            { "name": "data", "type": "Object" }
+          ],
+          "description": "验证数据"
+        },
+        {
+          "name": "process",
+          "returnType": "Object",
+          "params": [
+            { "name": "input", "type": "Object" }
+          ],
+          "description": "处理数据"
+        }
+      ]
+    },
+    {
+      "name": "NotificationService",
+      "fullPath": "com.example.service.NotificationService",
+      "package": "com.example.service",
+      "description": "通知服务类",
+      "methods": [
+        {
+          "name": "sendEmail",
+          "returnType": "void",
+          "params": [
+            { "name": "to", "type": "String" },
+            { "name": "subject", "type": "String" },
+            { "name": "content", "type": "String" }
+          ],
+          "description": "发送邮件"
+        },
+        {
+          "name": "sendSms",
+          "returnType": "void",
+          "params": [
+            { "name": "phone", "type": "String" },
+            { "name": "message", "type": "String" }
+          ],
+          "description": "发送短信"
+        }
+      ]
+    }
+  ]
+}
+
