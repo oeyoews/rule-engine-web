@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Plus, GripVertical, Phone, RefreshCw, PlusCircle, Trash2, Edit, Zap } from 'lucide-vue-next'
+import { Plus, GripVertical, Phone, RefreshCw, PlusCircle, Trash2, Edit, Zap, Variable, Code2, Box } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassMethod } from '@/utils/classImport'
 import { VueDraggable } from 'vue-draggable-plus'
 
@@ -430,7 +430,12 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
                     :key="variable.value"
                     :label="variable.label"
                     :value="variable.value"
-                  />
+                  >
+                    <div class="flex items-center gap-2">
+                      <Variable :size="16" class="text-blue-600" />
+                      <span>{{ variable.label }}</span>
+                    </div>
+                  </el-option>
                 </el-option-group>
                 <el-option-group v-if="extractVariablesFromWhen.length === 0" label="提示">
                   <el-option
@@ -454,7 +459,12 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
                   :key="obj.value"
                   :label="obj.label"
                   :value="obj.value"
-                />
+                >
+                  <div class="flex items-center gap-2">
+                    <Box :size="16" class="text-indigo-600" />
+                    <span>{{ obj.label }}</span>
+                  </div>
+                </el-option>
               </el-select>
             </div>
 
@@ -475,9 +485,12 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
                   :label="method.name"
                   :value="method.name"
                 >
-                  <div class="flex flex-col">
-                    <span>{{ method.name }}</span>
-                    <span class="text-xs text-gray-500">{{ method.description }}</span>
+                  <div class="flex items-center gap-2">
+                    <Code2 :size="16" class="text-green-600" />
+                    <div class="flex flex-col">
+                      <span>{{ method.name }}</span>
+                      <!-- <span class="text-xs text-gray-500">{{ method.description }}</span> -->
+                    </div>
                   </div>
                 </el-option>
               </el-select>
@@ -528,7 +541,12 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
                 :key="variable.value"
                 :label="variable.label"
                 :value="variable.value"
-              />
+              >
+                <div class="flex items-center gap-2">
+                  <Variable :size="16" class="text-blue-600" />
+                  <span>{{ variable.label }}</span>
+                </div>
+              </el-option>
             </el-option-group>
             <el-option-group v-if="extractVariablesFromWhen.length === 0" label="提示">
               <el-option
@@ -560,7 +578,12 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
                   :key="variable.value"
                   :label="variable.label"
                   :value="variable.value"
-                />
+                >
+                  <div class="flex items-center gap-2">
+                    <Variable :size="16" class="text-blue-600" />
+                    <span>{{ variable.label }}</span>
+                  </div>
+                </el-option>
               </el-option-group>
               <el-option-group v-if="extractVariablesFromWhen.length === 0" label="提示">
                 <el-option

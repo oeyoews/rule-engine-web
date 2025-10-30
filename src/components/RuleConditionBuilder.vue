@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Plus, Trash2, GripVertical, Ampersand, Split } from 'lucide-vue-next'
+import { Plus, Trash2, GripVertical, Ampersand, Split, Box, Hash, Equal } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassField } from '@/utils/classImport'
 import { VueDraggable } from 'vue-draggable-plus'
 
@@ -309,7 +309,7 @@ watch(() => props.modelValue, (newValue) => {
             </el-radio-group>
           </div>
 
-          <div class="grid grid-cols-11 gap-2 items-start flex-1">
+          <div class="grid grid-cols-11 gap-2 items-center flex-1">
             <!-- 变量名 -->
             <div class="col-span-2">
               <label class="text-xs text-gray-600 mb-1 block">变量名</label>
@@ -342,9 +342,12 @@ watch(() => props.modelValue, (newValue) => {
                   :label="cls.name"
                   :value="cls.name"
                 >
-                  <div class="flex flex-col">
-                    <span>{{ cls.name }}</span>
-                    <span class="text-xs text-gray-500">{{ cls.description }}</span>
+                  <div class="flex items-center gap-2">
+                    <Box :size="16" class="text-indigo-600" />
+                    <div class="flex flex-col">
+                      <span>{{ cls.name }}</span>
+                      <!-- <span class="text-xs text-gray-500">{{ cls.description }}</span> -->
+                    </div>
                   </div>
                 </el-option>
               </el-select>
@@ -368,9 +371,12 @@ watch(() => props.modelValue, (newValue) => {
                   :label="field.name"
                   :value="field.name"
                 >
-                  <div class="flex flex-col">
-                    <span>{{ field.name }}</span>
-                    <span class="text-xs text-gray-500">{{ field.type }} - {{ field.description }}</span>
+                  <div class="flex items-center gap-2">
+                    <Hash :size="16" class="text-teal-600" />
+                    <div class="flex flex-col">
+                      <span>{{ field.name }}</span>
+                      <!-- <span class="text-xs text-gray-500">{{ field.type }} - {{ field.description }}</span> -->
+                    </div>
                   </div>
                 </el-option>
               </el-select>
@@ -390,7 +396,12 @@ watch(() => props.modelValue, (newValue) => {
                   :key="op.value"
                   :label="op.label"
                   :value="op.value"
-                />
+                >
+                  <div class="flex items-center gap-2">
+                    <Equal :size="16" class="text-purple-600" />
+                    <span>{{ op.label }}</span>
+                  </div>
+                </el-option>
               </el-select>
             </div>
 

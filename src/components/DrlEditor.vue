@@ -477,7 +477,12 @@ onMounted(() => {
                       :key="item.value"
                       :label="item.label"
                       :value="item.value"
-                    />
+                    >
+                      <div class="flex items-center gap-2">
+                        <Package :size="16" class="text-amber-600" />
+                        <span>{{ item.label }}</span>
+                      </div>
+                    </el-option>
                   </el-select>
                 </el-form-item>
                 <el-form-item>
@@ -518,7 +523,12 @@ onMounted(() => {
                       :key="item.value"
                       :label="item.label"
                       :value="item.value"
-                    />
+                    >
+                      <div class="flex items-center gap-2">
+                        <FileInput :size="16" class="text-purple-600" />
+                        <span>{{ item.label }}</span>
+                      </div>
+                    </el-option>
                   </el-select>
                   <!-- 自动导入模式提示 -->
                   <div v-if="autoImportMode" class="mt-2 flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5">
@@ -564,7 +574,12 @@ onMounted(() => {
                       :key="item.value"
                       :label="item.label"
                       :value="item.value"
-                    />
+                    >
+                      <div class="flex items-center gap-2">
+                        <Globe :size="16" class="text-blue-600" />
+                        <span>{{ item.label }}</span>
+                      </div>
+                    </el-option>
                   </el-select>
                 </el-form-item>
                 <el-form-item>
