@@ -5,7 +5,7 @@ import {
   Trash2, HelpCircle, Lightbulb, Plus,
   Code2, Settings, ClipboardList, FileText, AlertTriangle,
   Package, FileInput, Globe, FileText as FileDescription, Tag, Target, Search, Zap,
-  CheckCircle, XCircle, Wand2, Eye, Terminal, X, Upload
+  CheckCircle, XCircle, Wand2, Eye, Terminal, X, Upload, GripVertical
 } from 'lucide-vue-next'
 import HelpDialog from './HelpDialog.vue'
 import PreviewDialog from './PreviewDialog.vue'
@@ -18,6 +18,7 @@ import { sampleConfig, sampleRules } from '@/constants/sampleData'
 import { extractClassNamesFromRules, getMissingImports, extractPackagePrefix } from '@/utils/importDetector'
 import { parseDrlFile, validateDrlFile } from '@/utils/drlParser'
 import { v4 as uuidv4 } from 'uuid'
+import { VueDraggable } from 'vue-draggable-plus'
 
 // 数据定义
 const config = ref<Config>({
@@ -630,45 +631,56 @@ onMounted(() => {
 
                   <!-- 规则项目 -->
                   <el-collapse v-model="activeRules" accordion>
-                    <el-collapse-item v-for="(rule, index) in rules" :key="index" :name="index" :disabled="advancedMode">
-                      <template #title>
-                        <div class="flex items-center justify-between w-full py-2.5 pl-1 group">
-                          <div class="flex items-center gap-3 flex-wrap">
-                            <div class="flex items-center justify-center w-8 h-8 bg-linear-to-br from-indigo-100 to-purple-100 rounded-lg text-indigo-600 font-bold text-sm">
-                              {{ index + 1 }}
+                    <VueDraggable
+                      v-model="rules"
+                      :animation="200"
+                      handle=".rule-drag-handle"
+                      ghostClass="rule-dragging-ghost"
+                      :disabled="advancedMode"
+                    >
+                      <el-collapse-item v-for="(rule, index) in rules" :key="index" :name="index" :disabled="advancedMode">
+                        <template #title>
+                          <div class="flex items-center justify-between w-full py-2.5 pl-1 group">
+                            <div class="flex items-center gap-3 flex-wrap">
+                              <!-- 拖拽手柄 -->
+                              <div v-if="!advancedMode" class="rule-drag-handle flex items-center justify-center w-8 h-8 cursor-move hover:bg-indigo-100 rounded-lg transition-colors">
+                                <GripVertical :size="16" class="text-indigo-400" />
+                              </div>
+                              <div class="flex items-center justify-center w-8 h-8 bg-linear-to-br from-indigo-100 to-purple-100 rounded-lg text-indigo-600 font-bold text-sm">
+                                {{ index + 1 }}
+                              </div>
+                              <span class="font-semibold text-gray-700 text-base">
+                                {{ rule.name || '规则 ' + (index + 1) }}
+                              </span>
+                              <el-tag v-if="rule.enabled" size="small" class="bg-emerald-100! text-emerald-700! border-emerald-200! transition-none!">
+                                <span class="inline-flex items-center gap-1">
+                                  <CheckCircle :size="14" class="text-emerald-700" />
+                                  启用
+                                </span>
+                              </el-tag>
+                              <el-tag v-else size="small" class="bg-slate-100! text-slate-600! border-slate-200! transition-none!">
+                                <span class="inline-flex items-center gap-1">
+                                  <XCircle :size="14" class="text-slate-600" />
+                                  禁用
+                                </span>
+                              </el-tag>
+                              <el-tag v-if="rule.salience > 0" size="small" class="bg-violet-100! text-violet-700! border-violet-200! transition-none!">
+                                <span class="inline-flex items-center gap-1">
+                                  <Zap :size="14" class="text-violet-700" />
+                                  {{ rule.salience }}
+                                </span>
+                              </el-tag>
                             </div>
-                            <span class="font-semibold text-gray-700 text-base">
-                              {{ rule.name || '规则 ' + (index + 1) }}
-                            </span>
-                            <el-tag v-if="rule.enabled" size="small" class="bg-emerald-100! text-emerald-700! border-emerald-200! transition-none!">
-                              <span class="inline-flex items-center gap-1">
-                                <CheckCircle :size="14" class="text-emerald-700" />
-                                启用
-                              </span>
-                            </el-tag>
-                            <el-tag v-else size="small" class="bg-slate-100! text-slate-600! border-slate-200! transition-none!">
-                              <span class="inline-flex items-center gap-1">
-                                <XCircle :size="14" class="text-slate-600" />
-                                禁用
-                              </span>
-                            </el-tag>
-                            <el-tag v-if="rule.salience > 0" size="small" class="bg-violet-100! text-violet-700! border-violet-200! transition-none!">
-                              <span class="inline-flex items-center gap-1">
-                                <Zap :size="14" class="text-violet-700" />
-                                {{ rule.salience }}
-                              </span>
-                            </el-tag>
+                            <el-button
+                              v-if="!advancedMode"
+                              circle
+                              @click.stop="confirmRemoveRule(index)"
+                              class="group-hover:opacity-100 opacity-0 transition-all duration-200 p-2 hover:bg-red-50 rounded-lg mr-2"
+                            >
+                              <Trash2 :size="16" class="text-red-500" />
+                            </el-button>
                           </div>
-                          <el-button
-                            v-if="!advancedMode"
-                            circle
-                            @click.stop="confirmRemoveRule(index)"
-                            class="group-hover:opacity-100 opacity-0 transition-all duration-200 p-2 hover:bg-red-50 rounded-lg mr-2"
-                          >
-                            <Trash2 :size="16" class="text-red-500" />
-                          </el-button>
-                        </div>
-                      </template>
+                        </template>
                       <el-form :model="rule" label-width="120px" label-position="top" class="pt-3 pl-1 pb-2">
                         <el-form-item>
                           <template #label>
@@ -781,7 +793,8 @@ onMounted(() => {
                           </el-input>
                         </el-form-item>
                       </el-form>
-                    </el-collapse-item>
+                      </el-collapse-item>
+                    </VueDraggable>
                   </el-collapse>
                 </div>
               </el-collapse-item>
@@ -891,5 +904,12 @@ onMounted(() => {
 :deep(.el-tag) {
   transition: none !important;
   animation: none !important;
+}
+
+/* 规则拖拽时的幽灵元素样式 */
+.rule-dragging-ghost {
+  opacity: 0.5;
+  background: #eef2ff;
+  border: 2px dashed #818cf8;
 }
 </style>

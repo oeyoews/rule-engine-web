@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Plus, X } from 'lucide-vue-next'
+import { Plus, X, GripVertical } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassField } from '@/utils/classImport'
+import { VueDraggable } from 'vue-draggable-plus'
 
 interface Condition {
   id: string
@@ -273,7 +274,14 @@ watch(() => props.modelValue, (newValue) => {
       </el-button>
     </div>
 
-    <div class="space-y-3">
+    <VueDraggable
+      v-model="conditions"
+      :animation="200"
+      handle=".drag-handle"
+      ghostClass="dragging-ghost"
+      @end="updateDrlCode"
+      class="space-y-3"
+    >
       <div
         v-for="(condition, index) in conditions"
         :key="condition.id"
@@ -292,116 +300,123 @@ watch(() => props.modelValue, (newValue) => {
           </el-radio-group>
         </div>
 
-        <div class="grid grid-cols-12 gap-2 items-start">
-          <!-- 变量名 -->
-          <div class="col-span-2">
-            <label class="text-xs text-gray-600 mb-1 block">变量名</label>
-            <el-input
-              v-model="condition.variable"
-              size="small"
-              placeholder="p"
-              @change="updateDrlCode"
-            >
-              <template #prefix>
-                <span class="text-gray-400">$</span>
-              </template>
-            </el-input>
+        <div class="flex gap-2 items-start">
+          <!-- 拖拽手柄 -->
+          <div class="drag-handle flex items-center justify-center w-8 h-full min-h-[32px] cursor-move hover:bg-gray-200 rounded transition-colors mt-5">
+            <GripVertical :size="16" class="text-gray-400" />
           </div>
 
-          <!-- 类名 -->
-          <div class="col-span-2">
-            <label class="text-xs text-gray-600 mb-1 block">类</label>
-            <el-select
-              v-model="condition.className"
-              size="small"
-              placeholder="选择类"
-              filterable
-              @change="updateDrlCode"
-              class="w-full"
-            >
-              <el-option
-                v-for="cls in availableClasses"
-                :key="cls.name"
-                :label="cls.name"
-                :value="cls.name"
+          <div class="grid grid-cols-12 gap-2 items-start flex-1">
+            <!-- 变量名 -->
+            <div class="col-span-2">
+              <label class="text-xs text-gray-600 mb-1 block">变量名</label>
+              <el-input
+                v-model="condition.variable"
+                size="small"
+                placeholder="p"
+                @change="updateDrlCode"
               >
-                <div class="flex flex-col">
-                  <span>{{ cls.name }}</span>
-                  <span class="text-xs text-gray-500">{{ cls.description }}</span>
-                </div>
-              </el-option>
-            </el-select>
-          </div>
+                <template #prefix>
+                  <span class="text-gray-400">$</span>
+                </template>
+              </el-input>
+            </div>
 
-          <!-- 字段 -->
-          <div class="col-span-2">
-            <label class="text-xs text-gray-600 mb-1 block">字段</label>
-            <el-select
-              v-model="condition.field"
-              size="small"
-              placeholder="选择字段"
-              filterable
-              @change="updateDrlCode"
-              :disabled="!condition.className"
-              class="w-full"
-            >
-              <el-option
-                v-for="field in getClassFields(condition.className)"
-                :key="field.name"
-                :label="field.name"
-                :value="field.name"
+            <!-- 类名 -->
+            <div class="col-span-2">
+              <label class="text-xs text-gray-600 mb-1 block">类</label>
+              <el-select
+                v-model="condition.className"
+                size="small"
+                placeholder="选择类"
+                filterable
+                @change="updateDrlCode"
+                class="w-full"
               >
-                <div class="flex flex-col">
-                  <span>{{ field.name }}</span>
-                  <span class="text-xs text-gray-500">{{ field.type }} - {{ field.description }}</span>
-                </div>
-              </el-option>
-            </el-select>
-          </div>
+                <el-option
+                  v-for="cls in availableClasses"
+                  :key="cls.name"
+                  :label="cls.name"
+                  :value="cls.name"
+                >
+                  <div class="flex flex-col">
+                    <span>{{ cls.name }}</span>
+                    <span class="text-xs text-gray-500">{{ cls.description }}</span>
+                  </div>
+                </el-option>
+              </el-select>
+            </div>
 
-          <!-- 操作符 -->
-          <div class="col-span-2">
-            <label class="text-xs text-gray-600 mb-1 block">操作符</label>
-            <el-select
-              v-model="condition.operator"
-              size="small"
-              @change="updateDrlCode"
-              class="w-full"
-            >
-              <el-option
-                v-for="op in operators"
-                :key="op.value"
-                :label="op.label"
-                :value="op.value"
+            <!-- 字段 -->
+            <div class="col-span-2">
+              <label class="text-xs text-gray-600 mb-1 block">字段</label>
+              <el-select
+                v-model="condition.field"
+                size="small"
+                placeholder="选择字段"
+                filterable
+                @change="updateDrlCode"
+                :disabled="!condition.className"
+                class="w-full"
+              >
+                <el-option
+                  v-for="field in getClassFields(condition.className)"
+                  :key="field.name"
+                  :label="field.name"
+                  :value="field.name"
+                >
+                  <div class="flex flex-col">
+                    <span>{{ field.name }}</span>
+                    <span class="text-xs text-gray-500">{{ field.type }} - {{ field.description }}</span>
+                  </div>
+                </el-option>
+              </el-select>
+            </div>
+
+            <!-- 操作符 -->
+            <div class="col-span-2">
+              <label class="text-xs text-gray-600 mb-1 block">操作符</label>
+              <el-select
+                v-model="condition.operator"
+                size="small"
+                @change="updateDrlCode"
+                class="w-full"
+              >
+                <el-option
+                  v-for="op in operators"
+                  :key="op.value"
+                  :label="op.label"
+                  :value="op.value"
+                />
+              </el-select>
+            </div>
+
+            <!-- 值 -->
+            <div class="col-span-3">
+              <label class="text-xs text-gray-600 mb-1 block">值</label>
+              <el-input
+                v-model="condition.value"
+                size="small"
+                placeholder="输入值"
+                @change="updateDrlCode"
               />
-            </el-select>
-          </div>
+            </div>
 
-          <!-- 值 -->
-          <div class="col-span-3">
-            <label class="text-xs text-gray-600 mb-1 block">值</label>
-            <el-input
-              v-model="condition.value"
-              size="small"
-              placeholder="输入值"
-              @change="updateDrlCode"
-            />
-          </div>
-
-          <!-- 删除按钮 -->
-          <div class="col-span-1 flex items-end">
-            <el-button
-              size="small"
-              type="danger"
-              :icon="X"
-              circle
-              @click="removeCondition(condition.id)"
-              :disabled="conditions.length === 1"
-            />
+            <!-- 删除按钮 -->
+            <div class="col-span-1 flex items-end">
+              <el-button
+                size="small"
+                type="danger"
+                :icon="X"
+                circle
+                @click="removeCondition(condition.id)"
+                :disabled="conditions.length === 1"
+              />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </VueDraggable>
 
     <!-- 生成的代码预览 -->
     <div class="mt-3">
@@ -426,6 +441,13 @@ watch(() => props.modelValue, (newValue) => {
 .condition-item:hover {
   border-color: #93c5fd;
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+/* 拖拽时的幽灵元素样式 */
+.dragging-ghost {
+  opacity: 0.5;
+  background: #e0f2fe;
+  border: 2px dashed #0ea5e9;
 }
 
 /* 禁用 el-tag 的所有过渡动画 */

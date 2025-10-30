@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Plus, X } from 'lucide-vue-next'
+import { Plus, X, GripVertical } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassMethod } from '@/utils/classImport'
+import { VueDraggable } from 'vue-draggable-plus'
 
 interface Action {
   id: string
@@ -364,13 +365,24 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
       </el-button>
     </div>
 
-    <div class="space-y-3">
+    <VueDraggable
+      v-model="actions"
+      :animation="200"
+      handle=".drag-handle"
+      ghostClass="dragging-ghost"
+      @end="updateDrlCode"
+      class="space-y-3"
+    >
       <div
         v-for="(action, index) in actions"
         :key="action.id"
         class="action-item bg-green-50 rounded-lg p-3 border border-green-200"
       >
         <div class="flex items-center gap-2 mb-3">
+          <!-- 拖拽手柄 -->
+          <div class="drag-handle flex items-center justify-center w-8 h-8 cursor-move hover:bg-green-200 rounded transition-colors">
+            <GripVertical :size="16" class="text-green-600" />
+          </div>
           <div class="text-xs font-medium text-gray-600">动作 {{ index + 1 }}</div>
           <el-divider direction="vertical" />
           <el-radio-group v-model="action.type" size="small" @change="updateDrlCode">
@@ -566,7 +578,7 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
           </div>
         </div>
       </div>
-    </div>
+    </VueDraggable>
 
     <!-- 生成的代码预览 -->
     <div class="mt-3">
@@ -591,6 +603,13 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
 .action-item:hover {
   border-color: #4ade80;
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+/* 拖拽时的幽灵元素样式 */
+.dragging-ghost {
+  opacity: 0.5;
+  background: #d1fae5;
+  border: 2px dashed #10b981;
 }
 
 /* 禁用 el-tag 的所有过渡动画 */
