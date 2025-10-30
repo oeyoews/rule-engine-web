@@ -7,6 +7,12 @@ import { useClipboard } from '@vueuse/core'
 import { ElMessage } from 'element-plus'
 import { downloadFile } from '../utils/drl'
 import CodeStatistics from './CodeStatistics.vue'
+import hljs from 'highlight.js/lib/core'
+import java from 'highlight.js/lib/languages/java'
+import 'highlight.js/styles/atom-one-dark.css'
+
+// 注册 Java 语言
+hljs.registerLanguage('java', java)
 
 // 双向绑定
 const dialogVisible = defineModel<boolean>()
@@ -20,6 +26,20 @@ const props = defineProps<{
 
 // 代码行数
 const codeLines = computed(() => props.code.split('\n').length)
+
+// 高亮后的代码（带行号）
+const highlightedCode = computed(() => {
+  const highlighted = hljs.highlight(props.code, { language: 'java' }).value
+  const lines = highlighted.split('\n')
+
+  return lines.map((line, index) => {
+    const lineNumber = index + 1
+    return `<div class="code-line">
+      <span class="line-number">${lineNumber}</span>
+      <span class="line-content">${line || ' '}</span>
+    </div>`
+  }).join('')
+})
 
 // 使用 VueUse 的 useClipboard (legacy 模式)
 const { copy, copied, isSupported } = useClipboard({ legacy: true })
@@ -73,8 +93,8 @@ const copyCode = async () => {
 
     <!-- 代码预览区 -->
     <div class="space-y-3">
-      <el-scrollbar max-height="550px" class="bg-linear-to-br from-slate-900 via-gray-900 to-slate-900 rounded-lg shadow-xl overflow-hidden">
-        <pre class="text-green-400 p-4 text-sm font-mono leading-relaxed">{{ code }}</pre>
+      <el-scrollbar max-height="550px" class="code-container rounded-lg shadow-xl overflow-hidden">
+        <div class="code-wrapper" v-html="highlightedCode"></div>
       </el-scrollbar>
 
       <!-- 代码统计信息 -->
@@ -115,6 +135,43 @@ const copyCode = async () => {
 </template>
 
 <style scoped>
-/* 如果需要特定样式可以在这里添加 */
+.code-container {
+  background: linear-gradient(135deg, #282c34 0%, #1e2127 100%);
+}
+
+.code-wrapper {
+  padding: 1rem;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #abb2bf;
+}
+
+:deep(.code-line) {
+  display: flex;
+  min-height: 1.6em;
+}
+
+:deep(.code-line:hover) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+:deep(.line-number) {
+  display: inline-block;
+  width: 1.5em;
+  padding-right: 1em;
+  text-align: right;
+  color: #5c6370;
+  user-select: none;
+  flex-shrink: 0;
+  border-right: 1px solid #3e4451;
+  margin-right: 1em;
+}
+
+:deep(.line-content) {
+  flex: 1;
+  white-space: pre;
+  word-break: break-word;
+}
 </style>
 
