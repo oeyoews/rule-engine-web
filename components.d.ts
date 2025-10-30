@@ -30,6 +30,7 @@ declare module 'vue' {
     ElSwitch: typeof import('element-plus/es')['ElSwitch']
     ElTag: typeof import('element-plus/es')['ElTag']
     HelpDialog: typeof import('./src/components/HelpDialog.vue')['default']
+    PreviewDialog: typeof import('./src/components/PreviewDialog.vue')['default']
     RuleActionBuilder: typeof import('./src/components/RuleActionBuilder.vue')['default']
     RuleConditionBuilder: typeof import('./src/components/RuleConditionBuilder.vue')['default']
     RuleFlow: typeof import('./src/components/RuleFlow.vue')['default']

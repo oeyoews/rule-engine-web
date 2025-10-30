@@ -3,12 +3,13 @@ import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Trash2, HelpCircle, Lightbulb, Download, Copy, Check, Plus,
-  Code2, Lock, Settings, ClipboardList, FileText, AlertTriangle, Info,
+  Code2, Settings, ClipboardList, FileText, AlertTriangle,
   Package, Globe, FileText as FileDescription, Tag, Target, Search, Zap,
-  CheckCircle, XCircle, Hash, FileCode, ToggleRight, Sparkles, Wand2
+  CheckCircle, XCircle, Hash, FileCode, ToggleRight, Wand2, Eye, Terminal, X
 } from 'lucide-vue-next'
 import { useClipboard } from '@vueuse/core'
 import HelpDialog from './HelpDialog.vue'
+import PreviewDialog from './PreviewDialog.vue'
 import RuleConditionBuilder from './RuleConditionBuilder.vue'
 import RuleActionBuilder from './RuleActionBuilder.vue'
 import { generateDrlCode, downloadFile, formatTimestamp } from '../utils/drl'
@@ -49,6 +50,9 @@ const activeRuleList = ref<string>('ruleList') // 规则列表折叠状态
 
 // 控制帮助弹窗显示
 const showHelpDialog = ref(false)
+
+// 控制代码预览弹窗显示
+const showPreviewDialog = ref(false)
 
 // 高级模式状态
 const advancedMode = ref(false)
@@ -177,12 +181,9 @@ const generateDRL = (): string => {
 /**
  * 处理高级模式切换
  */
-const handleAdvancedModeChange = (value: string | number | boolean) => {
-  if (value === true) {
-    // 先恢复开关状态
-    advancedMode.value = false
-
-    // 弹出确认框
+const handleAdvancedModeToggle = () => {
+  if (!advancedMode.value) {
+    // 开启高级模式
     ElMessageBox.confirm(
       '开启高级模式后，您可以直接编辑 DRL 代码。手动修改的内容将覆盖表单生成的代码，并影响下载和复制的结果。',
       '开启高级模式',
@@ -206,10 +207,16 @@ const handleAdvancedModeChange = (value: string | number | boolean) => {
         message: '已开启高级模式，可以手动编辑代码'
       })
     }).catch(() => {
-      // 用户取消，保持关闭状态（已经是 false）
+      // 用户取消
+    })
+  } else {
+    // 关闭高级模式
+    advancedMode.value = false
+    ElMessage({
+      type: 'info',
+      message: '已退出高级模式'
     })
   }
-  // 注意：关闭高级模式时不清空 manualDrlCode，保留用户的编辑内容
 }
 
 /**
@@ -250,7 +257,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="bg-linear-to-br from-slate-50 via-blue-50 to-slate-50 p-4">
+  <div class="bg-linear-to-br min-h-screen from-slate-50 via-blue-50 to-slate-50 p-4">
     <div class="md:max-w-7xl lg:max-w-9xl xl:max-w-11xl mx-auto space-y-4">
       <!-- 顶部标题栏 - 优化视觉层次 -->
       <div class="bg-white/95 backdrop-blur-md rounded-xl shadow-lg p-4 border border-slate-200/80 hover:shadow-xl transition-shadow duration-300">
@@ -287,6 +294,26 @@ onMounted(() => {
             </el-button>
             <el-button
               size="default"
+              class="bg-linear-to-br! from-violet-50! to-purple-100! text-purple-700! border! border-violet-200! hover:border-purple-400! hover:shadow-md! hover:scale-105! transition-all! duration-200!"
+              @click="showPreviewDialog = true"
+              :disabled="advancedMode"
+            >
+              <Eye :size="18" class="mr-2" />
+              代码预览
+            </el-button>
+            <el-button
+              size="default"
+              :class="advancedMode
+                ? 'bg-linear-to-br! from-orange-100! to-red-100! text-red-700! border! border-orange-300! shadow-md! scale-105! transition-all! duration-200!'
+                : 'bg-linear-to-br! from-slate-50! to-gray-100! text-gray-700! border! border-slate-200! hover:border-gray-400! hover:shadow-md! hover:scale-105! transition-all! duration-200!'
+              "
+              @click="handleAdvancedModeToggle"
+            >
+              <Terminal :size="18" class="mr-2" />
+              {{ advancedMode ? '退出高级模式' : '高级模式' }}
+            </el-button>
+            <el-button
+              size="default"
               class="bg-linear-to-br! from-emerald-50! to-green-100! text-green-700! border! border-emerald-200! hover:border-green-400! hover:shadow-md! hover:scale-105! transition-all! duration-200!"
               @click="downloadDRL"
             >
@@ -309,18 +336,8 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- 全局配置卡片 - 独占一行 -->
-      <div class="relative">
-        <!-- 高级模式禁用遮罩 - 改进视觉效果 -->
-        <transition name="fade">
-          <div v-if="advancedMode" class="absolute inset-0 bg-slate-900/5 backdrop-blur-sm z-10 rounded-xl flex items-center justify-center">
-            <div class="bg-linear-to-r from-red-500 to-pink-600 text-white px-6 py-3 rounded-xl shadow-2xl text-base font-semibold flex items-center gap-3 animate-pulse">
-              <Lock :size="20" class="text-white" />
-              高级模式已启用，表单编辑已锁定
-            </div>
-          </div>
-        </transition>
-
+      <!-- 全局配置卡片 - 独占一行（普通模式） -->
+      <div v-if="!advancedMode">
         <!-- 全局配置卡片 -->
         <div class="bg-white/95 backdrop-blur-md rounded-xl shadow-md border border-slate-200/80 overflow-hidden hover:shadow-lg transition-shadow duration-300">
           <el-collapse v-model="activeConfig" accordion>
@@ -336,7 +353,7 @@ onMounted(() => {
                   </div>
                 </div>
               </template>
-              <el-form :model="config" label-width="100px" label-position="top" :disabled="advancedMode" class="pt-3 px-4 pb-3">
+              <el-form :model="config" label-width="100px" label-position="top" class="pt-3 px-4 pb-3">
                 <el-form-item>
                   <template #label>
                     <div class="flex items-center gap-2 ml-1">
@@ -409,11 +426,9 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- 主内容区域 - 改进响应式布局 -->
-      <div class="grid grid-cols-1 xl:grid-cols-[1fr_1.2fr] gap-4">
-        <!-- 左侧：规则列表 -->
-        <div class="space-y-4 relative">
-          <!-- 规则列表卡片 -->
+      <!-- 规则列表（普通模式） -->
+      <div v-if="!advancedMode">
+        <!-- 规则列表卡片 -->
           <div class="bg-white/95 backdrop-blur-md rounded-xl shadow-md border border-slate-200/80 overflow-hidden hover:shadow-lg transition-shadow duration-300">
             <el-collapse v-model="activeRuleList" accordion>
               <el-collapse-item name="ruleList">
@@ -491,7 +506,7 @@ onMounted(() => {
                           </el-button>
                         </div>
                       </template>
-                      <el-form :model="rule" label-width="120px" label-position="top" class="pt-3 pl-1 pb-2" :disabled="advancedMode">
+                      <el-form :model="rule" label-width="120px" label-position="top" class="pt-3 pl-1 pb-2">
                         <el-form-item>
                           <template #label>
                             <div class="flex items-center gap-2 ml-1">
@@ -608,90 +623,71 @@ onMounted(() => {
               </el-collapse-item>
             </el-collapse>
           </div>
+      </div>
+
+      <!-- 高级模式：全屏代码编辑器 -->
+      <div v-if="advancedMode" class="bg-white/95 backdrop-blur-md rounded-xl shadow-md border border-slate-200/80 overflow-hidden">
+        <!-- 编辑器头部 -->
+        <div class="flex justify-between items-center p-4 border-b border-slate-200 bg-linear-to-r from-red-50 to-orange-50">
+          <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center w-10 h-10 bg-linear-to-br from-red-100 to-orange-200 rounded-lg">
+              <Terminal :size="20" class="text-red-600" />
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800 mb-0">高级模式 - DRL 代码编辑器</h3>
+              <p class="text-xs text-gray-500">直接编辑 Drools 规则代码</p>
+            </div>
+          </div>
+          <el-button
+            size="default"
+            class="bg-linear-to-br! from-blue-50! to-blue-100! text-blue-700! border! border-blue-200! hover:border-blue-400! hover:shadow-md! transition-all! duration-200!"
+            @click="handleAdvancedModeToggle"
+          >
+            <X :size="18" class="mr-2" />
+            退出高级模式
+          </el-button>
         </div>
 
-        <!-- 右侧：代码预览区 -->
-        <div class="space-y-4">
-          <div class="bg-white/95 backdrop-blur-md rounded-xl shadow-md border border-slate-200/80 overflow-hidden hover:shadow-lg transition-shadow duration-300 sticky top-4">
-            <!-- 预览头部 -->
-            <div class="flex justify-between items-center p-4 border-b border-slate-200 bg-linear-to-r from-slate-50 to-gray-50">
-              <div class="flex items-center gap-3">
-                <div class="flex items-center justify-center w-10 h-10 bg-linear-to-br from-emerald-100 to-green-200 rounded-lg">
-                  <Code2 :size="20" class="text-emerald-600" />
-                </div>
-                <div>
-                  <h3 class="text-lg font-semibold text-gray-800 mb-0">DRL 代码预览</h3>
-                  <p class="text-xs text-gray-500">实时预览生成的 Drools 规则代码</p>
-                </div>
-              </div>
-              <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
-                <div class="flex items-center gap-2">
-                  <Sparkles :size="16" class="text-emerald-600" />
-                  <span class="text-sm font-medium text-gray-700">高级模式</span>
-                </div>
-                <el-switch
-                  v-model="advancedMode"
-                  active-color="#10b981"
-                  inactive-color="#94a3b8"
-                  @change="handleAdvancedModeChange"
-                  size="default"
-                />
-              </div>
+        <!-- 代码编辑区 -->
+        <div class="p-4">
+          <el-scrollbar max-height="calc(100vh - 280px)" class="bg-linear-to-br from-slate-900 to-gray-900 border-2! border-red-500! rounded-lg shadow-2xl overflow-hidden">
+            <el-input
+              v-model="manualDrlCode"
+              type="textarea"
+              :autosize="{ minRows: 35 }"
+              placeholder="在此手动编辑 DRL 规则代码..."
+              style="font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 14px; line-height: 1.6;"
+              class="drl-editor-advanced"
+              resize="none"
+            />
+          </el-scrollbar>
+          <div class="mt-3 flex items-start gap-3 text-sm text-red-700 bg-linear-to-r from-red-50 to-orange-50 border-l-4 border-red-500 rounded-lg p-3 shadow-sm">
+            <AlertTriangle :size="20" class="shrink-0 mt-0.5 text-red-600" />
+            <div>
+              <p class="font-semibold mb-1">高级模式提示</p>
+              <p class="text-xs text-gray-700 leading-relaxed">您正在直接编辑 DRL 代码。所有表单已隐藏，修改将影响下载和复制的结果。点击顶部或右上角的"退出高级模式"按钮可返回表单编辑。</p>
             </div>
+          </div>
+        </div>
 
-            <!-- 高级模式：可编辑 -->
-            <div v-if="advancedMode" class="p-3">
-              <el-scrollbar max-height="650px" class="bg-linear-to-br from-slate-900 to-gray-900 border-2! border-red-500! rounded-lg shadow-2xl overflow-hidden">
-                <el-input
-                  v-model="manualDrlCode"
-                  type="textarea"
-                  :autosize="{ minRows: 32 }"
-                  placeholder="在此手动编辑 DRL 规则代码..."
-                  style="font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 14px; line-height: 1.6;"
-                  class="drl-editor-advanced"
-                  resize="none"
-                />
-              </el-scrollbar>
-              <div class="mt-2 flex items-start gap-3 text-sm text-red-700 bg-linear-to-r from-red-50 to-orange-50 border-l-4 border-red-500 rounded-lg p-3 shadow-sm">
-                <AlertTriangle :size="20" class="shrink-0 mt-0.5 text-red-600" />
-                <div>
-                  <p class="font-semibold mb-1">高级模式提示</p>
-                  <p class="text-xs text-gray-700 leading-relaxed">您可以直接编辑代码。左侧表单已被禁用，所有修改将通过代码编辑器进行。关闭高级模式后将恢复为自动生成模式。</p>
-                </div>
+        <!-- 代码统计信息 -->
+        <div class="border-t border-slate-200 p-3 bg-linear-to-r from-slate-50 to-gray-50">
+          <div class="flex items-center justify-between text-sm">
+            <div class="flex items-center gap-6">
+              <div class="flex items-center gap-2">
+                <Hash :size="16" class="text-blue-600" />
+                <span class="text-gray-600">规则数量:</span>
+                <span class="font-bold text-blue-600">{{ rules.length }}</span>
               </div>
-            </div>
-
-            <!-- 普通模式：只读预览 -->
-            <div v-else class="p-3">
-              <el-scrollbar max-height="650px" class="bg-linear-to-br from-slate-900 via-gray-900 to-slate-900 rounded-lg shadow-2xl overflow-hidden">
-                <pre class="text-green-400 p-4 text-sm font-mono min-h-[500px] leading-relaxed">{{ generateDRL() }}</pre>
-              </el-scrollbar>
-              <div class="mt-2 flex items-center gap-2 text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-2.5">
-                <Info :size="16" class="text-blue-500" />
-                <span>代码预览模式：只读。开启高级模式可手动编辑代码。</span>
+              <div class="flex items-center gap-2">
+                <FileCode :size="16" class="text-green-600" />
+                <span class="text-gray-600">代码行数:</span>
+                <span class="font-bold text-green-600">{{ manualDrlCode.split('\n').length }}</span>
               </div>
-            </div>
-
-            <!-- 代码统计信息 -->
-            <div class="border-t border-slate-200 p-3 bg-linear-to-r from-slate-50 to-gray-50">
-              <div class="flex items-center justify-between text-sm">
-                <div class="flex items-center gap-6">
-                  <div class="flex items-center gap-2">
-                    <Hash :size="16" class="text-blue-600" />
-                    <span class="text-gray-600">规则数量:</span>
-                    <span class="font-bold text-blue-600">{{ rules.length }}</span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <FileCode :size="16" class="text-green-600" />
-                    <span class="text-gray-600">代码行数:</span>
-                    <span class="font-bold text-green-600">{{ generateDRL().split('\n').length }}</span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <ToggleRight :size="16" class="text-purple-600" />
-                    <span class="text-gray-600">启用规则:</span>
-                    <span class="font-bold text-purple-600">{{ rules.filter(r => r.enabled).length }}</span>
-                  </div>
-                </div>
+              <div class="flex items-center gap-2">
+                <ToggleRight :size="16" class="text-purple-600" />
+                <span class="text-gray-600">启用规则:</span>
+                <span class="font-bold text-purple-600">{{ rules.filter(r => r.enabled).length }}</span>
               </div>
             </div>
           </div>
@@ -701,6 +697,14 @@ onMounted(() => {
 
     <!-- 帮助弹窗组件 -->
     <HelpDialog v-model="showHelpDialog" />
+
+    <!-- 代码预览弹窗组件 -->
+    <PreviewDialog
+      v-model="showPreviewDialog"
+      :code="generateDRL()"
+      :rules-count="rules.length"
+      :enabled-rules-count="rules.filter(r => r.enabled).length"
+    />
   </div>
 </template>
 
