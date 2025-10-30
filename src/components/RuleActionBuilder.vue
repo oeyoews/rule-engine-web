@@ -237,7 +237,7 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
         class="action-item bg-green-50 rounded-lg p-3 border border-green-200"
       >
         <div class="flex items-center gap-2 mb-3">
-          <span class="text-xs font-medium text-gray-600">动作 {{ index + 1 }}</span>
+          <div class="text-xs font-medium text-gray-600">动作 {{ index + 1 }}</div>
           <el-divider direction="vertical" />
           <el-radio-group v-model="action.type" size="small" @change="updateDrlCode">
             <el-radio-button

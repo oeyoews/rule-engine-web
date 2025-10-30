@@ -250,8 +250,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="bg-linear-to-br from-slate-50 via-blue-50 to-slate-50 min-h-screen p-4">
-    <div class="max-w-[1800px] mx-auto space-y-4">
+  <div class="bg-linear-to-br from-slate-50 via-blue-50 to-slate-50 p-4">
+    <div class="md:max-w-7xl lg:max-w-9xl xl:max-w-11xl mx-auto space-y-4">
       <!-- 顶部标题栏 - 优化视觉层次 -->
       <div class="bg-white/95 backdrop-blur-md rounded-xl shadow-lg p-4 border border-slate-200/80 hover:shadow-xl transition-shadow duration-300">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -309,107 +309,110 @@ onMounted(() => {
         </div>
       </div>
 
+      <!-- 全局配置卡片 - 独占一行 -->
+      <div class="relative">
+        <!-- 高级模式禁用遮罩 - 改进视觉效果 -->
+        <transition name="fade">
+          <div v-if="advancedMode" class="absolute inset-0 bg-slate-900/5 backdrop-blur-sm z-10 rounded-xl flex items-center justify-center">
+            <div class="bg-linear-to-r from-red-500 to-pink-600 text-white px-6 py-3 rounded-xl shadow-2xl text-base font-semibold flex items-center gap-3 animate-pulse">
+              <Lock :size="20" class="text-white" />
+              高级模式已启用，表单编辑已锁定
+            </div>
+          </div>
+        </transition>
+
+        <!-- 全局配置卡片 -->
+        <div class="bg-white/95 backdrop-blur-md rounded-xl shadow-md border border-slate-200/80 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+          <el-collapse v-model="activeConfig" accordion>
+            <el-collapse-item name="config">
+              <template #title>
+                <div class="flex items-center gap-3 py-3 px-4">
+                  <div class="flex items-center justify-center w-10 h-10 bg-linear-to-br from-violet-100 to-purple-200 rounded-lg">
+                    <Settings :size="20" class="text-violet-600" />
+                  </div>
+                  <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-0">全局配置</h3>
+                    <p class="text-xs text-gray-500">配置包名、全局变量和描述信息</p>
+                  </div>
+                </div>
+              </template>
+              <el-form :model="config" label-width="100px" label-position="top" :disabled="advancedMode" class="pt-3 px-4 pb-3">
+                <el-form-item>
+                  <template #label>
+                    <div class="flex items-center gap-2 ml-1">
+                      <Package :size="16" class="text-amber-600" />
+                      <span>包名</span>
+                    </div>
+                  </template>
+                  <el-select
+                    v-model="config.package"
+                    filterable
+                    allow-create
+                    default-first-option
+                    placeholder="选择或输入包名"
+                    class="w-full"
+                    size="large"
+                  >
+                    <el-option
+                      v-for="item in packageOptions"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"
+                    />
+                  </el-select>
+                </el-form-item>
+                <el-form-item>
+                  <template #label>
+                    <div class="flex items-center gap-2 ml-1">
+                      <Globe :size="16" class="text-blue-600" />
+                      <span>全局变量</span>
+                    </div>
+                  </template>
+                  <el-select
+                    v-model="config.globals"
+                    multiple
+                    placeholder="选择全局变量"
+                    class="w-full"
+                    collapse-tags
+                    collapse-tags-tooltip
+                    :max-collapse-tags="4"
+                    size="large"
+                  >
+                    <el-option
+                      v-for="item in globalOptions"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"
+                    />
+                  </el-select>
+                </el-form-item>
+                <el-form-item>
+                  <template #label>
+                    <div class="flex items-center gap-2 ml-1">
+                      <FileDescription :size="16" class="text-green-600" />
+                      <span>描述</span>
+                    </div>
+                  </template>
+                  <el-input
+                    v-model="config.description"
+                    type="textarea"
+                    :rows="3"
+                    placeholder="请输入规则文件的描述信息"
+                    maxlength="200"
+                    show-word-limit
+                    size="large"
+                  />
+                </el-form-item>
+              </el-form>
+            </el-collapse-item>
+          </el-collapse>
+        </div>
+      </div>
+
       <!-- 主内容区域 - 改进响应式布局 -->
       <div class="grid grid-cols-1 xl:grid-cols-[1fr_1.2fr] gap-4">
-        <!-- 左侧：规则配置表单 -->
+        <!-- 左侧：规则列表 -->
         <div class="space-y-4 relative">
-          <!-- 高级模式禁用遮罩 - 改进视觉效果 -->
-          <transition name="fade">
-            <div v-if="advancedMode" class="absolute inset-0 bg-slate-900/5 backdrop-blur-sm z-10 rounded-xl flex items-center justify-center">
-              <div class="bg-linear-to-r from-red-500 to-pink-600 text-white px-6 py-3 rounded-xl shadow-2xl text-base font-semibold flex items-center gap-3 animate-pulse">
-                <Lock :size="20" class="text-white" />
-                高级模式已启用，表单编辑已锁定
-              </div>
-            </div>
-          </transition>
-
-          <!-- 全局配置卡片 -->
-          <div class="bg-white/95 backdrop-blur-md rounded-xl shadow-md border border-slate-200/80 overflow-hidden hover:shadow-lg transition-shadow duration-300">
-            <el-collapse v-model="activeConfig" accordion>
-              <el-collapse-item name="config">
-                <template #title>
-                  <div class="flex items-center gap-3 py-3 px-4">
-                    <div class="flex items-center justify-center w-10 h-10 bg-linear-to-br from-violet-100 to-purple-200 rounded-lg">
-                      <Settings :size="20" class="text-violet-600" />
-                    </div>
-                    <div>
-                      <h3 class="text-lg font-semibold text-gray-800 mb-0">全局配置</h3>
-                      <p class="text-xs text-gray-500">配置包名、全局变量和描述信息</p>
-                    </div>
-                  </div>
-                </template>
-                <el-form :model="config" label-width="100px" label-position="top" :disabled="advancedMode" class="pt-3 px-4 pb-3">
-                  <el-form-item>
-                    <template #label>
-                      <div class="flex items-center gap-2 ml-1">
-                        <Package :size="16" class="text-amber-600" />
-                        <span>包名</span>
-                      </div>
-                    </template>
-                    <el-select
-                      v-model="config.package"
-                      filterable
-                      allow-create
-                      default-first-option
-                      placeholder="选择或输入包名"
-                      class="w-full"
-                      size="large"
-                    >
-                      <el-option
-                        v-for="item in packageOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                      />
-                    </el-select>
-                  </el-form-item>
-                  <el-form-item>
-                    <template #label>
-                      <div class="flex items-center gap-2 ml-1">
-                        <Globe :size="16" class="text-blue-600" />
-                        <span>全局变量</span>
-                      </div>
-                    </template>
-                    <el-select
-                      v-model="config.globals"
-                      multiple
-                      placeholder="选择全局变量"
-                      class="w-full"
-                      collapse-tags
-                      collapse-tags-tooltip
-                      :max-collapse-tags="2"
-                      size="large"
-                    >
-                      <el-option
-                        v-for="item in globalOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                      />
-                    </el-select>
-                  </el-form-item>
-                  <el-form-item>
-                    <template #label>
-                      <div class="flex items-center gap-2 ml-1">
-                        <FileDescription :size="16" class="text-green-600" />
-                        <span>描述</span>
-                      </div>
-                    </template>
-                    <el-input
-                      v-model="config.description"
-                      type="textarea"
-                      :rows="3"
-                      placeholder="请输入规则文件的描述信息"
-                      maxlength="200"
-                      show-word-limit
-                      size="large"
-                    />
-                  </el-form-item>
-                </el-form>
-              </el-collapse-item>
-            </el-collapse>
-          </div>
-
           <!-- 规则列表卡片 -->
           <div class="bg-white/95 backdrop-blur-md rounded-xl shadow-md border border-slate-200/80 overflow-hidden hover:shadow-lg transition-shadow duration-300">
             <el-collapse v-model="activeRuleList" accordion>
@@ -521,11 +524,11 @@ onMounted(() => {
                           <template #label>
                             <div class="flex items-center gap-2 ml-1">
                               <Target :size="16" class="text-purple-600" />
-                              <span>优先级 (salience)</span>
+                              <span>优先级</span>
                             </div>
                           </template>
-                          <el-input-number v-model="rule.salience" :min="0" :max="999" size="large" :step="5"></el-input-number>
-                          <p class="text-xs text-gray-500 mt-1">数值越大，优先级越高</p>
+                          <el-input-number v-model="rule.salience" :min="0" :max="999" :step="1"></el-input-number>
+                          <p class="text-xs text-gray-500 mt-1 ml-4">数值越大，优先级越高</p>
                         </el-form-item>
                         <!-- 可视化模式切换 -->
                         <el-form-item>
@@ -539,7 +542,7 @@ onMounted(() => {
                                 v-model="rule.visualMode"
                                 active-text="可视化"
                                 inactive-text="代码"
-                                size="default"
+                                class="ml-4"
                               />
                             </div>
                           </template>
@@ -550,7 +553,7 @@ onMounted(() => {
                           <template #label>
                             <div class="flex items-center gap-2 ml-1">
                               <Search :size="16" class="text-cyan-600" />
-                              <span>条件 (when)</span>
+                              <span>条件</span>
                             </div>
                           </template>
 
@@ -572,12 +575,12 @@ onMounted(() => {
                           </el-input>
                         </el-form-item>
 
-                        <!-- 动作 (then) -->
+                        <!-- 动作-->
                         <el-form-item>
                           <template #label>
                             <div class="flex items-center gap-2 ml-1">
                               <Zap :size="16" class="text-orange-600" />
-                              <span>动作 (then)</span>
+                              <span>动作</span>
                             </div>
                           </template>
 
