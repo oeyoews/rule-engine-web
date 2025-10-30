@@ -170,7 +170,7 @@ const copyCode = async () => {
 
 :deep(.line-content) {
   flex: 1;
-  white-space: pre;
+  /* white-space: pre; */
   word-break: break-word;
 }
 </style>

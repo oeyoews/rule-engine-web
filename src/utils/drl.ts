@@ -48,16 +48,17 @@ export const generateDrlHeader = (description?: string, drlId?: string, timestam
   const time = timestamp || formatTimestamp()
   const desc = description || '自动生成的 Drools 规则文件'
 
-  // 更紧凑且对齐一致的头部注释样式
-  const separator = ' * ----------------------------------------\n'
+  // 统一第二行及其下方的缩进：在 * 后固定两个空格
+  const leftPad = ' *  '
+  const separator = `${leftPad}----------------------------------------\n`
   let header = `/*\n`
   header += separator
-  header += ` * DRL 规则文件\n`
+  header += `${leftPad}DRL 规则文件\n`
   header += separator
-  header += ` * 文件ID: ${id}\n`
-  header += ` * 创建时间: ${time}\n`
-  header += ` * 创建人: System\n`
-  header += ` * 描述: ${desc}\n`
+  header += `${leftPad}文件ID: ${id}\n`
+  header += `${leftPad}创建时间: ${time}\n`
+  header += `${leftPad}创建人: System\n`
+  header += `${leftPad}描述: ${desc}\n`
   header += separator
   header += ` */\n\n`
 
