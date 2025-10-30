@@ -57,8 +57,8 @@ export const generateDrlCode = (
 
   rules.forEach(rule => {
     code += `rule "${rule.name}"\n`
-    if (rule.enabled !== undefined) {
-      code += `    enabled ${rule.enabled}\n`
+    if (rule.enabled === false) {
+      code += `    enabled false\n`
     }
     if (rule.salience !== undefined) {
       code += `    salience ${rule.salience}\n`

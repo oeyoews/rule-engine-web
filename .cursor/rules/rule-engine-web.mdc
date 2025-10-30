@@ -1,0 +1,6 @@
+---
+alwaysApply: true
+---
+
+* 图标使用lucide
+* 样式使用tailwindcss
