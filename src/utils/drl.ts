@@ -83,15 +83,40 @@ function generateRulesCode(rules: Rule[]): string {
     })
 
     code += `when\n`
-    if (rule.when) {
-      code += `${rule.when}\n`
+    if (rule.when && rule.when.trim()) {
+      // 处理 when 条件的缩进
+      const whenLines = rule.when.split('\n')
+      whenLines.forEach(line => {
+        // 如果行不为空且没有缩进，添加 4 个空格
+        if (line.trim()) {
+          const hasIndent = line.startsWith(' ') || line.startsWith('\t')
+          code += hasIndent ? `${line}\n` : `    ${line}\n`
+        } else if (line) {
+          // 保留空行
+          code += `${line}\n`
+        }
+      })
+    } else {
+      // when 条件为空时，添加注释提示
+      code += `    // TODO: 请在此处添加规则条件\n`
     }
     code += `then\n`
-    if (rule.then) {
+    if (rule.then && rule.then.trim()) {
+      // 处理 then 动作的缩进
       const thenLines = rule.then.split('\n')
       thenLines.forEach(line => {
-        code += `${line}\n`
+        // 如果行不为空且没有缩进，添加 4 个空格
+        if (line.trim()) {
+          const hasIndent = line.startsWith(' ') || line.startsWith('\t')
+          code += hasIndent ? `${line}\n` : `    ${line}\n`
+        } else if (line) {
+          // 保留空行
+          code += `${line}\n`
+        }
       })
+    } else {
+      // then 动作为空时，添加注释提示
+      code += `    // TODO: 请在此处添加规则动作\n`
     }
     code += `end\n\n`
   })
