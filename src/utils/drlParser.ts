@@ -1,16 +1,4 @@
 /**
- * DRL 文件解析器
- */
-
-interface ParsedDrl {
-  package: string
-  imports: string[]
-  globals: string[]
-  description: string
-  rules: Rule[]
-}
-
-/**
  * 解析 DRL 文件内容
  */
 export function parseDrlFile(content: string): ParsedDrl {

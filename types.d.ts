@@ -17,3 +17,15 @@ interface Rule {
   then: string
   visualMode?: boolean  // 是否使用可视化模式
 }
+
+/**
+ * DRL 文件解析器
+ */
+
+interface ParsedDrl {
+  package: string
+  imports: string[]
+  globals: string[]
+  description: string
+  rules: Rule[]
+}
