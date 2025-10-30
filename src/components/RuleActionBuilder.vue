@@ -482,5 +482,11 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
   border-color: #4ade80;
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
+
+/* 禁用 el-tag 的所有过渡动画 */
+:deep(.el-tag) {
+  transition: none !important;
+  animation: none !important;
+}
 </style>
 

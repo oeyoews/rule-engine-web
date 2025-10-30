@@ -23,7 +23,8 @@ export const sampleRules: Rule[] = [
     noLoop: true,
     lockOnActive: false,
     when: '    $p: Person($age: age >= 18)',
-    then: '    $p.setAdult(true);\n    logger.info("{} 已成年",$p.getName());\n    update($p);'
+    then: '    $p.setAdult(true);\n    logger.info("{} 已成年",$p.getName());\n    update($p);',
+    visualMode: true  // 默认开启可视化模式
   },
   {
     name: 'CheckSex',
@@ -32,7 +33,8 @@ export const sampleRules: Rule[] = [
     noLoop: false,
     lockOnActive: false,
     when: '    $p : Person(sex == "girl")',
-    then: '    logger.warn("{} 是一个女孩", $p.getName());\n    $p.setSex("boy");\n    update($p);'
+    then: '    logger.warn("{} 是一个女孩", $p.getName());\n    $p.setSex("boy");\n    update($p);',
+    visualMode: true  // 默认开启可视化模式
   }
 ]
 

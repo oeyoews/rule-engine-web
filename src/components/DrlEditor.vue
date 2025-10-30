@@ -12,10 +12,10 @@ import PreviewDialog from './PreviewDialog.vue'
 import CodeStatistics from './CodeStatistics.vue'
 import RuleConditionBuilder from './RuleConditionBuilder.vue'
 import RuleActionBuilder from './RuleActionBuilder.vue'
-import { generateDrlCode, formatTimestamp } from '../utils/drl'
-import { packageOptions, importOptions, globalOptions } from '../constants/drlOptions'
-import { sampleConfig, sampleRules } from '../constants/sampleData'
-import { extractClassNamesFromRules, getMissingImports, extractPackagePrefix } from '../utils/importDetector'
+import { generateDrlCode, formatTimestamp } from '@/utils/drl'
+import { packageOptions, importOptions, globalOptions } from '@/constants/drlOptions'
+import { sampleConfig, sampleRules } from '@/constants/sampleData'
+import { extractClassNamesFromRules, getMissingImports, extractPackagePrefix } from '@/utils/importDetector'
 import { v4 as uuidv4 } from 'uuid'
 
 // 数据定义
@@ -112,7 +112,8 @@ const addRule = () => {
     noLoop: false,
     lockOnActive: false,
     when: '',
-    then: ''
+    then: '',
+    visualMode: true  // 默认开启可视化模式
   })
   // 自动展开新添加的规则
   activeRules.value = rules.value.length - 1
@@ -589,13 +590,13 @@ onMounted(() => {
 
                           <!-- 可视化模式 -->
                           <RuleConditionBuilder
-                            v-if="rule.visualMode"
+                            v-show="rule.visualMode"
                             v-model="rule.when"
                           />
 
                           <!-- 代码模式 -->
                           <el-input
-                            v-else
+                            v-show="!rule.visualMode"
                             v-model="rule.when"
                             type="textarea"
                             :rows="3"
@@ -616,14 +617,14 @@ onMounted(() => {
 
                           <!-- 可视化模式 -->
                           <RuleActionBuilder
-                            v-if="rule.visualMode"
+                            v-show="rule.visualMode"
                             v-model="rule.then"
                             :when-condition="rule.when"
                           />
 
                           <!-- 代码模式 -->
                           <el-input
-                            v-else
+                            v-show="!rule.visualMode"
                             v-model="rule.then"
                             type="textarea"
                             :rows="4"
@@ -737,5 +738,11 @@ onMounted(() => {
 /* 折叠面板箭头样式 */
 :deep(.el-collapse-item__arrow) {
   margin-right: 1rem !important;
+}
+
+/* 禁用 el-tag 的所有过渡动画 */
+:deep(.el-tag) {
+  transition: none !important;
+  animation: none !important;
 }
 </style>
