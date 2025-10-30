@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Plus, X, GripVertical } from 'lucide-vue-next'
+import { Plus, X, GripVertical, Ampersand, Split } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassField } from '@/utils/classImport'
 import { VueDraggable } from 'vue-draggable-plus'
 
@@ -41,8 +41,8 @@ const operators = [
 
 // 逻辑操作符
 const logicOperators = [
-  { label: '并且 (AND)', value: 'AND' },
-  { label: '或者 (OR)', value: 'OR' }
+  { label: '并且 (AND)', value: 'AND', icon: Ampersand, color: 'text-blue-600' },
+  { label: '或者 (OR)', value: 'OR', icon: Split, color: 'text-orange-600' }
 ]
 
 // 获取所有可用的类
@@ -295,7 +295,10 @@ watch(() => props.modelValue, (newValue) => {
               :key="op.value"
               :label="op.value"
             >
-              {{ op.label }}
+              <span class="inline-flex items-center gap-1.5">
+                <component :is="op.icon" :size="14" :class="op.color" />
+                <span>{{ op.label }}</span>
+              </span>
             </el-radio-button>
           </el-radio-group>
         </div>
