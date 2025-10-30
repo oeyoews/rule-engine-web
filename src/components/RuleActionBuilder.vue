@@ -26,6 +26,9 @@ const classData = ref<ClassData | null>(null)
 const actions = ref<Action[]>([])
 const isUpdatingFromCode = ref(false) // 防止循环更新
 
+// 折叠状态
+const activeActions = ref<string[]>([])
+
 // 动作类型选项
 const actionTypes = [
   { label: '调用方法', value: 'method', icon: Phone, color: 'text-blue-600' },
@@ -112,6 +115,8 @@ const addAction = () => {
     params: []
   }
   actions.value.push(newAction)
+  // 自动展开新添加的动作
+  activeActions.value.push(newAction.id)
   updateDrlCode()
 }
 
@@ -365,48 +370,51 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
       </el-button>
     </div>
 
-    <VueDraggable
-      v-model="actions"
-      :animation="200"
-      handle=".drag-handle"
-      ghostClass="dragging-ghost"
-      @end="updateDrlCode"
-      class="space-y-3"
-    >
-      <div
-        v-for="(action, index) in actions"
-        :key="action.id"
-        class="action-item bg-green-50 rounded-lg p-3 border border-green-200"
+    <el-collapse v-model="activeActions">
+      <VueDraggable
+        v-model="actions"
+        :animation="200"
+        handle=".drag-handle"
+        ghostClass="dragging-ghost"
+        @end="updateDrlCode"
       >
-        <div class="flex items-center gap-2 mb-3">
-          <!-- 拖拽手柄 -->
-          <div class="drag-handle flex items-center justify-center w-8 h-8 cursor-move hover:bg-green-200 rounded transition-colors shrink-0">
-            <GripVertical :size="16" class="text-green-600" />
-          </div>
-          <div class="text-xs font-medium text-gray-600 shrink-0">动作 {{ index + 1 }}</div>
-          <el-divider direction="vertical" class="shrink-0" />
-          <el-radio-group v-model="action.type" size="small" @change="updateDrlCode" class="flex-1">
-            <el-radio-button
-              v-for="type in actionTypes"
-              :key="type.value"
-              :label="type.value"
-            >
-              <span class="inline-flex items-center gap-1.5">
-                <component :is="type.icon" :size="14" :class="type.color" />
-                <span>{{ type.label }}</span>
-              </span>
-            </el-radio-button>
-          </el-radio-group>
-          <el-button
-            @click="removeAction(action.id)"
-            size="small"
-            circle
-            class="hover:bg-red-50! shrink-0 ml-2"
-            title="删除动作"
-          >
-            <Trash2 :size="16" class="text-red-500" />
-          </el-button>
-        </div>
+        <el-collapse-item
+          v-for="(action, index) in actions"
+          :key="action.id"
+          :name="action.id"
+        >
+          <template #title>
+            <div class="flex items-center gap-2 py-1 w-full">
+              <div class="drag-handle flex items-center justify-center w-8 h-8 cursor-move hover:bg-green-200 rounded transition-colors shrink-0">
+                <GripVertical :size="16" class="text-green-600" />
+              </div>
+              <div class="text-sm font-medium text-gray-700">
+                动作 {{ index + 1 }}:
+                <el-tag size="small" :type="action.type === 'method' || action.type === 'function' ? 'primary' : 'success'" class="ml-1">
+                  {{ actionTypes.find(t => t.value === action.type)?.label || action.type }}
+                </el-tag>
+                <span v-if="action.object" class="text-gray-500 ml-2">
+                  {{ action.object }}<span v-if="action.method">.{{ action.method }}()</span>
+                </span>
+              </div>
+            </div>
+          </template>
+          <div class="p-3 bg-green-50 rounded-lg border border-green-200 mt-2">
+            <div class="mb-3">
+              <label class="text-xs text-gray-600 mb-1 block">动作类型</label>
+              <el-radio-group v-model="action.type" size="small" @change="updateDrlCode">
+                <el-radio-button
+                  v-for="type in actionTypes"
+                  :key="type.value"
+                  :label="type.value"
+                >
+                  <span class="inline-flex items-center gap-1.5">
+                    <component :is="type.icon" :size="14" :class="type.color" />
+                    <span>{{ type.label }}</span>
+                  </span>
+                </el-radio-button>
+              </el-radio-group>
+            </div>
 
         <!-- 调用方法 -->
         <div v-if="action.type === 'method' || action.type === 'function'" class="space-y-2">
@@ -602,15 +610,36 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
               placeholder="方法名"
               @change="updateDrlCode"
             />
+            </div>
           </div>
-        </div>
-      </div>
-    </VueDraggable>
+
+          <!-- 删除按钮 -->
+          <div class="flex justify-end mt-3 pt-3 border-t border-green-300">
+            <el-button
+              @click.stop="removeAction(action.id)"
+              size="small"
+              plain
+              class="border-red-300! text-red-600! hover:bg-red-50! hover:border-red-400! hover:text-red-700!"
+            >
+              <Trash2 :size="16" class="mr-1" />
+              删除动作
+            </el-button>
+          </div>
+          </div>
+        </el-collapse-item>
+      </VueDraggable>
+    </el-collapse>
 
     <!-- 生成的代码预览 -->
     <div class="mt-3">
       <el-collapse>
-        <el-collapse-item title="查看生成的代码" name="preview">
+        <el-collapse-item name="preview">
+          <template #title>
+            <div class="flex items-center gap-2">
+              <Code2 :size="16" class="text-green-600" />
+              <span class="text-sm">查看生成的代码</span>
+            </div>
+          </template>
           <pre class="bg-gray-900 text-orange-400 p-3 rounded text-xs font-mono">{{ generateDrlCode() || '// 请配置动作' }}</pre>
         </el-collapse-item>
       </el-collapse>
@@ -625,11 +654,7 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
 
 .action-item {
   transition: all 0.2s;
-}
-
-.action-item:hover {
-  border-color: #4ade80;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  margin-bottom: 0.75rem;
 }
 
 /* 拖拽时的幽灵元素样式 */
@@ -643,6 +668,41 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
 :deep(.el-tag) {
   transition: none !important;
   animation: none !important;
+}
+
+/* 折叠面板标题样式 */
+.action-item :deep(.el-collapse-item__header) {
+  background: #f0fdf4;
+  border: 1px solid #d1fae5;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  margin-bottom: 0;
+  transition: all 0.2s;
+}
+
+.action-item :deep(.el-collapse-item__header:hover) {
+  background: #dcfce7;
+  border-color: #4ade80;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.action-item :deep(.el-collapse-item__wrap) {
+  border: none;
+  background: transparent;
+}
+
+.action-item :deep(.el-collapse-item__content) {
+  padding-bottom: 0;
+}
+
+/* 动作内容区域样式 */
+.action-item :deep(.el-collapse-item__content) .bg-green-50 {
+  transition: all 0.2s;
+}
+
+.action-item :deep(.el-collapse-item__content) .bg-green-50:hover {
+  border-color: #4ade80;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 </style>
 

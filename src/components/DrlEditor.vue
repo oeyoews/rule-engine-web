@@ -531,7 +531,7 @@ onMounted(() => {
                     </el-option>
                   </el-select>
                   <!-- 自动导入模式提示 -->
-                  <div v-if="autoImportMode" class="mt-2 flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5">
+                  <div v-if="autoImportMode" class="mt-2 flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 w-full">
                     <CheckCircle :size="16" class="shrink-0" />
                     <p class="text-xs font-medium">自动导入已启用，系统将自动检测并添加缺失的类导入</p>
                   </div>

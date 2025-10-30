@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Plus, Trash2, GripVertical, Ampersand, Split, Box, Hash, Equal } from 'lucide-vue-next'
+import { Plus, Trash2, GripVertical, Ampersand, Split, Box, Hash, Equal, Code2 } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassField } from '@/utils/classImport'
 import { VueDraggable } from 'vue-draggable-plus'
 
@@ -13,6 +13,9 @@ interface Condition {
   value: string
   logicOperator?: 'AND' | 'OR'
 }
+
+// 折叠状态
+const activeConditions = ref<string[]>([])
 
 const props = defineProps<{
   modelValue: string
@@ -70,6 +73,8 @@ const addCondition = () => {
     logicOperator: conditions.value.length > 0 ? 'AND' : undefined
   }
   conditions.value.push(newCondition)
+  // 自动展开新添加的条件
+  activeConditions.value.push(newCondition.id)
   updateDrlCode()
 }
 
@@ -274,43 +279,57 @@ watch(() => props.modelValue, (newValue) => {
       </el-button>
     </div>
 
-    <VueDraggable
-      v-model="conditions"
-      :animation="200"
-      handle=".drag-handle"
-      ghostClass="dragging-ghost"
-      @end="updateDrlCode"
-      class="space-y-3"
-    >
-      <div
-        v-for="(condition, index) in conditions"
-        :key="condition.id"
-        class="condition-item bg-gray-50 rounded-lg p-3 border border-gray-200"
+    <el-collapse v-model="activeConditions">
+      <VueDraggable
+        v-model="conditions"
+        :animation="200"
+        handle=".drag-handle"
+        ghostClass="dragging-ghost"
+        @end="updateDrlCode"
       >
-        <div class="flex gap-2 items-center">
-          <!-- 拖拽手柄 -->
-          <div class="drag-handle flex items-center justify-center w-8 h-8 cursor-move hover:bg-gray-200 rounded transition-colors shrink-0">
-            <GripVertical :size="16" class="text-gray-400" />
-          </div>
-
-          <!-- 逻辑操作符 -->
-          <div v-if="index > 0" class="shrink-0">
-            <el-radio-group v-model="condition.logicOperator" size="small" @change="updateDrlCode">
-              <el-radio-button
-                v-for="op in logicOperators"
-                :key="op.value"
-                :label="op.value"
-              >
-                <span class="inline-flex items-center gap-1.5">
-                  <component :is="op.icon" :size="14" :class="op.color" />
-                  <span>{{ op.label }}</span>
+        <el-collapse-item
+          v-for="(condition, index) in conditions"
+          :key="condition.id"
+          :name="condition.id"
+        >
+          <template #title>
+            <div class="flex items-center gap-2 py-1 w-full">
+              <div class="drag-handle flex items-center justify-center w-8 h-8 cursor-move hover:bg-gray-200 rounded transition-colors shrink-0">
+                <GripVertical :size="16" class="text-gray-400" />
+              </div>
+              <div v-if="index > 0" class="shrink-0">
+                <el-tag size="small" :type="condition.logicOperator === 'AND' ? 'primary' : 'warning'">
+                  {{ condition.logicOperator }}
+                </el-tag>
+              </div>
+              <div class="text-sm font-medium text-gray-700">
+                ${{ condition.variable }}: {{ condition.className || '(未选择类)' }}
+                <span v-if="condition.field" class="text-gray-500">
+                  .{{ condition.field }} {{ condition.operator }} {{ condition.value || '?' }}
                 </span>
-              </el-radio-button>
-            </el-radio-group>
-          </div>
+              </div>
+            </div>
+          </template>
+          <div class="p-3 bg-blue-50 rounded-lg border border-blue-200 mt-2">
+            <!-- 逻辑操作符 -->
+            <div v-if="index > 0" class="mb-3">
+              <label class="text-xs text-gray-600 mb-1 block">逻辑操作符</label>
+              <el-radio-group v-model="condition.logicOperator" size="small" @change="updateDrlCode">
+                <el-radio-button
+                  v-for="op in logicOperators"
+                  :key="op.value"
+                  :label="op.value"
+                >
+                  <span class="inline-flex items-center gap-1.5">
+                    <component :is="op.icon" :size="14" :class="op.color" />
+                    <span>{{ op.label }}</span>
+                  </span>
+                </el-radio-button>
+              </el-radio-group>
+            </div>
 
-          <div class="grid grid-cols-11 gap-2 items-center flex-1">
-            <!-- 变量名 -->
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <!-- 变量名 -->
             <div class="col-span-2">
               <label class="text-xs text-gray-600 mb-1 block">变量名</label>
               <el-input
@@ -414,28 +433,37 @@ watch(() => props.modelValue, (newValue) => {
                 placeholder="输入值"
                 @change="updateDrlCode"
               />
+              </div>
+            </div>
+
+            <!-- 删除按钮 -->
+            <div class="flex justify-end mt-3 pt-3 border-t border-blue-300">
+              <el-button
+                @click.stop="removeCondition(condition.id)"
+                :disabled="conditions.length === 1"
+                size="small"
+                plain
+                class="border-red-300! text-red-600! hover:bg-red-50! hover:border-red-400! hover:text-red-700!"
+              >
+                <Trash2 :size="16" class="mr-1" />
+                删除条件
+              </el-button>
             </div>
           </div>
-
-          <!-- 删除按钮 -->
-          <el-button
-            @click="removeCondition(condition.id)"
-            :disabled="conditions.length === 1"
-            size="small"
-            circle
-            class="hover:bg-red-50! shrink-0"
-            :title="conditions.length === 1 ? '至少保留一个条件' : '删除条件'"
-          >
-            <Trash2 :size="16" class="text-red-500" />
-          </el-button>
-        </div>
-      </div>
-    </VueDraggable>
+        </el-collapse-item>
+      </VueDraggable>
+    </el-collapse>
 
     <!-- 生成的代码预览 -->
     <div class="mt-3">
       <el-collapse>
-        <el-collapse-item title="查看生成的代码" name="preview">
+        <el-collapse-item name="preview">
+          <template #title>
+            <div class="flex items-center gap-2">
+              <Code2 :size="16" class="text-blue-600" />
+              <span class="text-sm">查看生成的代码</span>
+            </div>
+          </template>
           <pre class="bg-gray-900 text-green-400 p-3 rounded text-xs font-mono">{{ generateDrlCode() || '// 请配置条件' }}</pre>
         </el-collapse-item>
       </el-collapse>
@@ -448,26 +476,52 @@ watch(() => props.modelValue, (newValue) => {
   width: 100%;
 }
 
-.condition-item {
-  transition: all 0.2s;
-}
-
-.condition-item:hover {
-  border-color: #93c5fd;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-}
-
 /* 拖拽时的幽灵元素样式 */
 .dragging-ghost {
   opacity: 0.5;
-  background: #e0f2fe;
-  border: 2px dashed #0ea5e9;
+  background: #dbeafe;
+  border: 2px dashed #60a5fa;
 }
 
 /* 禁用 el-tag 的所有过渡动画 */
 :deep(.el-tag) {
   transition: none !important;
   animation: none !important;
+}
+
+/* 折叠面板标题样式 */
+.condition-item :deep(.el-collapse-item__header) {
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  margin-bottom: 0;
+  transition: all 0.2s;
+}
+
+.condition-item :deep(.el-collapse-item__header:hover) {
+  background: #dbeafe;
+  border-color: #60a5fa;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.condition-item :deep(.el-collapse-item__wrap) {
+  border: none;
+  background: transparent;
+}
+
+.condition-item :deep(.el-collapse-item__content) {
+  padding-bottom: 0;
+}
+
+/* 条件内容区域样式 */
+.condition-item :deep(.el-collapse-item__content) .bg-blue-50 {
+  transition: all 0.2s;
+}
+
+.condition-item :deep(.el-collapse-item__content) .bg-blue-50:hover {
+  border-color: #60a5fa;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 </style>
 
