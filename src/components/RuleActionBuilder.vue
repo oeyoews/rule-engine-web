@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Plus, GripVertical, Phone, RefreshCw, PlusCircle, Trash2, Edit, Zap, Variable, Code2, Box } from 'lucide-vue-next'
+import { Plus, GripVertical, Phone, RefreshCw, PlusCircle, Trash2, Edit, Zap, Variable, Code2, Box, Sparkles } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassMethod } from '@/utils/classImport'
 import { VueDraggable } from 'vue-draggable-plus'
 
@@ -357,6 +357,7 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
   <div class="action-builder">
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center gap-2">
+        <Sparkles :size="18" class="text-green-600 shrink-0" />
         <span class="text-sm font-medium text-gray-700">动作构建器</span>
         <el-tag size="small" type="success">可视化</el-tag>
       </div>
@@ -385,23 +386,23 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
         >
           <template #title>
             <div class="flex items-center gap-2 py-1 w-full">
-              <div class="drag-handle flex items-center justify-center w-8 h-8 cursor-move hover:bg-green-200 rounded transition-colors shrink-0">
+              <div class="drag-handle flex items-center justify-center size-8 cursor-move hover:bg-green-200 rounded transition-colors shrink-0">
                 <GripVertical :size="16" class="text-green-600" />
               </div>
               <div class="text-sm font-medium text-gray-700">
-                动作 {{ index + 1 }}:
+                动作{{ index + 1 }}:
                 <el-tag size="small" :type="action.type === 'method' || action.type === 'function' ? 'primary' : 'success'" class="ml-1">
                   {{ actionTypes.find(t => t.value === action.type)?.label || action.type }}
                 </el-tag>
-                <span v-if="action.object" class="text-gray-500 ml-2">
-                  {{ action.object }}<span v-if="action.method">.{{ action.method }}()</span>
+                <span v-if="action.object" class="text-green-600 ml-2">
+                  {{ action.object }}<span v-if="action.method" class="text-gray-500">.{{ action.method }}()</span>
                 </span>
               </div>
             </div>
           </template>
-          <div class="p-3 bg-green-50 rounded-lg border border-green-200 mt-2">
+          <div class="p-3 bg-green-50 rounded-lg border border-green-200 mt-2 ml-2">
             <div class="mb-3">
-              <label class="text-xs text-gray-600 mb-1 block">动作类型</label>
+              <label class="text-xs text-gray-600 mb-1 block">① 动作类型</label>
               <el-radio-group v-model="action.type" size="small" @change="updateDrlCode">
                 <el-radio-button
                   v-for="type in actionTypes"
@@ -420,7 +421,7 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
         <div v-if="action.type === 'method' || action.type === 'function'" class="space-y-2">
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="text-xs text-gray-600 mb-1 block">对象/类</label>
+              <label class="text-xs text-gray-600 mb-1 block">② 对象/类</label>
               <el-select
                 v-if="action.type === 'method'"
                 v-model="action.object"
@@ -477,7 +478,7 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
             </div>
 
             <div>
-              <label class="text-xs text-gray-600 mb-1 block">方法</label>
+              <label class="text-xs text-gray-600 mb-1 block">③ 方法</label>
               <el-select
                 v-model="action.method"
                 size="small"
@@ -507,7 +508,7 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
 
           <!-- 方法参数 -->
           <div v-if="action.params.length > 0" class="pl-4 border-l-2 border-green-300">
-            <label class="text-xs text-gray-600 mb-2 block">参数</label>
+            <label class="text-xs text-gray-600 mb-2 block">④ 参数</label>
             <div class="space-y-2">
               <div
                 v-for="(param, pIndex) in action.params"
@@ -532,7 +533,7 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
 
         <!-- Update/Insert/Retract -->
         <div v-else-if="['update', 'insert', 'retract'].includes(action.type)">
-          <label class="text-xs text-gray-600 mb-1 block">对象变量</label>
+          <label class="text-xs text-gray-600 mb-1 block">② 对象变量</label>
           <el-select
             v-model="action.object"
             size="small"
@@ -569,7 +570,7 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
         <!-- Modify -->
         <div v-else-if="action.type === 'modify'" class="space-y-2">
           <div>
-            <label class="text-xs text-gray-600 mb-1 block">对象变量</label>
+            <label class="text-xs text-gray-600 mb-1 block">② 对象变量</label>
             <el-select
               v-model="action.object"
               size="small"
@@ -603,7 +604,7 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
             </el-select>
           </div>
           <div>
-            <label class="text-xs text-gray-600 mb-1 block">修改方法</label>
+            <label class="text-xs text-gray-600 mb-1 block">③ 修改方法</label>
             <el-input
               v-model="action.method"
               size="small"
@@ -631,12 +632,12 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
     </el-collapse>
 
     <!-- 生成的代码预览 -->
-    <div class="mt-3">
+    <div class="mt-3 ml-2">
       <el-collapse>
         <el-collapse-item name="preview">
           <template #title>
             <div class="flex items-center gap-2">
-              <Code2 :size="16" class="text-green-600" />
+              <Code2 :size="16" class="text-green-600 shrink-0" />
               <span class="text-sm">查看生成的代码</span>
             </div>
           </template>

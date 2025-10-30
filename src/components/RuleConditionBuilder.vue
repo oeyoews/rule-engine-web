@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Plus, Trash2, GripVertical, Ampersand, Split, Box, Hash, Equal, Code2 } from 'lucide-vue-next'
+import { Plus, Trash2, GripVertical, Ampersand, Split, Box, Hash, Equal, Code2, Filter } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassField } from '@/utils/classImport'
 import { VueDraggable } from 'vue-draggable-plus'
 
@@ -266,8 +266,9 @@ watch(() => props.modelValue, (newValue) => {
   <div class="condition-builder">
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center gap-2">
+        <Filter :size="16" class="text-blue-600 shrink-0" />
         <span class="text-sm font-medium text-gray-700">条件构建器</span>
-        <el-tag size="small" type="info">可视化</el-tag>
+        <el-tag size="small" type="primary">可视化</el-tag>
       </div>
       <el-button
         size="small"
@@ -294,8 +295,8 @@ watch(() => props.modelValue, (newValue) => {
         >
           <template #title>
             <div class="flex items-center gap-2 py-1 w-full">
-              <div class="drag-handle flex items-center justify-center w-8 h-8 cursor-move hover:bg-gray-200 rounded transition-colors shrink-0">
-                <GripVertical :size="16" class="text-gray-400" />
+              <div class="drag-handle flex items-center justify-center size-8 cursor-move hover:bg-gray-200 rounded transition-colors shrink-0">
+                <GripVertical :size="16" class="text-blue-400" />
               </div>
               <div v-if="index > 0" class="shrink-0">
                 <el-tag size="small" :type="condition.logicOperator === 'AND' ? 'primary' : 'warning'">
@@ -303,17 +304,20 @@ watch(() => props.modelValue, (newValue) => {
                 </el-tag>
               </div>
               <div class="text-sm font-medium text-gray-700">
-                ${{ condition.variable }}: {{ condition.className || '(未选择类)' }}
+                条件{{ index + 1 }}:
+                <span class="text-blue-600">
+                  ${{ condition.variable }}: {{ condition.className || '(未选择类)' }}
+                </span>
                 <span v-if="condition.field" class="text-gray-500">
                   .{{ condition.field }} {{ condition.operator }} {{ condition.value || '?' }}
                 </span>
               </div>
             </div>
           </template>
-          <div class="p-3 bg-blue-50 rounded-lg border border-blue-200 mt-2">
+          <div class="ml-2 p-3 bg-blue-50 rounded-lg border border-blue-200 mt-2">
             <!-- 逻辑操作符 -->
             <div v-if="index > 0" class="mb-3">
-              <label class="text-xs text-gray-600 mb-1 block">逻辑操作符</label>
+              <label class="text-xs text-gray-600 mb-1 block">① 逻辑操作符</label>
               <el-radio-group v-model="condition.logicOperator" size="small" @change="updateDrlCode">
                 <el-radio-button
                   v-for="op in logicOperators"
@@ -331,7 +335,7 @@ watch(() => props.modelValue, (newValue) => {
             <div class="grid grid-cols-12 gap-2 items-center">
               <!-- 变量名 -->
             <div class="col-span-2">
-              <label class="text-xs text-gray-600 mb-1 block">变量名</label>
+              <label class="text-xs text-gray-600 mb-1 block">{{ index > 0 ? '②' : '①' }} 变量名</label>
               <el-input
                 v-model="condition.variable"
                 size="small"
@@ -346,7 +350,7 @@ watch(() => props.modelValue, (newValue) => {
 
             <!-- 类名 -->
             <div class="col-span-2">
-              <label class="text-xs text-gray-600 mb-1 block">类</label>
+              <label class="text-xs text-gray-600 mb-1 block">{{ index > 0 ? '③' : '②' }} 类</label>
               <el-select
                 v-model="condition.className"
                 size="small"
@@ -374,7 +378,7 @@ watch(() => props.modelValue, (newValue) => {
 
             <!-- 字段 -->
             <div class="col-span-2">
-              <label class="text-xs text-gray-600 mb-1 block">字段</label>
+              <label class="text-xs text-gray-600 mb-1 block">{{ index > 0 ? '④' : '③' }} 字段</label>
               <el-select
                 v-model="condition.field"
                 size="small"
@@ -403,7 +407,7 @@ watch(() => props.modelValue, (newValue) => {
 
             <!-- 操作符 -->
             <div class="col-span-2">
-              <label class="text-xs text-gray-600 mb-1 block">操作符</label>
+              <label class="text-xs text-gray-600 mb-1 block">{{ index > 0 ? '⑤' : '④' }} 操作符</label>
               <el-select
                 v-model="condition.operator"
                 size="small"
@@ -426,7 +430,7 @@ watch(() => props.modelValue, (newValue) => {
 
             <!-- 值 -->
             <div class="col-span-3">
-              <label class="text-xs text-gray-600 mb-1 block">值</label>
+              <label class="text-xs text-gray-600 mb-1 block">{{ index > 0 ? '⑥' : '⑤' }} 值</label>
               <el-input
                 v-model="condition.value"
                 size="small"
@@ -455,12 +459,12 @@ watch(() => props.modelValue, (newValue) => {
     </el-collapse>
 
     <!-- 生成的代码预览 -->
-    <div class="mt-3">
+    <div class="mt-3 ml-2">
       <el-collapse>
         <el-collapse-item name="preview">
           <template #title>
             <div class="flex items-center gap-2">
-              <Code2 :size="16" class="text-blue-600" />
+              <Code2 :size="18" class="text-blue-600 shrink-0" />
               <span class="text-sm">查看生成的代码</span>
             </div>
           </template>

@@ -5,7 +5,7 @@ import {
   Trash2, HelpCircle, Lightbulb, Plus,
   Code2, Settings, ClipboardList, FileText, AlertTriangle,
   Package, FileInput, Globe, FileText as FileDescription, Tag, Target, Search, Zap,
-  CheckCircle, XCircle, Wand2, Eye, Terminal, X, Upload, GripVertical
+  CheckCircle, XCircle, Wand2, Eye, Terminal, X, Upload, GripVertical, Power, RotateCcw, Lock
 } from 'lucide-vue-next'
 import HelpDialog from './HelpDialog.vue'
 import PreviewDialog from './PreviewDialog.vue'
@@ -658,10 +658,10 @@ onMounted(() => {
                           <div class="flex items-center justify-between w-full py-2.5 pl-1 group">
                             <div class="flex items-center gap-3 flex-wrap">
                               <!-- 拖拽手柄 -->
-                              <div v-if="!advancedMode" class="rule-drag-handle flex items-center justify-center w-8 h-8 cursor-move hover:bg-indigo-100 rounded-lg transition-colors">
+                              <div v-if="!advancedMode" class="rule-drag-handle flex items-center justify-center size-8 cursor-move hover:bg-indigo-100 rounded-lg transition-colors -ml-2">
                                 <GripVertical :size="16" class="text-indigo-400" />
                               </div>
-                              <div class="flex items-center justify-center w-8 h-8 bg-linear-to-br from-indigo-100 to-purple-100 rounded-lg text-indigo-600 font-bold text-sm">
+                              <div class="flex items-center justify-center size-6 bg-linear-to-br from-indigo-100 to-purple-100 rounded-full text-indigo-600 font-bold text-sm">
                                 {{ index + 1 }}
                               </div>
                               <span class="font-semibold text-gray-700 text-base">
@@ -698,67 +698,76 @@ onMounted(() => {
                             </el-button>
                           </div>
                         </template>
-                      <el-form :model="rule" label-width="120px" label-position="top" class="pt-3 pl-1 pb-2">
+                      <el-form :model="rule" label-width="120px" label-position="left" class="pt-3 pl-1 pb-2">
                         <el-form-item>
                           <template #label>
-                            <div class="flex items-center gap-2 ml-1">
+                            <div class="flex items-center gap-2">
                               <Tag :size="16" class="text-indigo-600" />
                               <span>规则名称</span>
                             </div>
                           </template>
-                          <el-input v-model="rule.name" maxlength="50" show-word-limit placeholder="输入规则名称" size="large"></el-input>
+                          <el-input v-model="rule.name" maxlength="50" show-word-limit placeholder="输入规则名称" ></el-input>
                         </el-form-item>
                         <el-form-item>
                           <template #label>
-                            <div class="flex items-center gap-2 ml-1">
+                            <div class="flex items-center gap-2">
                               <Settings :size="16" class="text-teal-600" />
                               <span>规则配置</span>
                             </div>
                           </template>
-                          <div class="flex gap-6 p-3 bg-gray-50 rounded-lg">
-                            <el-checkbox v-model="rule.enabled" size="large">
-                              <span class="text-sm font-medium">启用规则</span>
+                          <div class="flex flex-wrap gap-4 p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200">
+                            <el-checkbox v-model="rule.enabled" size="large" class="hover:bg-white px-3 py-2 rounded transition-colors">
+                              <span class="inline-flex items-center gap-2">
+                                <Power :size="16" :class="rule.enabled ? 'text-green-600' : 'text-gray-400'" />
+                                <span class="text-sm font-medium">启用规则</span>
+                              </span>
                             </el-checkbox>
-                            <el-checkbox v-model="rule.noLoop" size="large">
-                              <span class="text-sm font-medium">防止循环</span>
+                            <el-checkbox v-model="rule.noLoop" size="large" class="hover:bg-white px-3 py-2 rounded transition-colors">
+                              <span class="inline-flex items-center gap-2">
+                                <RotateCcw :size="16" :class="rule.noLoop ? 'text-orange-600' : 'text-gray-400'" />
+                                <span class="text-sm font-medium">防止循环</span>
+                              </span>
                             </el-checkbox>
-                            <el-checkbox v-model="rule.lockOnActive" size="large">
-                              <span class="text-sm font-medium">锁定激活</span>
+                            <el-checkbox v-model="rule.lockOnActive" size="large" class="hover:bg-white px-3 py-2 rounded transition-colors">
+                              <span class="inline-flex items-center gap-2">
+                                <Lock :size="16" :class="rule.lockOnActive ? 'text-purple-600' : 'text-gray-400'" />
+                                <span class="text-sm font-medium">锁定激活</span>
+                              </span>
                             </el-checkbox>
                           </div>
                         </el-form-item>
                         <el-form-item>
                           <template #label>
-                            <div class="flex items-center gap-2 ml-1">
+                            <div class="flex items-center gap-2">
                               <Target :size="16" class="text-purple-600" />
                               <span>优先级</span>
                             </div>
                           </template>
                           <el-input-number v-model="rule.salience" :min="0" :max="999" :step="1"></el-input-number>
-                          <p class="text-xs text-gray-500 mt-1 ml-4">数值越大，优先级越高</p>
                         </el-form-item>
+                        <el-divider />
                         <!-- 可视化模式切换 -->
-                        <el-form-item>
+                        <el-form-item label-width="250px">
                           <template #label>
-                            <div class="flex items-center justify-between w-full">
-                              <div class="flex items-center gap-2 ml-1">
+                            <div class="flex items-center justifybetween w-full">
+                              <div class="flex items-center gap-2">
                                 <Wand2 :size="16" class="text-violet-600" />
                                 <span>编辑模式</span>
                               </div>
                               <el-switch
                                 v-model="rule.visualMode"
-                                active-text="可视化"
-                                inactive-text="代码"
                                 class="ml-4"
+                                active-text="可视化"
                               />
+                                <!-- inactive-text="文本" -->
                             </div>
                           </template>
                         </el-form-item>
 
                         <!-- 条件 (when) -->
-                        <el-form-item>
-                          <template #label>
-                            <div class="flex items-center gap-2 ml-1">
+                        <el-form-item :label-width="rule.visualMode ? '0' : '100'">
+                          <template #label v-if="!rule.visualMode">
+                            <div class="flex items-center gap-2">
                               <Search :size="16" class="text-cyan-600" />
                               <span>条件</span>
                             </div>
@@ -783,9 +792,9 @@ onMounted(() => {
                         </el-form-item>
 
                         <!-- 动作-->
-                        <el-form-item>
-                          <template #label>
-                            <div class="flex items-center gap-2 ml-1">
+                        <el-form-item :label-width="rule.visualMode ? '0' : '100'">
+                          <template #label v-if="!rule.visualMode">
+                            <div class="flex items-center gap-2">
                               <Zap :size="16" class="text-orange-600" />
                               <span>动作</span>
                             </div>
