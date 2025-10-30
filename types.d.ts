@@ -1,6 +1,7 @@
 // 配置接口
 interface Config {
   package: string
+  imports: string[]
   globals: string[]
   description: string
 }

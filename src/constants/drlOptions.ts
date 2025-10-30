@@ -14,6 +14,18 @@ export const packageOptions = [
 ]
 
 /**
+ * 导入类选项
+ */
+export const importOptions = [
+  { value: 'import com.example.model.Person;', label: 'Person (人员类)' },
+  { value: 'import com.example.model.Order;', label: 'Order (订单类)' },
+  { value: 'import com.example.model.Product;', label: 'Product (产品类)' },
+  { value: 'import java.util.*;', label: 'java.util.* (Java 工具包)' },
+  { value: 'import java.util.Date;', label: 'Date (日期类)' },
+  { value: 'import java.math.BigDecimal;', label: 'BigDecimal (高精度数值)' }
+]
+
+/**
  * 全局变量选项
  */
 export const globalOptions = [

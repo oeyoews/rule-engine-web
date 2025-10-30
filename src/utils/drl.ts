@@ -100,10 +100,11 @@ function generateRulesCode(rules: Rule[]): string {
 }
 
 /**
- * 生成 DRL 代码（同步版本，不自动添加import）
+ * 生成 DRL 代码（同步版本，支持手动导入）
  */
 export const generateDrlCode = (
   packageName: string,
+  imports: string[],
   globals: string[],
   rules: Rule[],
   description?: string,
@@ -115,6 +116,13 @@ export const generateDrlCode = (
   let code = generateDrlHeader(description, drlId, timestamp)
 
   code += `package ${pkg};\n\n`
+
+  if (imports.length > 0) {
+    imports.forEach(i => {
+      code += `${i}\n`
+    })
+    code += `\n`
+  }
 
   if (globals.length > 0) {
     globals.forEach(g => {

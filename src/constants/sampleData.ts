@@ -7,6 +7,7 @@
  */
 export const sampleConfig = {
   package: 'com.example.rules',
+  imports: ['import com.example.model.Person;'],
   globals: ['global org.slf4j.Logger logger;'],
   description: '示例规则文件'
 }
