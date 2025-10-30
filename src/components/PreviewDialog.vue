@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import {
-  Code2, Download, Copy, Check, Hash, FileCode, ToggleRight
+  Code2, Download, Copy, Check
 } from 'lucide-vue-next'
 import { useClipboard } from '@vueuse/core'
 import { ElMessage } from 'element-plus'
 import { downloadFile } from '../utils/drl'
+import CodeStatistics from './CodeStatistics.vue'
 
 // 双向绑定
 const dialogVisible = defineModel<boolean>()
@@ -77,25 +78,11 @@ const copyCode = async () => {
       </el-scrollbar>
 
       <!-- 代码统计信息 -->
-      <div class="flex items-center justify-between text-sm p-3 bg-linear-to-r from-slate-50 to-gray-50 rounded-lg border border-slate-200">
-        <div class="flex items-center gap-6">
-          <div class="flex items-center gap-2">
-            <Hash :size="16" class="text-blue-600" />
-            <span class="text-gray-600">规则数量:</span>
-            <span class="font-bold text-blue-600">{{ rulesCount }}</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <FileCode :size="16" class="text-green-600" />
-            <span class="text-gray-600">代码行数:</span>
-            <span class="font-bold text-green-600">{{ codeLines }}</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <ToggleRight :size="16" class="text-purple-600" />
-            <span class="text-gray-600">启用规则:</span>
-            <span class="font-bold text-purple-600">{{ enabledRulesCount }}</span>
-          </div>
-        </div>
-      </div>
+      <CodeStatistics
+        :rules-count="rulesCount"
+        :code-lines="codeLines"
+        :enabled-rules-count="enabledRulesCount"
+      />
     </div>
 
     <!-- 对话框底部按钮 -->

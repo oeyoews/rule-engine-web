@@ -5,14 +5,17 @@ import {
   Trash2, HelpCircle, Lightbulb, Download, Copy, Check, Plus,
   Code2, Settings, ClipboardList, FileText, AlertTriangle,
   Package, Globe, FileText as FileDescription, Tag, Target, Search, Zap,
-  CheckCircle, XCircle, Hash, FileCode, ToggleRight, Wand2, Eye, Terminal, X
+  CheckCircle, XCircle, Wand2, Eye, Terminal, X
 } from 'lucide-vue-next'
 import { useClipboard } from '@vueuse/core'
 import HelpDialog from './HelpDialog.vue'
 import PreviewDialog from './PreviewDialog.vue'
+import CodeStatistics from './CodeStatistics.vue'
 import RuleConditionBuilder from './RuleConditionBuilder.vue'
 import RuleActionBuilder from './RuleActionBuilder.vue'
 import { generateDrlCode, downloadFile, formatTimestamp } from '../utils/drl'
+import { packageOptions, globalOptions } from '../constants/drlOptions'
+import { sampleConfig, sampleRules } from '../constants/sampleData'
 import { v4 as uuidv4 } from 'uuid'
 
 // 数据定义
@@ -21,25 +24,6 @@ const config = ref<Config>({
   globals: [],
   description: ''
 })
-
-// 包名选项
-const packageOptions = [
-  { value: 'com.example.rules', label: 'com.example.rules (示例包)' },
-  { value: 'com.company.drools.rules', label: 'com.company.drools.rules (公司规则包)' },
-  { value: 'com.myapp.business.rules', label: 'com.myapp.business.rules (业务规则包)' },
-  { value: 'org.example.rules', label: 'org.example.rules (组织规则包)' },
-  { value: 'cn.example.rules', label: 'cn.example.rules (中文域名包)' }
-]
-
-// 全局变量选项
-const globalOptions = [
-  { value: 'global org.slf4j.Logger logger;', label: 'Logger (日志)' },
-  { value: 'global java.util.Map dataMap;', label: 'Map (数据映射)' },
-  { value: 'global java.util.List resultList;', label: 'List (结果列表)' },
-  { value: 'global com.example.service.RuleService ruleService;', label: 'RuleService (规则服务)' },
-  { value: 'global com.example.util.DateUtils dateUtils;', label: 'DateUtils (日期工具)' },
-  { value: 'global com.example.util.StringUtils stringUtils;', label: 'StringUtils (字符串工具)' }
-]
 
 const rules = ref<Rule[]>([])
 const activeRules = ref<number | string>(0)
@@ -137,33 +121,11 @@ const removeRule = (index: number) => {
  */
 const loadSample = () => {
   // 设置全局配置
-  config.value = {
-    package: 'com.example.rules',
-    globals: ['global org.slf4j.Logger logger;'],
-    description: '示例规则文件'
-  }
+  config.value = { ...sampleConfig }
 
   // 设置规则示例
-  rules.value = [
-    {
-      name: 'CheckAdult',
-      enabled: true,
-      salience: 10,
-      noLoop: true,
-      lockOnActive: false,
-      when: '    $p: Person($age: age >= 18)',
-      then: '    $p.setAdult(true);\n    logger.info("{} 已成年",$p.getName());\n    update($p);'
-    },
-    {
-      name: 'CheckSex',
-      enabled: true,
-      salience: 15,
-      noLoop: false,
-      lockOnActive: false,
-      when: '    $p : Person(sex == "girl")',
-      then: '    logger.warn("{} 是一个女孩", $p.getName());\n    $p.setSex("boy");\n    update($p);'
-    }
-  ]
+  rules.value = [...sampleRules]
+
   // 展开第一个规则
   activeRules.value = 0
 }
@@ -671,26 +633,12 @@ onMounted(() => {
         </div>
 
         <!-- 代码统计信息 -->
-        <div class="border-t border-slate-200 p-3 bg-linear-to-r from-slate-50 to-gray-50">
-          <div class="flex items-center justify-between text-sm">
-            <div class="flex items-center gap-6">
-              <div class="flex items-center gap-2">
-                <Hash :size="16" class="text-blue-600" />
-                <span class="text-gray-600">规则数量:</span>
-                <span class="font-bold text-blue-600">{{ rules.length }}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <FileCode :size="16" class="text-green-600" />
-                <span class="text-gray-600">代码行数:</span>
-                <span class="font-bold text-green-600">{{ manualDrlCode.split('\n').length }}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <ToggleRight :size="16" class="text-purple-600" />
-                <span class="text-gray-600">启用规则:</span>
-                <span class="font-bold text-purple-600">{{ rules.filter(r => r.enabled).length }}</span>
-              </div>
-            </div>
-          </div>
+        <div class="border-t border-slate-200">
+          <CodeStatistics
+            :rules-count="rules.length"
+            :code-lines="manualDrlCode.split('\n').length"
+            :enabled-rules-count="rules.filter(r => r.enabled).length"
+          />
         </div>
       </div>
     </div>
