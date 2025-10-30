@@ -14,6 +14,7 @@ interface Action {
 
 const props = defineProps<{
   modelValue: string
+  whenCondition?: string
 }>()
 
 const emit = defineEmits<{
@@ -33,13 +34,36 @@ const actionTypes = [
   { label: '调用函数', value: 'function', icon: '⚡' }
 ]
 
-// 获取所有可用的类和方法
+/**
+ * 从 when 条件中提取变量
+ * 匹配模式: $变量名: 类名(...)
+ * 例如: $p: Person(age >= 18) -> 提取 $p
+ */
+const extractVariablesFromWhen = computed(() => {
+  if (!props.whenCondition) return []
+
+  const variables: Array<{ label: string; value: string }> = []
+
+  // 匹配 $变量名: 类名 的模式
+  const regex = /\$(\w+)\s*:\s*(\w+)/g
+  let match
+
+  while ((match = regex.exec(props.whenCondition)) !== null) {
+    const varName = `$${match[1]}`
+    const className = match[2]
+    variables.push({
+      label: `${varName} (${className})`,
+      value: varName
+    })
+  }
+
+  return variables
+})
+
+// 获取所有可用的类和方法（用于函数类型）
 const availableObjects = computed(() => {
   if (!classData.value) return []
   const objects: Array<{ label: string; value: string; type: string }> = []
-
-  // 添加变量引用
-  objects.push({ label: '$variable (引用when中的变量)', value: '$', type: 'variable' })
 
   // 添加工具类
   classData.value.utilities.forEach(util => {
@@ -263,13 +287,33 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label class="text-xs text-gray-600 mb-1 block">对象/类</label>
-              <el-input
+              <el-select
                 v-if="action.type === 'method'"
                 v-model="action.object"
                 size="small"
-                placeholder="$变量名"
+                placeholder="选择或输入变量名"
+                filterable
+                allow-create
+                default-first-option
                 @change="updateDrlCode"
-              />
+                class="w-full"
+              >
+                <el-option-group label="条件中的变量">
+                  <el-option
+                    v-for="variable in extractVariablesFromWhen"
+                    :key="variable.value"
+                    :label="variable.label"
+                    :value="variable.value"
+                  />
+                </el-option-group>
+                <el-option-group v-if="extractVariablesFromWhen.length === 0" label="提示">
+                  <el-option
+                    value=""
+                    label="在条件中定义变量后会显示在这里"
+                    disabled
+                  />
+                </el-option-group>
+              </el-select>
               <el-select
                 v-else
                 v-model="action.object"
@@ -342,24 +386,64 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
         <!-- Update/Insert/Retract -->
         <div v-else-if="['update', 'insert', 'retract'].includes(action.type)">
           <label class="text-xs text-gray-600 mb-1 block">对象变量</label>
-          <el-input
+          <el-select
             v-model="action.object"
             size="small"
-            placeholder="$变量名"
+            placeholder="选择或输入变量名"
+            filterable
+            allow-create
+            default-first-option
             @change="updateDrlCode"
-          />
+            class="w-full"
+          >
+            <el-option-group label="条件中的变量">
+              <el-option
+                v-for="variable in extractVariablesFromWhen"
+                :key="variable.value"
+                :label="variable.label"
+                :value="variable.value"
+              />
+            </el-option-group>
+            <el-option-group v-if="extractVariablesFromWhen.length === 0" label="提示">
+              <el-option
+                value=""
+                label="在条件中定义变量后会显示在这里"
+                disabled
+              />
+            </el-option-group>
+          </el-select>
         </div>
 
         <!-- Modify -->
         <div v-else-if="action.type === 'modify'" class="space-y-2">
           <div>
             <label class="text-xs text-gray-600 mb-1 block">对象变量</label>
-            <el-input
+            <el-select
               v-model="action.object"
               size="small"
-              placeholder="$变量名"
+              placeholder="选择或输入变量名"
+              filterable
+              allow-create
+              default-first-option
               @change="updateDrlCode"
-            />
+              class="w-full"
+            >
+              <el-option-group label="条件中的变量">
+                <el-option
+                  v-for="variable in extractVariablesFromWhen"
+                  :key="variable.value"
+                  :label="variable.label"
+                  :value="variable.value"
+                />
+              </el-option-group>
+              <el-option-group v-if="extractVariablesFromWhen.length === 0" label="提示">
+                <el-option
+                  value=""
+                  label="在条件中定义变量后会显示在这里"
+                  disabled
+                />
+              </el-option-group>
+            </el-select>
           </div>
           <div>
             <label class="text-xs text-gray-600 mb-1 block">修改方法</label>

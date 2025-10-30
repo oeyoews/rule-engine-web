@@ -60,7 +60,7 @@ const getClassFields = (className: string): ClassField[] => {
 const addCondition = () => {
   const newCondition: Condition = {
     id: Date.now().toString(),
-    variable: `var${conditions.value.length + 1}`,
+    variable: `p${conditions.value.length + 1}`,
     className: '',
     field: '',
     operator: '==',
@@ -197,9 +197,13 @@ onMounted(async () => {
             <el-input
               v-model="condition.variable"
               size="small"
-              placeholder="var1"
+              placeholder="p"
               @change="updateDrlCode"
-            />
+            >
+              <template #prefix>
+                <span class="text-gray-400">$</span>
+              </template>
+            </el-input>
           </div>
 
           <!-- 类名 -->

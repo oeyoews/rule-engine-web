@@ -618,6 +618,7 @@ onMounted(() => {
                           <RuleActionBuilder
                             v-if="rule.visualMode"
                             v-model="rule.then"
+                            :when-condition="rule.when"
                           />
 
                           <!-- 代码模式 -->
