@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { Plus, X } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassMethod } from '@/utils/classImport'
 
@@ -23,6 +23,7 @@ const emit = defineEmits<{
 
 const classData = ref<ClassData | null>(null)
 const actions = ref<Action[]>([])
+const isUpdatingFromCode = ref(false) // 防止循环更新
 
 // 动作类型选项
 const actionTypes = [
@@ -206,27 +207,136 @@ const generateDrlCode = (): string => {
 
 // 更新 DRL 代码
 const updateDrlCode = () => {
+  isUpdatingFromCode.value = true
   const code = generateDrlCode()
   emit('update:modelValue', code)
+  setTimeout(() => {
+    isUpdatingFromCode.value = false
+  }, 0)
 }
 
 // 解析 DRL 代码（初始化时使用）
-const parseDrlCode = (_code: string) => {
-  // 简化的解析器
-  actions.value = []
+const parseDrlCode = (code: string) => {
+  if (!code || code.trim().length === 0) {
+    actions.value = []
+    return
+  }
+
+  try {
+    const parsedActions: Action[] = []
+
+    // 按分号分割多个语句
+    const statements = code.split(';').map(s => s.trim()).filter(s => s.length > 0)
+
+    for (const statement of statements) {
+      let action: Action | null = null
+
+      // 解析 update($变量)
+      const updateMatch = statement.match(/update\s*\(\s*(\$\w+)\s*\)/)
+      if (updateMatch) {
+        action = {
+          id: Date.now().toString() + Math.random(),
+          type: 'update',
+          object: updateMatch[1] || '',
+          method: '',
+          params: []
+        }
+      }
+
+      // 解析 insert(new 类名(...))
+      const insertMatch = statement.match(/insert\s*\(\s*new\s+(\w+)\s*\(([^)]*)\)\s*\)/)
+      if (!action && insertMatch) {
+        const className = insertMatch[1]
+        const paramsStr = insertMatch[2]?.trim() || ''
+        const params = paramsStr ? paramsStr.split(',').map(p => ({ value: p.trim().replace(/['"]/g, '') })) : []
+
+        action = {
+          id: Date.now().toString() + Math.random(),
+          type: 'insert',
+          object: className || '',
+          method: '',
+          params: params
+        }
+      }
+
+      // 解析 delete/retract($变量)
+      const deleteMatch = statement.match(/(?:delete|retract)\s*\(\s*(\$\w+)\s*\)/)
+      if (!action && deleteMatch) {
+        action = {
+          id: Date.now().toString() + Math.random(),
+          type: 'retract',
+          object: deleteMatch[1] || '',
+          method: '',
+          params: []
+        }
+      }
+
+      // 解析 modify($变量) { 方法(...) }
+      const modifyMatch = statement.match(/modify\s*\(\s*(\$\w+)\s*\)\s*\{\s*(\w+)\s*\(([^)]*)\)\s*\}/)
+      if (!action && modifyMatch) {
+        const object = modifyMatch[1]
+        const method = modifyMatch[2]
+        const paramsStr = modifyMatch[3]?.trim() || ''
+        const params = paramsStr ? paramsStr.split(',').map(p => ({ value: p.trim().replace(/['"]/g, '') })) : []
+
+        action = {
+          id: Date.now().toString() + Math.random(),
+          type: 'modify',
+          object: object || '',
+          method: method || '',
+          params: params
+        }
+      }
+
+      // 解析普通方法调用：$变量.方法(...) 或 对象.方法(...)
+      const methodMatch = statement.match(/(\$?\w+)\.(\w+)\s*\(([^)]*)\)/)
+      if (!action && methodMatch) {
+        const object = methodMatch[1]
+        const method = methodMatch[2]
+        const paramsStr = methodMatch[3]?.trim() || ''
+        const params = paramsStr ? paramsStr.split(',').map(p => ({ value: p.trim().replace(/['"]/g, '') })) : []
+
+        // 判断是方法调用还是函数调用
+        const isVariable = object?.startsWith('$')
+
+        action = {
+          id: Date.now().toString() + Math.random(),
+          type: isVariable ? 'method' : 'function',
+          object: object || '',
+          method: method || '',
+          params: params
+        }
+      }
+
+      if (action) {
+        parsedActions.push(action)
+      }
+    }
+
+    actions.value = parsedActions
+  } catch (error) {
+    console.error('解析 DRL then 代码失败:', error)
+    // 解析失败时保持为空，让用户在代码模式下编辑
+    actions.value = []
+  }
 }
 
 // 加载类数据
 onMounted(async () => {
   classData.value = await loadClassData()
 
-  if (props.modelValue) {
+  if (props.modelValue && props.modelValue.trim()) {
     parseDrlCode(props.modelValue)
-  }
-
-  // 如果没有动作，添加第一个
-  if (actions.value.length === 0) {
+  } else {
+    // 只有在没有初始值时才添加默认动作
     addAction()
+  }
+})
+
+// 监听外部代码变化（如从代码模式切换回来）
+watch(() => props.modelValue, (newValue) => {
+  if (!isUpdatingFromCode.value && newValue) {
+    parseDrlCode(newValue)
   }
 })
 

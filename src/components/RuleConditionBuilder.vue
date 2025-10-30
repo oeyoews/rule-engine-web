@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { Plus, X } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassField } from '@/utils/classImport'
 
@@ -23,6 +23,7 @@ const emit = defineEmits<{
 
 const classData = ref<ClassData | null>(null)
 const conditions = ref<Condition[]>([])
+const isUpdatingFromCode = ref(false) // 防止循环更新
 
 // 操作符选项
 const operators = [
@@ -128,28 +129,129 @@ const generateDrlCode = (): string => {
 
 // 更新 DRL 代码
 const updateDrlCode = () => {
+  isUpdatingFromCode.value = true
   const code = generateDrlCode()
   emit('update:modelValue', code)
+  setTimeout(() => {
+    isUpdatingFromCode.value = false
+  }, 0)
 }
 
 // 解析 DRL 代码（初始化时使用）
-const parseDrlCode = (_code: string) => {
-  // 这是一个简化的解析器，实际情况可能需要更复杂的解析逻辑
-  // 暂时保持空实现，让用户从头开始构建
-  conditions.value = []
+const parseDrlCode = (code: string) => {
+  if (!code || code.trim().length === 0) {
+    conditions.value = []
+    return
+  }
+
+  try {
+    const parsedConditions: Condition[] = []
+
+    // 移除多余的空格和换行
+    const cleanCode = code.trim().replace(/\s+/g, ' ')
+
+    // 分割 and/or 逻辑操作符（不区分大小写）
+    const parts = cleanCode.split(/\s+(and|or)\s+/i)
+
+    let currentLogicOp: 'AND' | 'OR' | undefined = undefined
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i]?.trim()
+
+      if (!part) continue
+
+      // 检查是否是逻辑操作符
+      if (part.toLowerCase() === 'and') {
+        currentLogicOp = 'AND'
+        continue
+      } else if (part.toLowerCase() === 'or') {
+        currentLogicOp = 'OR'
+        continue
+      }
+
+      // 解析条件：$变量: 类名(字段 操作符 值)
+      const conditionMatch = part.match(/\$(\w+)\s*:\s*(\w+)\s*\(([^)]+)\)/)
+
+      if (conditionMatch) {
+        const variable = conditionMatch[1]
+        const className = conditionMatch[2]
+        const fieldExpression = conditionMatch[3]?.trim()
+
+        if (!variable || !className || !fieldExpression) continue
+
+        // 解析字段表达式
+        let field = ''
+        let operator = '=='
+        let value = ''
+
+        // 尝试匹配特殊操作符
+        if (fieldExpression.includes(' contains ')) {
+          const [f, v] = fieldExpression.split(' contains ')
+          field = f?.trim() || ''
+          operator = 'contains'
+          value = v?.trim().replace(/['"]/g, '') || ''
+        } else if (fieldExpression.includes(' matches ')) {
+          const [f, v] = fieldExpression.split(' matches ')
+          field = f?.trim() || ''
+          operator = 'matches'
+          value = v?.trim().replace(/['"]/g, '') || ''
+        } else if (fieldExpression.includes(' memberOf ')) {
+          const [f, v] = fieldExpression.split(' memberOf ')
+          field = f?.trim() || ''
+          operator = 'memberOf'
+          value = v?.trim() || ''
+        } else {
+          // 匹配标准操作符
+          const opMatch = fieldExpression.match(/(\w+)\s*(==|!=|>=|<=|>|<)\s*(.+)/)
+          if (opMatch) {
+            field = opMatch[1]?.trim() || ''
+            operator = opMatch[2]?.trim() || '=='
+            value = opMatch[3]?.trim().replace(/['"]/g, '') || ''
+          } else {
+            // 如果无法解析，跳过这个条件
+            continue
+          }
+        }
+
+        parsedConditions.push({
+          id: Date.now().toString() + Math.random(),
+          variable: variable,
+          className: className,
+          field: field,
+          operator: operator,
+          value: value,
+          logicOperator: parsedConditions.length > 0 ? currentLogicOp : undefined
+        })
+
+        // 重置逻辑操作符
+        currentLogicOp = undefined
+      }
+    }
+
+    conditions.value = parsedConditions
+  } catch (error) {
+    console.error('解析 DRL when 代码失败:', error)
+    // 解析失败时保持为空，让用户在代码模式下编辑
+    conditions.value = []
+  }
 }
 
 // 加载类数据
 onMounted(async () => {
   classData.value = await loadClassData()
 
-  if (props.modelValue) {
+  if (props.modelValue && props.modelValue.trim()) {
     parseDrlCode(props.modelValue)
-  }
-
-  // 如果没有条件，添加第一个
-  if (conditions.value.length === 0) {
+  } else {
+    // 只有在没有初始值时才添加默认条件
     addCondition()
+  }
+})
+
+// 监听外部代码变化（如从代码模式切换回来）
+watch(() => props.modelValue, (newValue) => {
+  if (!isUpdatingFromCode.value && newValue) {
+    parseDrlCode(newValue)
   }
 })
 </script>
