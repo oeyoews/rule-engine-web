@@ -3,6 +3,11 @@
 @import "tailwindcss/utilities.css" layer(utilities);
 @import "tailwindcss/theme.css" layer(theme);
 
+/* 支持CJK自动间距 */
+html {
+	text-autospace: normal;
+}
+
 /* 支持黑暗模式 */
 @custom-variant dark (&:where(.dark, .dark *));
 
