@@ -673,9 +673,11 @@ onMounted(() => {
                             </div>
                             <el-button
                               v-if="!advancedMode"
-                              circle
                               @click.stop="confirmRemoveRule(index)"
-                              class="group-hover:opacity-100 opacity-0 transition-all duration-200 p-2 hover:bg-red-50 rounded-lg mr-2"
+                              size="small"
+                              circle
+                              class="group-hover:opacity-100! opacity-0! transition-all! duration-200! hover:bg-red-50! mr-2"
+                              title="删除规则"
                             >
                               <Trash2 :size="16" class="text-red-500" />
                             </el-button>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Plus, X, GripVertical, Phone, RefreshCw, PlusCircle, Trash2, Edit, Zap } from 'lucide-vue-next'
+import { Plus, GripVertical, Phone, RefreshCw, PlusCircle, Trash2, Edit, Zap } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassMethod } from '@/utils/classImport'
 import { VueDraggable } from 'vue-draggable-plus'
 
@@ -380,12 +380,12 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
       >
         <div class="flex items-center gap-2 mb-3">
           <!-- 拖拽手柄 -->
-          <div class="drag-handle flex items-center justify-center w-8 h-8 cursor-move hover:bg-green-200 rounded transition-colors">
+          <div class="drag-handle flex items-center justify-center w-8 h-8 cursor-move hover:bg-green-200 rounded transition-colors shrink-0">
             <GripVertical :size="16" class="text-green-600" />
           </div>
-          <div class="text-xs font-medium text-gray-600">动作 {{ index + 1 }}</div>
-          <el-divider direction="vertical" />
-          <el-radio-group v-model="action.type" size="small" @change="updateDrlCode">
+          <div class="text-xs font-medium text-gray-600 shrink-0">动作 {{ index + 1 }}</div>
+          <el-divider direction="vertical" class="shrink-0" />
+          <el-radio-group v-model="action.type" size="small" @change="updateDrlCode" class="flex-1">
             <el-radio-button
               v-for="type in actionTypes"
               :key="type.value"
@@ -397,14 +397,15 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
               </span>
             </el-radio-button>
           </el-radio-group>
-          <div class="flex-1"></div>
           <el-button
-            size="small"
-            type="danger"
-            :icon="X"
-            circle
             @click="removeAction(action.id)"
-          />
+            size="small"
+            circle
+            class="hover:bg-red-50! shrink-0 ml-2"
+            title="删除动作"
+          >
+            <Trash2 :size="16" class="text-red-500" />
+          </el-button>
         </div>
 
         <!-- 调用方法 -->

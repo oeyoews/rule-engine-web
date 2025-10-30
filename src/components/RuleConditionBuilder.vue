@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Plus, X, GripVertical, Ampersand, Split } from 'lucide-vue-next'
+import { Plus, Trash2, GripVertical, Ampersand, Split } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassField } from '@/utils/classImport'
 import { VueDraggable } from 'vue-draggable-plus'
 
@@ -287,29 +287,29 @@ watch(() => props.modelValue, (newValue) => {
         :key="condition.id"
         class="condition-item bg-gray-50 rounded-lg p-3 border border-gray-200"
       >
-        <!-- 逻辑操作符 -->
-        <div v-if="index > 0" class="mb-2">
-          <el-radio-group v-model="condition.logicOperator" size="small" @change="updateDrlCode">
-            <el-radio-button
-              v-for="op in logicOperators"
-              :key="op.value"
-              :label="op.value"
-            >
-              <span class="inline-flex items-center gap-1.5">
-                <component :is="op.icon" :size="14" :class="op.color" />
-                <span>{{ op.label }}</span>
-              </span>
-            </el-radio-button>
-          </el-radio-group>
-        </div>
-
-        <div class="flex gap-2 items-start">
+        <div class="flex gap-2 items-center">
           <!-- 拖拽手柄 -->
-          <div class="drag-handle flex items-center justify-center w-8 h-full min-h-[32px] cursor-move hover:bg-gray-200 rounded transition-colors mt-5">
+          <div class="drag-handle flex items-center justify-center w-8 h-8 cursor-move hover:bg-gray-200 rounded transition-colors shrink-0">
             <GripVertical :size="16" class="text-gray-400" />
           </div>
 
-          <div class="grid grid-cols-12 gap-2 items-start flex-1">
+          <!-- 逻辑操作符 -->
+          <div v-if="index > 0" class="shrink-0">
+            <el-radio-group v-model="condition.logicOperator" size="small" @change="updateDrlCode">
+              <el-radio-button
+                v-for="op in logicOperators"
+                :key="op.value"
+                :label="op.value"
+              >
+                <span class="inline-flex items-center gap-1.5">
+                  <component :is="op.icon" :size="14" :class="op.color" />
+                  <span>{{ op.label }}</span>
+                </span>
+              </el-radio-button>
+            </el-radio-group>
+          </div>
+
+          <div class="grid grid-cols-11 gap-2 items-start flex-1">
             <!-- 变量名 -->
             <div class="col-span-2">
               <label class="text-xs text-gray-600 mb-1 block">变量名</label>
@@ -404,19 +404,19 @@ watch(() => props.modelValue, (newValue) => {
                 @change="updateDrlCode"
               />
             </div>
-
-            <!-- 删除按钮 -->
-            <div class="col-span-1 flex items-end">
-              <el-button
-                size="small"
-                type="danger"
-                :icon="X"
-                circle
-                @click="removeCondition(condition.id)"
-                :disabled="conditions.length === 1"
-              />
-            </div>
           </div>
+
+          <!-- 删除按钮 -->
+          <el-button
+            @click="removeCondition(condition.id)"
+            :disabled="conditions.length === 1"
+            size="small"
+            circle
+            class="hover:bg-red-50! shrink-0"
+            :title="conditions.length === 1 ? '至少保留一个条件' : '删除条件'"
+          >
+            <Trash2 :size="16" class="text-red-500" />
+          </el-button>
         </div>
       </div>
     </VueDraggable>
