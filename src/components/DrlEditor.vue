@@ -5,7 +5,7 @@ import {
   Trash2, HelpCircle, Lightbulb, Plus,
   Code2, Settings, ClipboardList, FileText, AlertTriangle,
   Package, FileInput, Globe, FileText as FileDescription, Tag, Target, Search, Zap,
-  CheckCircle, XCircle, Wand2, Eye, Terminal, X
+  CheckCircle, XCircle, Wand2, Eye, Terminal, X, Upload
 } from 'lucide-vue-next'
 import HelpDialog from './HelpDialog.vue'
 import PreviewDialog from './PreviewDialog.vue'
@@ -16,6 +16,7 @@ import { generateDrlCode, formatTimestamp } from '@/utils/drl'
 import { packageOptions, importOptions, globalOptions } from '@/constants/drlOptions'
 import { sampleConfig, sampleRules } from '@/constants/sampleData'
 import { extractClassNamesFromRules, getMissingImports, extractPackagePrefix } from '@/utils/importDetector'
+import { parseDrlFile, validateDrlFile } from '@/utils/drlParser'
 import { v4 as uuidv4 } from 'uuid'
 
 // 数据定义
@@ -172,6 +173,84 @@ const loadSample = () => {
 }
 
 /**
+ * 导入 DRL 文件
+ */
+const importDrlFile = (file: File) => {
+  const reader = new FileReader()
+
+  reader.onload = (e) => {
+    try {
+      const content = e.target?.result as string
+
+      // 验证文件格式
+      const validation = validateDrlFile(content)
+      if (!validation.valid) {
+        ElMessage.error(validation.error || '文件格式不正确')
+        return
+      }
+
+      // 解析文件
+      const parsed = parseDrlFile(content)
+
+      // 填充配置
+      config.value = {
+        package: parsed.package,
+        imports: parsed.imports,
+        globals: parsed.globals,
+        description: parsed.description
+      }
+
+      // 填充规则
+      rules.value = parsed.rules
+
+      // 展开第一个规则
+      if (rules.value.length > 0) {
+        activeRules.value = 0
+      }
+
+      ElMessage.success(`成功导入 ${parsed.rules.length} 个规则`)
+    } catch (error) {
+      console.error('解析 DRL 文件失败:', error)
+      ElMessage.error('解析文件失败，请检查文件格式')
+    }
+  }
+
+  reader.onerror = () => {
+    ElMessage.error('读取文件失败')
+  }
+
+  reader.readAsText(file)
+}
+
+/**
+ * 处理文件上传
+ */
+const handleFileUpload = (file: File) => {
+  // 检查文件类型
+  if (!file.name.endsWith('.drl')) {
+    ElMessage.warning('请上传 .drl 格式的文件')
+    return false
+  }
+
+  // 确认导入
+  ElMessageBox.confirm(
+    '导入文件将覆盖当前所有配置和规则，是否继续？',
+    '确认导入',
+    {
+      confirmButtonText: '确定导入',
+      cancelButtonText: '取消',
+      type: 'warning',
+    }
+  ).then(() => {
+    importDrlFile(file)
+  }).catch(() => {
+    // 用户取消
+  })
+
+  return false // 阻止默认上传行为
+}
+
+/**
  * 生成 DRL 代码
  */
 const generateDRL = (): string => {
@@ -265,6 +344,21 @@ onMounted(() => {
               <Lightbulb :size="18" class="mr-2" />
               加载示例
             </el-button>
+            <el-upload
+              :show-file-list="false"
+              :before-upload="handleFileUpload"
+              accept=".drl"
+              :disabled="advancedMode"
+            >
+              <el-button
+                size="default"
+                class="bg-linear-to-br! from-green-50! to-emerald-100! text-emerald-700! border! border-green-200! hover:border-emerald-400! hover:shadow-md! hover:scale-105! transition-all! duration-200!"
+                :disabled="advancedMode"
+              >
+                <Upload :size="18" class="mr-2" />
+                导入文件
+              </el-button>
+            </el-upload>
             <el-button
               size="default"
               class="bg-linear-to-br! from-violet-50! to-purple-100! text-purple-700! border! border-violet-200! hover:border-purple-400! hover:shadow-md! hover:scale-105! transition-all! duration-200!"
