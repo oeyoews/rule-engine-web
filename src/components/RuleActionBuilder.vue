@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Plus, GripVertical, Phone, RefreshCw, PlusCircle, Trash2, Edit, Zap, Variable, Code2, Box, Sparkles } from 'lucide-vue-next'
+import { Plus, Grip, Phone, RefreshCw, PlusCircle, Trash2, Edit, Zap, Variable, Code2, Box, Sparkles } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassMethod } from '@/utils/classImport'
 import { VueDraggable } from 'vue-draggable-plus'
 
@@ -386,21 +386,21 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
         >
           <template #title>
             <div class="flex items-center gap-2 py-1 w-full">
-              <div class="drag-handle flex items-center justify-center size-8 cursor-move hover:bg-green-200 rounded transition-colors shrink-0">
-                <GripVertical :size="16" class="text-green-600" />
+              <div class="drag-handle flex items-center justify-center size-8 cursor-move hover:bg-green-200 rounded transition-colors shrink-0 ml-2">
+                <Grip :size="16" class="text-green-600" />
               </div>
               <div class="text-sm font-medium text-gray-700">
                 动作{{ index + 1 }}:
                 <el-tag size="small" :type="action.type === 'method' || action.type === 'function' ? 'primary' : 'success'" class="ml-1">
                   {{ actionTypes.find(t => t.value === action.type)?.label || action.type }}
                 </el-tag>
-                <span v-if="action.object" class="text-green-600 ml-2">
+                <span v-if="action.object" class="text-green-600 ml-4">
                   {{ action.object }}<span v-if="action.method" class="text-gray-500">.{{ action.method }}()</span>
                 </span>
               </div>
             </div>
           </template>
-          <div class="p-3 bg-green-50 rounded-lg border border-green-200 mt-2 ml-2">
+          <div class="p-3 bg-green-50 rounded-lg border border-green-200 mt-2 ml-4">
             <div class="mb-3">
               <label class="text-xs text-gray-600 mb-1 block">① 动作类型</label>
               <el-radio-group v-model="action.type" size="small" @change="updateDrlCode">
@@ -632,7 +632,7 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
     </el-collapse>
 
     <!-- 生成的代码预览 -->
-    <div class="mt-3 ml-2">
+    <div class="mt-3 ml-4">
       <el-collapse>
         <el-collapse-item name="preview">
           <template #title>

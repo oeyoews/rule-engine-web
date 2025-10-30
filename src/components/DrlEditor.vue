@@ -5,7 +5,7 @@ import {
   Trash2, HelpCircle, Lightbulb, Plus,
   Code2, Settings, ClipboardList, FileText, AlertTriangle,
   Package, FileInput, Globe, FileText as FileDescription, Tag, Target, Search, Zap,
-  CheckCircle, XCircle, Wand2, Eye, Terminal, X, Upload, GripVertical, Power, RotateCcw, Lock
+  CheckCircle, XCircle, Wand2, Eye, Terminal, X, Upload, Grip, Power, RotateCcw, Lock
 } from 'lucide-vue-next'
 import HelpDialog from './HelpDialog.vue'
 import PreviewDialog from './PreviewDialog.vue'
@@ -659,7 +659,7 @@ onMounted(() => {
                             <div class="flex items-center gap-3 flex-wrap">
                               <!-- 拖拽手柄 -->
                               <div v-if="!advancedMode" class="rule-drag-handle flex items-center justify-center size-8 cursor-move hover:bg-indigo-100 rounded-lg transition-colors -ml-2">
-                                <GripVertical :size="16" class="text-indigo-400" />
+                                <Grip :size="16" class="text-indigo-400" />
                               </div>
                               <div class="flex items-center justify-center size-6 bg-linear-to-br from-indigo-100 to-purple-100 rounded-full text-indigo-600 font-bold text-sm">
                                 {{ index + 1 }}
@@ -667,6 +667,12 @@ onMounted(() => {
                               <span class="font-semibold text-gray-700 text-base">
                                 {{ rule.name || '规则 ' + (index + 1) }}
                               </span>
+                              <el-tag v-if="rule.salience > 0" size="small" class="bg-violet-100! text-violet-700! border-violet-200! transition-none!">
+                                <span class="inline-flex items-center gap-1">
+                                  <Zap :size="14" class="text-violet-700" />
+                                  {{ rule.salience }}
+                                </span>
+                              </el-tag>
                               <el-tag v-if="rule.enabled" size="small" class="bg-emerald-100! text-emerald-700! border-emerald-200! transition-none!">
                                 <span class="inline-flex items-center gap-1">
                                   <CheckCircle :size="14" class="text-emerald-700" />
@@ -677,12 +683,6 @@ onMounted(() => {
                                 <span class="inline-flex items-center gap-1">
                                   <XCircle :size="14" class="text-slate-600" />
                                   禁用
-                                </span>
-                              </el-tag>
-                              <el-tag v-if="rule.salience > 0" size="small" class="bg-violet-100! text-violet-700! border-violet-200! transition-none!">
-                                <span class="inline-flex items-center gap-1">
-                                  <Zap :size="14" class="text-violet-700" />
-                                  {{ rule.salience }}
                                 </span>
                               </el-tag>
                             </div>
@@ -698,7 +698,7 @@ onMounted(() => {
                             </el-button>
                           </div>
                         </template>
-                      <el-form :model="rule" label-width="120px" label-position="left" class="pt-3 pl-1 pb-2">
+                      <el-form :model="rule" label-width="120px" label-position="left" class="pt-3 pl-1 pb-2 ml-4">
                         <el-form-item>
                           <template #label>
                             <div class="flex items-center gap-2">
@@ -715,7 +715,7 @@ onMounted(() => {
                               <span>规则配置</span>
                             </div>
                           </template>
-                          <div class="flex flex-wrap gap-4 p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200">
+                          <div class="flex flex-wrap gap-4 p-2 rounded-lg border border-green-400 w-full">
                             <el-checkbox v-model="rule.enabled" size="large" class="hover:bg-white px-3 py-2 rounded transition-colors">
                               <span class="inline-flex items-center gap-2">
                                 <Power :size="16" :class="rule.enabled ? 'text-green-600' : 'text-gray-400'" />

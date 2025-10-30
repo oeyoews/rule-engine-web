@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Plus, Trash2, GripVertical, Ampersand, Split, Box, Hash, Equal, Code2, Filter } from 'lucide-vue-next'
+import { Plus, Trash2, Grip, Ampersand, Split, Box, Hash, Equal, Code2, Filter } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassField } from '@/utils/classImport'
 import { VueDraggable } from 'vue-draggable-plus'
 
@@ -295,8 +295,8 @@ watch(() => props.modelValue, (newValue) => {
         >
           <template #title>
             <div class="flex items-center gap-2 py-1 w-full">
-              <div class="drag-handle flex items-center justify-center size-8 cursor-move hover:bg-gray-200 rounded transition-colors shrink-0">
-                <GripVertical :size="16" class="text-blue-400" />
+              <div class="drag-handle flex items-center justify-center size-8 cursor-move hover:bg-gray-200 rounded transition-colors shrink-0 ml-2">
+                <Grip :size="16" class="text-blue-400" />
               </div>
               <div v-if="index > 0" class="shrink-0">
                 <el-tag size="small" :type="condition.logicOperator === 'AND' ? 'primary' : 'warning'">
@@ -314,7 +314,7 @@ watch(() => props.modelValue, (newValue) => {
               </div>
             </div>
           </template>
-          <div class="ml-2 p-3 bg-blue-50 rounded-lg border border-blue-200 mt-2">
+          <div class="ml-4 p-3 bg-blue-50 rounded-lg border border-blue-200 mt-2">
             <!-- 逻辑操作符 -->
             <div v-if="index > 0" class="mb-3">
               <label class="text-xs text-gray-600 mb-1 block">① 逻辑操作符</label>
@@ -459,7 +459,7 @@ watch(() => props.modelValue, (newValue) => {
     </el-collapse>
 
     <!-- 生成的代码预览 -->
-    <div class="mt-3 ml-2">
+    <div class="mt-3 ml-4">
       <el-collapse>
         <el-collapse-item name="preview">
           <template #title>
