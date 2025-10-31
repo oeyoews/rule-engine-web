@@ -325,7 +325,8 @@ watch(() => props.modelValue, (newValue) => {
       <VueDraggable
         v-model="conditions"
         :animation="200"
-        handle=".drag-handle"
+        :handle="conditions.length > 1 ? '.drag-handle' : undefined"
+        :disabled="conditions.length <= 1"
         ghostClass="dragging-ghost"
         @end="updateDrlCode"
       >
@@ -336,8 +337,17 @@ watch(() => props.modelValue, (newValue) => {
         >
           <template #title>
             <div class="flex items-center gap-2 py-1 w-full">
-              <div class="drag-handle flex items-center justify-center size-8 cursor-move hover:bg-gray-200 rounded transition-colors shrink-0 ml-2">
+              <div
+                v-if="conditions.length > 1"
+                class="drag-handle flex items-center justify-center size-8 cursor-move hover:bg-gray-200 rounded transition-colors shrink-0 ml-2"
+              >
                 <Grip :size="16" class="text-blue-400" />
+              </div>
+              <div
+                v-else
+                class="flex items-center justify-center size-8 shrink-0 ml-2 opacity-30"
+              >
+                <Grip :size="16" class="text-gray-400" />
               </div>
               <div v-if="index > 0" class="shrink-0">
                 <el-tag size="small" :type="condition.logicOperator === 'AND' ? 'primary' : 'warning'">

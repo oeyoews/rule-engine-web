@@ -10,7 +10,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="flex items-center justify-between text-sm p-3 bg-linear-to-r from-slate-50 to-gray-50 rounded-lg border border-slate-200">
+  <div class="flex items-center justify-between text-sm p-3 rounded-lg border border-slate-200 bg-slate-50">
     <div class="flex items-center gap-6">
       <div class="flex items-center gap-2">
         <Hash :size="16" class="text-blue-600" />

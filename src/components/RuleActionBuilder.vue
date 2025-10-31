@@ -366,7 +366,8 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
       <VueDraggable
         v-model="actions"
         :animation="200"
-        handle=".drag-handle"
+        :handle="actions.length > 1 ? '.drag-handle' : undefined"
+        :disabled="actions.length <= 1"
         ghostClass="dragging-ghost"
         @end="updateDrlCode"
       >
@@ -377,8 +378,17 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
         >
           <template #title>
             <div class="flex items-center gap-2 py-1 w-full">
-              <div class="drag-handle flex items-center justify-center size-8 cursor-move hover:bg-green-200 rounded transition-colors shrink-0 ml-2">
+              <div
+                v-if="actions.length > 1"
+                class="drag-handle flex items-center justify-center size-8 cursor-move hover:bg-green-200 rounded transition-colors shrink-0 ml-2"
+              >
                 <Grip :size="16" class="text-green-600" />
+              </div>
+              <div
+                v-else
+                class="flex items-center justify-center size-8 shrink-0 ml-2 opacity-30"
+              >
+                <Grip :size="16" class="text-gray-400" />
               </div>
               <div class="text-sm font-medium text-gray-700">
                 动作{{ index + 1 }}:

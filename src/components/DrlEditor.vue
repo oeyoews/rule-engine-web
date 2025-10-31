@@ -316,14 +316,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="bg-linear-to-br min-h-screen">
+  <div class="min-h-screen">
     <div class="md:max-w-7xl lg:max-w-9xl xl:max-w-11xl mx-auto space-y-4">
       <!-- 顶部标题栏 -->
       <div class="bg-white/95 backdrop-blur-md rounded-xl shadow-lg p-4 border border-slate-200/80 hover:shadow-xl transition-shadow duration-300">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <!-- 标题区域 -->
           <div class="flex items-center gap-4">
-            <div class="flex items-center justify-center w-14 h-14 bg-linear-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg shrink-0">
+            <div class="flex items-center justify-center w-14 h-14 bg-indigo-600/70 rounded-xl shadow-lg shrink-0">
               <Code2 :size="32" class="text-white" />
             </div>
             <div>
@@ -582,16 +582,15 @@ onMounted(() => {
                                   {{ rule.salience }}
                                 </span>
                               </el-tag>
-                              <el-tag v-if="rule.enabled" size="small" class="bg-emerald-100! text-emerald-700! border-emerald-200! transition-none!">
+                              <el-tag
+                                size="small"
+                                :class="rule.enabled ? 'bg-emerald-100! text-emerald-700! border-emerald-200!' : 'bg-slate-100! text-slate-600! border-slate-200!'"
+                                class="transition-none!"
+                              >
                                 <span class="inline-flex items-center gap-1">
-                                  <CheckCircle :size="14" class="text-emerald-700" />
-                                  启用
-                                </span>
-                              </el-tag>
-                              <el-tag v-else size="small" class="bg-slate-100! text-slate-600! border-slate-200! transition-none!">
-                                <span class="inline-flex items-center gap-1">
-                                  <XCircle :size="14" class="text-slate-600" />
-                                  禁用
+                                  <CheckCircle v-if="rule.enabled" :size="14" class="text-emerald-700" />
+                                  <XCircle v-else :size="14" class="text-slate-600" />
+                                  {{ rule.enabled ? '启用' : '禁用' }}
                                 </span>
                               </el-tag>
                             </div>
@@ -746,7 +745,7 @@ onMounted(() => {
               <div class="pt-4 px-4 pb-4">
                 <!-- 代码编辑区 -->
                 <div>
-                  <el-scrollbar max-height="calc(100vh - 400px)" class="bg-linear-to-br from-slate-900 to-gray-900 border-2! border-red-500! rounded-lg shadow-2xl overflow-hidden">
+                  <el-scrollbar max-height="calc(100vh - 400px)" class="bg-slate-900 border-2! rounded-lg shadow-2xl overflow-hidden">
                     <el-input
                       v-model="manualDrlCode"
                       type="textarea"
@@ -757,7 +756,7 @@ onMounted(() => {
                       resize="none"
                     />
                   </el-scrollbar>
-                  <div class="mt-3 flex items-start gap-3 text-sm text-red-700 bg-linear-to-r from-red-50 to-orange-50 border-l-4 border-red-500 rounded-lg p-3 shadow-sm">
+                  <div class="mt-3 flex items-center gap-3 text-sm text-red-700 bg-linear-to-r from-red-50 to-orange-50 border-l-4 border-red-500 rounded-lg p-3 shadow-sm">
                     <AlertTriangle :size="20" class="shrink-0 mt-0.5 text-red-600" />
                     <div>
                       <p class="font-semibold mb-1">高级模式提示</p>
