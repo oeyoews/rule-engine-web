@@ -6,7 +6,7 @@ import {
 import { useClipboard } from '@vueuse/core'
 import { ElMessage } from 'element-plus'
 import { downloadFile } from '../utils/drl'
-import CodeStatistics from './CodeStatistics.vue'
+import CodeStatistics from './common/CodeStatistics.vue'
 import hljs from 'highlight.js/lib/core'
 import java from 'highlight.js/lib/languages/java'
 import 'highlight.js/styles/atom-one-dark.css'
@@ -170,7 +170,7 @@ const copyCode = async () => {
 
 :deep(.line-content) {
   flex: 1;
-  /* white-space: pre; */
+  white-space: pre;  /* 保留空格和换行符 */
   word-break: break-word;
 }
 </style>

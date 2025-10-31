@@ -9,7 +9,7 @@ import {
 } from 'lucide-vue-next'
 import HelpDialog from './HelpDialog.vue'
 import PreviewDialog from './PreviewDialog.vue'
-import CodeStatistics from './CodeStatistics.vue'
+import CodeStatistics from './common/CodeStatistics.vue'
 import RuleConditionBuilder from './RuleConditionBuilder.vue'
 import RuleActionBuilder from './RuleActionBuilder.vue'
 import { generateDrlCode, formatTimestamp } from '@/utils/drl'

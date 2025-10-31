@@ -11,7 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    CodeStatistics: typeof import('./src/components/CodeStatistics.vue')['default']
+    CodeStatistics: typeof import('./src/components/common/CodeStatistics.vue')['default']
     DrlEditor: typeof import('./src/components/DrlEditor.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCheckbox: typeof import('element-plus/es')['ElCheckbox']
@@ -37,6 +37,6 @@ declare module 'vue' {
     RuleActionBuilder: typeof import('./src/components/RuleActionBuilder.vue')['default']
     RuleConditionBuilder: typeof import('./src/components/RuleConditionBuilder.vue')['default']
     RuleFlow: typeof import('./src/components/RuleFlow.vue')['default']
-    SectionTitle: typeof import('./src/components/SectionTitle.vue')['default']
+    SectionTitle: typeof import('./src/components/common/SectionTitle.vue')['default']
   }
 }

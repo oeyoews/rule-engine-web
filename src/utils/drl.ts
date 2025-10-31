@@ -2,6 +2,12 @@ import { v4 as uuidv4 } from 'uuid'
 import moment from 'moment'
 import { saveAs } from 'file-saver'
 import { extractImportsFromDrl, generateImportStatements } from './classImport'
+import { indentLine } from './indent'
+
+/**
+ * 换行符常量
+ */
+const NEW_LINE = '\n'
 
 /**
  * 规则属性键名常量
@@ -20,16 +26,16 @@ type AttributeGenerator = (rule: Rule) => string | null
 
 const attributeGenerators: Record<string, AttributeGenerator> = {
   [RuleAttribute.ENABLED]: (rule: Rule) => {
-    return rule.enabled === false ? '    enabled false\n' : null
+    return rule.enabled === false ? indentLine('enabled false') + NEW_LINE : null
   },
   [RuleAttribute.SALIENCE]: (rule: Rule) => {
-    return rule.salience !== undefined ? `    salience ${rule.salience}\n` : null
+    return rule.salience !== undefined ? indentLine(`salience ${rule.salience}`) + NEW_LINE : null
   },
   [RuleAttribute.NO_LOOP]: (rule: Rule) => {
-    return rule.noLoop ? '    no-loop true\n' : null
+    return rule.noLoop ? indentLine('no-loop true') + NEW_LINE : null
   },
   [RuleAttribute.LOCK_ON_ACTIVE]: (rule: Rule) => {
-    return rule.lockOnActive ? '    lock-on-active true\n' : null
+    return rule.lockOnActive ? indentLine('lock-on-active true') + NEW_LINE : null
   }
 }
 
@@ -48,19 +54,14 @@ export const generateDrlHeader = (description?: string, drlId?: string, timestam
   const time = timestamp || formatTimestamp()
   const desc = description || '自动生成的 Drools 规则文件'
 
-  // 统一第二行及其下方的缩进：在 * 后固定两个空格
-  const leftPad = ' *  '
-  const separator = `${leftPad}----------------------------------------\n`
-  let header = `/*\n`
-  header += separator
-  header += `${leftPad}DRL 规则文件\n`
-  header += separator
-  header += `${leftPad}文件ID: ${id}\n`
-  header += `${leftPad}创建时间: ${time}\n`
-  header += `${leftPad}创建人: System\n`
-  header += `${leftPad}描述: ${desc}\n`
-  header += separator
-  header += ` */\n\n`
+  let header = `// ============================================${NEW_LINE}`
+  header += `// DRL 规则文件${NEW_LINE}`
+  header += `// ============================================${NEW_LINE}`
+  header += `// 文件ID: ${id}${NEW_LINE}`
+  header += `// 创建时间: ${time}${NEW_LINE}`
+  header += `// 创建人: System${NEW_LINE}`
+  header += `// 描述: ${desc}${NEW_LINE}`
+  header += `// ============================================${NEW_LINE}${NEW_LINE}`
 
   return header
 }
@@ -72,7 +73,7 @@ function generateRulesCode(rules: Rule[]): string {
   let code = ''
 
   rules.forEach(rule => {
-    code += `rule "${rule.name}"\n`
+    code += `rule "${rule.name}"${NEW_LINE}`
 
     // 使用枚举映射生成规则属性
     Object.values(RuleAttribute).forEach(attr => {
@@ -85,43 +86,40 @@ function generateRulesCode(rules: Rule[]): string {
       }
     })
 
-    code += `when\n`
+    // 关键字不缩进
+    code += `when${NEW_LINE}`
     if (rule.when && rule.when.trim()) {
-      // 处理 when 条件的缩进
-      const whenLines = rule.when.split('\n')
+      // 处理 when 条件的缩进（一级缩进：4 个空格）
+      const whenLines = rule.when.split(NEW_LINE)
       whenLines.forEach(line => {
-        // 如果行不为空且没有缩进，添加 4 个空格
         if (line.trim()) {
-          const hasIndent = line.startsWith(' ') || line.startsWith('\t')
-          code += hasIndent ? `${line}\n` : `    ${line}\n`
-        } else if (line) {
-          // 保留空行
-          code += `${line}\n`
+          code += indentLine(line) + NEW_LINE
+        } else {
+          code += NEW_LINE
         }
       })
     } else {
       // when 条件为空时，添加注释提示
-      code += `    // TODO: 请在此处添加规则条件\n`
+      code += indentLine('// TODO: 请在此处添加规则条件') + NEW_LINE
     }
-    code += `then\n`
+    // 关键字不缩进
+    code += `then${NEW_LINE}`
     if (rule.then && rule.then.trim()) {
-      // 处理 then 动作的缩进
-      const thenLines = rule.then.split('\n')
+      // 处理 then 动作的缩进（一级缩进：4 个空格）
+      const thenLines = rule.then.split(NEW_LINE)
       thenLines.forEach(line => {
-        // 如果行不为空且没有缩进，添加 4 个空格
         if (line.trim()) {
-          const hasIndent = line.startsWith(' ') || line.startsWith('\t')
-          code += hasIndent ? `${line}\n` : `    ${line}\n`
-        } else if (line) {
-          // 保留空行
-          code += `${line}\n`
+          code += indentLine(line) + NEW_LINE
+        } else {
+          code += NEW_LINE
         }
       })
     } else {
       // then 动作为空时，添加注释提示
-      code += `    // TODO: 请在此处添加规则动作\n`
+      code += indentLine('// TODO: 请在此处添加规则动作') + NEW_LINE
     }
-    code += `end\n\n`
+    // 关键字不缩进
+    code += `end${NEW_LINE}${NEW_LINE}`
   })
 
   return code
@@ -143,20 +141,20 @@ export const generateDrlCode = (
 
   let code = generateDrlHeader(description, drlId, timestamp)
 
-  code += `package ${pkg};\n\n`
+  code += `package ${pkg};${NEW_LINE}${NEW_LINE}`
 
   if (imports.length > 0) {
     imports.forEach(i => {
-      code += `${i}\n`
+      code += `${i}${NEW_LINE}`
     })
-    code += `\n`
+    code += NEW_LINE
   }
 
   if (globals.length > 0) {
     globals.forEach(g => {
-      code += `${g}\n`
+      code += `${g}${NEW_LINE}`
     })
-    code += `\n`
+    code += NEW_LINE
   }
 
   code += generateRulesCode(rules)
@@ -180,7 +178,7 @@ export const generateDrlCodeWithImports = async (
 
   let code = generateDrlHeader(description, drlId, timestamp)
 
-  code += `package ${pkg};\n\n`
+  code += `package ${pkg};${NEW_LINE.repeat(2)}`
 
   // 自动检测并添加import语句
   if (autoImport) {
@@ -201,9 +199,9 @@ export const generateDrlCodeWithImports = async (
 
   if (globals.length > 0) {
     globals.forEach(g => {
-      code += `${g}\n`
+      code += `${g}${NEW_LINE}`
     })
-    code += `\n`
+    code += NEW_LINE
   }
 
   code += generateRulesCode(rules)

@@ -10,7 +10,7 @@ import {
   Zap,
   Info
 } from 'lucide-vue-next'
-import SectionTitle from './SectionTitle.vue'
+import SectionTitle from './common/SectionTitle.vue'
 
 const visible = defineModel<boolean>()
 
