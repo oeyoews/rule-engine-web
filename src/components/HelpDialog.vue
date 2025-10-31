@@ -12,8 +12,6 @@ import {
 } from 'lucide-vue-next'
 import SectionTitle from './common/SectionTitle.vue'
 
-const visible = defineModel<boolean>()
-
 // 帮助信息数据
 const helpItems = [
   {
@@ -116,16 +114,10 @@ const helpItems = [
 </script>
 
 <template>
-  <el-dialog
-    v-model="visible"
-    title="使用帮助"
-    width="90%"
-    :close-on-click-modal="true"
-    class="max-w-7xl"
-  >
-    <div class="flex flex-col gap-5 max-h-[70vh] overflow-y-auto pr-2">
+  <div class="help-inline">
+    <div class="flex flex-col gap-5 max-h-[calc(100vh-400px)] overflow-y-auto pr-2">
       <!-- 顶部说明 -->
-      <div class="pb-3 border-b-2 border-gray-200 sticky top-0 bg-white z-10">
+      <div class="pb-3 border-b-2 border-gray-200">
         <div class="flex items-center gap-3">
           <div class="flex items-center justify-center w-12 h-12 bg-linear-to-br from-blue-100 to-blue-200 rounded-xl shrink-0">
             <Info :size="28" class="text-blue-600" />
@@ -160,18 +152,6 @@ const helpItems = [
           </div>
         </div>
       </div>
-
-      <!-- 底部提示 -->
-      <!-- <div class="pt-3 border-t-2 border-gray-200 sticky bottom-0 bg-white">
-        <div class="flex items-start gap-2 text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
-          <AlertTriangle :size="16" class="shrink-0 mt-0.5" />
-          <div class="text-xs">
-            <p class="font-semibold mb-0.5">温馨提示</p>
-            <p>点击"加载示例"可以查看完整的示例规则配置</p>
-          </div>
-        </div>
-      </div> -->
     </div>
-
-  </el-dialog>
+  </div>
 </template>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import {
-  Code2, Download, Copy, Check
+  Download, Copy, Check
 } from 'lucide-vue-next'
 import { useClipboard } from '@vueuse/core'
 import { ElMessage } from 'element-plus'
@@ -13,9 +13,6 @@ import 'highlight.js/styles/atom-one-dark.css'
 
 // 注册 Java 语言
 hljs.registerLanguage('java', java)
-
-// 双向绑定
-const dialogVisible = defineModel<boolean>()
 
 // Props
 const props = defineProps<{
@@ -72,28 +69,10 @@ const copyCode = async () => {
 </script>
 
 <template>
-  <el-dialog
-    v-model="dialogVisible"
-    title="DRL 代码预览"
-    width="65%"
-    :close-on-click-modal="false"
-    class="drl-preview-dialog"
-  >
-    <template #header>
-      <div class="flex items-center gap-3">
-        <div class="flex items-center justify-center w-10 h-10 bg-linear-to-br from-emerald-100 to-green-200 rounded-lg">
-          <Code2 :size="20" class="text-emerald-600" />
-        </div>
-        <div>
-          <h3 class="text-lg font-semibold text-gray-800 mb-0">DRL 代码预览</h3>
-          <p class="text-xs text-gray-500 mt-1">实时预览生成的 Drools 规则代码</p>
-        </div>
-      </div>
-    </template>
-
+  <div class="preview-inline">
     <!-- 代码预览区 -->
     <div class="space-y-3">
-      <el-scrollbar max-height="550px" class="code-container rounded-lg shadow-xl overflow-hidden">
+      <el-scrollbar max-height="calc(100vh - 400px)" class="code-container rounded-lg shadow-xl overflow-hidden">
         <div class="code-wrapper" v-html="highlightedCode"></div>
       </el-scrollbar>
 
@@ -105,33 +84,30 @@ const copyCode = async () => {
       />
     </div>
 
-    <!-- 对话框底部按钮 -->
-    <template #footer>
-      <div class="flex justify-end gap-2">
-        <el-button
-          size="default"
-          class="bg-linear-to-br! from-emerald-50! to-green-100! text-green-700! border! border-emerald-200! hover:border-green-400! hover:shadow-md! transition-all! duration-200!"
-          @click="downloadDRL"
-        >
-          <Download :size="18" class="mr-2" />
-          下载文件
-        </el-button>
-        <el-button
-          size="default"
-          :class="copied
-            ? 'bg-linear-to-br! from-green-100! to-emerald-200! text-emerald-800! border! border-green-300! shadow-md! transition-all! duration-200!'
-            : 'bg-linear-to-br! from-purple-50! to-indigo-100! text-indigo-700! border! border-purple-200! hover:border-indigo-400! hover:shadow-md! transition-all! duration-200!'
-          "
-          @click="copyCode"
-        >
-          <Copy v-if="!copied" :size="18" class="mr-2" />
-          <Check v-else :size="18" class="mr-2" />
-          {{ copied ? '已复制！' : '复制代码' }}
-        </el-button>
-        <el-button @click="dialogVisible = false">关闭</el-button>
-      </div>
-    </template>
-  </el-dialog>
+    <!-- 操作按钮 -->
+    <div class="flex justify-end gap-2 pt-3">
+      <el-button
+        size="default"
+        class="bg-linear-to-br! from-emerald-50! to-green-100! text-green-700! border! border-emerald-200! hover:border-green-400! hover:shadow-md! transition-all! duration-200!"
+        @click="downloadDRL"
+      >
+        <Download :size="18" class="mr-2" />
+        下载文件
+      </el-button>
+      <el-button
+        size="default"
+        :class="copied
+          ? 'bg-linear-to-br! from-green-100! to-emerald-200! text-emerald-800! border! border-green-300! shadow-md! transition-all! duration-200!'
+          : 'bg-linear-to-br! from-purple-50! to-indigo-100! text-indigo-700! border! border-purple-200! hover:border-indigo-400! hover:shadow-md! transition-all! duration-200!'
+        "
+        @click="copyCode"
+      >
+        <Copy v-if="!copied" :size="18" class="mr-2" />
+        <Check v-else :size="18" class="mr-2" />
+        {{ copied ? '已复制！' : '复制代码' }}
+      </el-button>
+    </div>
+  </div>
 </template>
 
 <style scoped>
