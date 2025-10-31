@@ -536,17 +536,19 @@ onMounted(() => {
                     <p class="text-xs font-medium">自动导入已启用，系统将自动检测并添加缺失的类导入</p>
                   </div>
                   <!-- 手动导入模式提示 -->
-                  <div v-else-if="!autoImportMode && hasMissingImports" class="mt-2 flex items-start gap-2 text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
-                    <AlertTriangle :size="16" class="shrink-0 mt-0.5" />
-                    <div class="flex-1 text-xs">
+                  <div v-else-if="!autoImportMode && hasMissingImports" class="mt-2 flex items-center gap-3 justify-between text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5 w-full">
+                    <div class="flex items-center gap-2 flex-1 min-w-0">
+                      <AlertTriangle :size="26" class="shrink-0 mt-0.5 mr-2" />
+                      <div class="flex-1 text-xs min-w-0">
                       <p class="font-semibold mb-0.5">检测到 {{ missingImports.length }} 个未导入的类</p>
                       <p class="text-gray-700">{{ missingImports.map(imp => imp.match(/\.(\w+);/)?.[1]).join(', ') }}</p>
+                      </div>
                     </div>
                     <el-button
                       size="small"
                       type="primary"
                       @click="autoAddImports"
-                      class="shrink-0"
+                      class="shrink-0 self-center"
                     >
                       手动添加
                     </el-button>

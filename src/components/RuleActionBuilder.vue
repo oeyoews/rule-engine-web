@@ -643,9 +643,9 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
               @click.stop="removeAction(action.id)"
               size="small"
               plain
-              class="border-red-300! text-red-600! hover:bg-red-50! hover:border-red-400! hover:text-red-700!"
+              class="group bg-red-50! border-red-200! text-red-600! hover:bg-red-100! hover:border-red-300! hover:text-red-700! focus:outline-none! focus:ring-2! focus:ring-red-200! active:translate-y-px! transition-all! duration-150! rounded-md!"
             >
-              <Trash2 :size="16" class="mr-1" />
+              <Trash2 :size="16" class="mr-1 transition-colors duration-150 group-hover:text-red-700" />
               删除动作
             </el-button>
           </div>

@@ -67,6 +67,22 @@ const operatorColorMap: Record<string, string> = {
   'memberOf': 'text-teal-600'
 }
 
+// 生成操作符对应的浅色 el-tag 颜色类
+const operatorTagClass = (op: string): string => {
+  const map: Record<string, string> = {
+    '==': 'bg-purple-50! text-purple-700! border-purple-200!',
+    '!=': 'bg-rose-50! text-rose-700! border-rose-200!',
+    '>': 'bg-orange-50! text-orange-700! border-orange-200!',
+    '<': 'bg-blue-50! text-blue-600! border-blue-200!',
+    '>=': 'bg-orange-50! text-orange-700! border-orange-200!',
+    '<=': 'bg-blue-50! text-blue-600! border-blue-200!',
+    'contains': 'bg-emerald-50! text-emerald-700! border-emerald-200!',
+    'matches': 'bg-indigo-50! text-indigo-600! border-indigo-200!',
+    'memberOf': 'bg-teal-50! text-teal-700! border-teal-200!'
+  }
+  return map[op] || 'bg-slate-50! text-slate-700! border-slate-200!'
+}
+
 // 逻辑操作符
 const logicOperators = [
   { label: '并且 (AND)', value: 'AND', icon: Ampersand, color: 'text-blue-600' },
@@ -330,11 +346,15 @@ watch(() => props.modelValue, (newValue) => {
               </div>
               <div class="text-sm font-medium text-gray-700">
                 条件{{ index + 1 }}:
-                <span class="text-blue-600">
-                  ${{ condition.variable }}: {{ condition.className || '(未选择类)' }}
-                </span>
-                <span v-if="condition.field" class="text-gray-500">
-                  .{{ condition.field }} {{ condition.operator }} {{ condition.value || '?' }}
+                <span class="inline-flex flex-wrap items-center gap-1 ml-1 align-middle">
+                  <el-tag size="small" effect="plain" class="bg-cyan-50! text-cyan-700! border-cyan-200!">${{ condition.variable }}</el-tag>
+                  <span class="text-slate-400">:</span>
+                  <el-tag size="small" effect="plain" class="bg-fuchsia-50! text-fuchsia-700! border-fuchsia-200!">{{ condition.className || '(未选择类)' }}</el-tag>
+                  <template v-if="condition.field">
+                    <el-tag size="small" effect="plain" class="bg-slate-50! text-slate-700! border-slate-200!">.{{ condition.field }}</el-tag>
+                    <el-tag size="small" effect="plain" :class="operatorTagClass(condition.operator)">{{ condition.operator }}</el-tag>
+                    <el-tag size="small" effect="plain" class="bg-slate-50! text-slate-700! border-slate-200!">{{ condition.value || '?' }}</el-tag>
+                  </template>
                 </span>
               </div>
             </div>
@@ -368,7 +388,7 @@ watch(() => props.modelValue, (newValue) => {
                 @change="updateDrlCode"
               >
                 <template #prefix>
-                  <span class="text-gray-400">$</span>
+                  <span class="text-cyan-600 font-mono">$</span>
                 </template>
               </el-input>
             </div>
@@ -470,7 +490,11 @@ watch(() => props.modelValue, (newValue) => {
                 size="small"
                 placeholder="输入值"
                 @change="updateDrlCode"
-              />
+              >
+                <template #prefix>
+                  <Code2 :size="14" class="text-emerald-600 ml-1" />
+                </template>
+              </el-input>
               </div>
             </div>
 
@@ -481,9 +505,9 @@ watch(() => props.modelValue, (newValue) => {
                 :disabled="conditions.length === 1"
                 size="small"
                 plain
-                class="border-red-300! text-red-600! hover:bg-red-50! hover:border-red-400! hover:text-red-700!"
+                class="group bg-red-50! border-red-200! text-red-600! hover:bg-red-100! hover:border-red-300! hover:text-red-700! focus:outline-none! focus:ring-2! focus:ring-red-200! active:translate-y-[1px]! transition-all! duration-150! rounded-md!"
               >
-                <Trash2 :size="16" class="mr-1" />
+                <Trash2 :size="16" class="mr-1 transition-colors duration-150 group-hover:text-red-700" />
                 删除条件
               </el-button>
             </div>
