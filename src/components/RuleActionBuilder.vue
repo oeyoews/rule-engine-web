@@ -433,6 +433,9 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
                 @change="updateDrlCode"
                 class="w-full"
               >
+                <template #prefix>
+                  <Variable :size="14" class="text-blue-600 ml-1" />
+                </template>
                 <el-option-group label="条件中的变量">
                   <el-option
                     v-for="variable in extractVariablesFromWhen"
@@ -463,6 +466,9 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
                 @change="updateDrlCode"
                 class="w-full"
               >
+                <template #prefix>
+                  <Box :size="14" class="text-indigo-600 ml-1" />
+                </template>
                 <el-option
                   v-for="obj in availableObjects"
                   :key="obj.value"
@@ -488,6 +494,9 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
                 :disabled="!action.object"
                 class="w-full"
               >
+                <template #prefix>
+                  <Code2 :size="14" class="text-green-600 ml-1" />
+                </template>
                 <el-option
                   v-for="method in getObjectMethods(action.object)"
                   :key="method.name"
@@ -525,7 +534,11 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
                   :placeholder="`输入${getMethodParams(action)?.params[pIndex]?.type}`"
                   @change="updateDrlCode"
                   class="flex-1"
-                />
+                >
+                  <template #prefix>
+                    <Code2 :size="14" class="text-emerald-600 ml-1" />
+                  </template>
+                </el-input>
               </div>
             </div>
           </div>
@@ -544,6 +557,9 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
             @change="updateDrlCode"
             class="w-full"
           >
+            <template #prefix>
+              <Variable :size="14" class="text-blue-600 ml-1" />
+            </template>
             <el-option-group label="条件中的变量">
               <el-option
                 v-for="variable in extractVariablesFromWhen"
@@ -581,6 +597,9 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
               @change="updateDrlCode"
               class="w-full"
             >
+              <template #prefix>
+                <Variable :size="14" class="text-blue-600 ml-1" />
+              </template>
               <el-option-group label="条件中的变量">
                 <el-option
                   v-for="variable in extractVariablesFromWhen"
@@ -610,7 +629,11 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
               size="small"
               placeholder="方法名"
               @change="updateDrlCode"
-            />
+            >
+              <template #prefix>
+                <Edit :size="14" class="text-orange-600 ml-1" />
+              </template>
+            </el-input>
             </div>
           </div>
 

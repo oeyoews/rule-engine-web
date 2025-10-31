@@ -706,7 +706,8 @@ onMounted(() => {
                               <span>规则名称</span>
                             </div>
                           </template>
-                          <el-input v-model="rule.name" maxlength="50" show-word-limit placeholder="输入规则名称" ></el-input>
+                          <el-input v-model="rule.name" maxlength="50" show-word-limit placeholder="输入规则名称">
+                          </el-input>
                         </el-form-item>
                         <el-form-item>
                           <template #label>

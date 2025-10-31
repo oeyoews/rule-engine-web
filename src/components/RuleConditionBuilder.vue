@@ -384,6 +384,9 @@ watch(() => props.modelValue, (newValue) => {
                 @change="updateDrlCode"
                 class="w-full"
               >
+                <template #prefix>
+                  <Box :size="14" class="text-indigo-600 ml-1" />
+                </template>
                 <el-option
                   v-for="cls in availableClasses"
                   :key="cls.name"
@@ -413,6 +416,9 @@ watch(() => props.modelValue, (newValue) => {
                 :disabled="!condition.className"
                 class="w-full"
               >
+                <template #prefix>
+                  <Hash :size="14" class="text-teal-600 ml-1" />
+                </template>
                 <el-option
                   v-for="field in getClassFields(condition.className)"
                   :key="field.name"
@@ -439,6 +445,9 @@ watch(() => props.modelValue, (newValue) => {
                 @change="updateDrlCode"
                 class="w-full"
               >
+                <template #prefix>
+                  <component :is="operatorIconMap[condition.operator] || Equal" :size="14" :class="operatorColorMap[condition.operator] || 'text-purple-600'" class="ml-1" />
+                </template>
                 <el-option
                   v-for="op in operators"
                   :key="op.value"
