@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Plus, Trash2, Grip, Ampersand, Split, Box, Hash, Equal, Code2, Filter } from 'lucide-vue-next'
+import { Plus, Trash2, Grip, Ampersand, Split, Box, Hash, Equal, EqualNot, ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft, Regex, Code2, Filter } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassField } from '@/utils/classImport'
 import { VueDraggable } from 'vue-draggable-plus'
 
@@ -41,6 +41,31 @@ const operators = [
   { label: '匹配 (matches)', value: 'matches' },
   { label: '在...中 (memberOf)', value: 'memberOf' }
 ]
+
+// 操作符图标映射与颜色
+const operatorIconMap: Record<string, any> = {
+  '==': Equal,
+  '!=': EqualNot,
+  '>': ChevronRight,
+  '<': ChevronLeft,
+  '>=': ChevronsRight,
+  '<=': ChevronsLeft,
+  'contains': Filter,
+  'matches': Regex,
+  'memberOf': Box
+}
+
+const operatorColorMap: Record<string, string> = {
+  '==': 'text-purple-600',
+  '!=': 'text-rose-600',
+  '>': 'text-orange-600',
+  '<': 'text-blue-600',
+  '>=': 'text-orange-600',
+  '<=': 'text-blue-600',
+  'contains': 'text-emerald-600',
+  'matches': 'text-indigo-600',
+  'memberOf': 'text-teal-600'
+}
 
 // 逻辑操作符
 const logicOperators = [
@@ -421,7 +446,7 @@ watch(() => props.modelValue, (newValue) => {
                   :value="op.value"
                 >
                   <div class="flex items-center gap-2">
-                    <Equal :size="16" class="text-purple-600" />
+                    <component :is="operatorIconMap[op.value] || Equal" :size="16" :class="operatorColorMap[op.value] || 'text-purple-600'" />
                     <span>{{ op.label }}</span>
                   </div>
                 </el-option>

@@ -715,20 +715,20 @@ onMounted(() => {
                               <span>规则配置</span>
                             </div>
                           </template>
-                          <div class="flex flex-wrap gap-4 p-2 rounded-lg border border-green-400 w-full">
-                            <el-checkbox v-model="rule.enabled" size="large" class="hover:bg-white px-3 py-2 rounded transition-colors">
+                           <div class="flex flex-wrap gap-4 p-2 rounded-lg border border-green-400 w-full">
+                             <el-checkbox v-model="rule.enabled" size="large" class="cb-enabled hover:bg-white px-3 py-2 rounded transition-colors">
                               <span class="inline-flex items-center gap-2">
                                 <Power :size="16" :class="rule.enabled ? 'text-green-600' : 'text-gray-400'" />
                                 <span class="text-sm font-medium">启用规则</span>
                               </span>
                             </el-checkbox>
-                            <el-checkbox v-model="rule.noLoop" size="large" class="hover:bg-white px-3 py-2 rounded transition-colors">
+                             <el-checkbox v-model="rule.noLoop" size="large" class="cb-noloop hover:bg-white px-3 py-2 rounded transition-colors">
                               <span class="inline-flex items-center gap-2">
                                 <RotateCcw :size="16" :class="rule.noLoop ? 'text-orange-600' : 'text-gray-400'" />
                                 <span class="text-sm font-medium">防止循环</span>
                               </span>
                             </el-checkbox>
-                            <el-checkbox v-model="rule.lockOnActive" size="large" class="hover:bg-white px-3 py-2 rounded transition-colors">
+                             <el-checkbox v-model="rule.lockOnActive" size="large" class="cb-lock hover:bg-white px-3 py-2 rounded transition-colors">
                               <span class="inline-flex items-center gap-2">
                                 <Lock :size="16" :class="rule.lockOnActive ? 'text-purple-600' : 'text-gray-400'" />
                                 <span class="text-sm font-medium">锁定激活</span>
@@ -937,5 +937,42 @@ onMounted(() => {
   opacity: 0.5;
   background: #eef2ff;
   border: 2px dashed #818cf8;
+}
+
+/* Checkbox 配色定制（启用/循环/锁定） */
+:deep(.cb-enabled .el-checkbox__input.is-checked .el-checkbox__inner) {
+  background-color: #16a34a !important; /* green-600 */
+  border-color: #16a34a !important;
+}
+:deep(.cb-enabled .el-checkbox__inner:hover) {
+  border-color: #16a34a !important;
+}
+:deep(.cb-enabled.is-checked .el-checkbox__label),
+:deep(.cb-enabled .el-checkbox__input.is-checked + .el-checkbox__label) {
+  color: #16a34a !important;
+}
+
+:deep(.cb-noloop .el-checkbox__input.is-checked .el-checkbox__inner) {
+  background-color: #ea580c !important; /* orange-600 */
+  border-color: #ea580c !important;
+}
+:deep(.cb-noloop .el-checkbox__inner:hover) {
+  border-color: #ea580c !important;
+}
+:deep(.cb-noloop.is-checked .el-checkbox__label),
+:deep(.cb-noloop .el-checkbox__input.is-checked + .el-checkbox__label) {
+  color: #ea580c !important;
+}
+
+:deep(.cb-lock .el-checkbox__input.is-checked .el-checkbox__inner) {
+  background-color: #7c3aed !important; /* purple-600 */
+  border-color: #7c3aed !important;
+}
+:deep(.cb-lock .el-checkbox__inner:hover) {
+  border-color: #7c3aed !important;
+}
+:deep(.cb-lock.is-checked .el-checkbox__label),
+:deep(.cb-lock .el-checkbox__input.is-checked + .el-checkbox__label) {
+  color: #7c3aed !important;
 }
 </style>
