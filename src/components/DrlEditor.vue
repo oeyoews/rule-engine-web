@@ -363,9 +363,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="bg-linear-to-br min-h-screen from-slate-50 via-blue-50 to-slate-50 p-4">
+  <div class="bg-linear-to-br min-h-screen">
     <div class="md:max-w-7xl lg:max-w-9xl xl:max-w-11xl mx-auto space-y-4">
-      <!-- 顶部标题栏 - 优化视觉层次 -->
+      <!-- 顶部标题栏 -->
       <div class="bg-white/95 backdrop-blur-md rounded-xl shadow-lg p-4 border border-slate-200/80 hover:shadow-xl transition-shadow duration-300">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <!-- 标题区域 -->
@@ -379,7 +379,7 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- 操作按钮组 - 优化布局和视觉效果 -->
+          <!-- 操作按钮组 -->
           <div class="flex flex-wrap gap-2">
             <el-button
               size="default"
@@ -438,9 +438,8 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- 全局配置卡片 - 独占一行（普通模式） -->
+      <!-- 全局配置卡片 -->
       <div v-if="!advancedMode">
-        <!-- 全局配置卡片 -->
         <div class="bg-white/95 backdrop-blur-md rounded-xl shadow-md border border-slate-200/80 overflow-hidden hover:shadow-lg transition-shadow duration-300">
           <el-collapse v-model="activeConfig" accordion>
             <el-collapse-item name="config">

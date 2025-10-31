@@ -4,15 +4,6 @@ import { Plus, Grip, Phone, RefreshCw, PlusCircle, Trash2, Edit, Zap, Variable, 
 import { loadClassData, type ClassData, type ClassMethod } from '@/utils/classImport'
 import { VueDraggable } from 'vue-draggable-plus'
 
-interface Action {
-  id: string
-  type: 'method' | 'function' | 'update' | 'insert' | 'retract' | 'modify'
-  object: string
-  method: string
-  params: Array<{ value: string }>
-  description?: string
-}
-
 const props = defineProps<{
   modelValue: string
   whenCondition?: string
@@ -354,7 +345,7 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
 </script>
 
 <template>
-  <div class="action-builder">
+  <div class="w-full">
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center gap-2">
         <Sparkles :size="18" class="text-green-600 shrink-0" />
@@ -403,18 +394,29 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
           <div class="p-3 bg-green-50 rounded-lg border border-green-200 mt-2 ml-4">
             <div class="mb-3">
               <label class="text-xs text-gray-600 mb-1 block">① 动作类型</label>
-              <el-radio-group v-model="action.type" size="small" @change="updateDrlCode">
-                <el-radio-button
-                  v-for="type in actionTypes"
-                  :key="type.value"
-                  :label="type.value"
-                >
+              <el-segmented
+                v-model="action.type"
+                size="default"
+                @change="updateDrlCode"
+                class="w-full"
+                :options="actionTypes.map(type => ({
+                  label: type.label,
+                  value: type.value,
+                  icon: type.icon,
+                  color: type.color
+                }))"
+              >
+                <template #default="scope">
                   <span class="inline-flex items-center gap-1.5">
-                    <component :is="type.icon" :size="14" :class="type.color" />
-                    <span>{{ type.label }}</span>
+                    <component
+                      :is="scope.item.icon"
+                      :size="14"
+                      :class="scope.item.color"
+                    />
+                    <span>{{ scope.item.label }}</span>
                   </span>
-                </el-radio-button>
-              </el-radio-group>
+                </template>
+              </el-segmented>
             </div>
 
         <!-- 调用方法 -->
@@ -672,10 +674,6 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
 </template>
 
 <style scoped>
-.action-builder {
-  width: 100%;
-}
-
 .action-item {
   transition: all 0.2s;
   margin-bottom: 0.75rem;

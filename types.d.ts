@@ -29,3 +29,12 @@ interface ParsedDrl {
   description: string
   rules: Rule[]
 }
+
+interface Action {
+  id: string
+  type: 'method' | 'function' | 'update' | 'insert' | 'retract' | 'modify'
+  object: string
+  method: string
+  params: Array<{ value: string }>
+  description?: string
+}
