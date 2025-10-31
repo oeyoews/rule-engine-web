@@ -31,9 +31,8 @@ const config = ref<Config>({
 const rules = ref<Rule[]>([])
 const activeRules = ref<number | string>(0)
 
-// 控制折叠面板显示
-const activeConfig = ref<string>('config') // 全局配置折叠状态
-const activeRuleList = ref<string>('ruleList') // 规则列表折叠状态
+// 控制标签页显示
+const activeTab = ref<string>('config') // 当前激活的标签页
 
 // 控制帮助弹窗显示
 const showHelpDialog = ref(false)
@@ -438,23 +437,20 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- 全局配置卡片 -->
+      <!-- 全局配置和规则列表 - 使用标签页 -->
       <div v-if="!advancedMode">
-        <div class="bg-white/95 backdrop-blur-md rounded-xl shadow-md border border-slate-200/80 overflow-hidden hover:shadow-lg transition-shadow duration-300">
-          <el-collapse v-model="activeConfig" accordion>
-            <el-collapse-item name="config">
-              <template #title>
-                <div class="flex items-center gap-3 py-3 px-4">
-                  <div class="flex items-center justify-center w-10 h-10 bg-linear-to-br from-violet-100 to-purple-200 rounded-lg">
-                    <Settings :size="20" class="text-violet-600" />
-                  </div>
-                  <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-0">全局配置</h3>
-                    <p class="text-xs text-gray-500">配置包名、全局变量和描述信息</p>
-                  </div>
+        <div class="bg-white/95 backdrop-blur-md rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+          <el-tabs v-model="activeTab" type="border-card">
+            <!-- 全局配置标签页 -->
+            <el-tab-pane name="config">
+              <template #label>
+                <div class="flex items-center gap-2">
+                  <Settings :size="18" class="text-violet-600" />
+                  <span>全局配置</span>
                 </div>
               </template>
-              <el-form :model="config" label-width="100px" label-position="top" class="pt-3 px-4 pb-3">
+              <div class="pt-4 px-4 pb-4">
+                <el-form :model="config" label-width="100px" label-position="top">
                 <el-form-item>
                   <template #label>
                     <div class="flex items-center gap-2 ml-1">
@@ -601,40 +597,30 @@ onMounted(() => {
                   />
                 </el-form-item>
               </el-form>
-            </el-collapse-item>
-          </el-collapse>
-        </div>
-      </div>
+              </div>
+            </el-tab-pane>
 
-      <!-- 规则列表（普通模式） -->
-      <div v-if="!advancedMode">
-        <!-- 规则列表卡片 -->
-          <div class="bg-white/95 backdrop-blur-md rounded-xl shadow-md border border-slate-200/80 overflow-hidden hover:shadow-lg transition-shadow duration-300">
-            <el-collapse v-model="activeRuleList" accordion>
-              <el-collapse-item name="ruleList">
-                <template #title>
-                  <div class="flex justify-between items-center w-full py-3 px-4">
-                    <div class="flex items-center gap-3">
-                      <div class="flex items-center justify-center w-10 h-10 bg-linear-to-br from-blue-100 to-cyan-200 rounded-lg">
-                        <ClipboardList :size="20" class="text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 class="text-lg font-semibold text-gray-800 mb-0">规则列表</h3>
-                        <p class="text-xs text-gray-500">管理和配置业务规则</p>
-                      </div>
-                    </div>
-                    <el-button
-                      class="mr-6 bg-linear-to-br! from-sky-50! to-blue-100! text-blue-700! border! border-sky-200! hover:border-blue-400! hover:shadow-md! hover:scale-105! transition-all! duration-200!"
-                      @click.stop="addRule"
-                      :disabled="advancedMode"
-                      size="default"
-                    >
-                      <Plus :size="18" class="mr-1" />
-                      添加规则
-                    </el-button>
-                  </div>
-                </template>
-                <div class="pt-3 px-4 pb-3">
+            <!-- 规则列表标签页 -->
+            <el-tab-pane name="ruleList">
+              <template #label>
+                <div class="flex items-center gap-2">
+                  <ClipboardList :size="18" class="text-blue-600" />
+                  <span>规则列表</span>
+                </div>
+              </template>
+              <div class="pt-4 px-4 pb-4">
+                <!-- 添加规则按钮 -->
+                <div class="flex justify-end mb-4">
+                  <el-button
+                    class="bg-linear-to-br! from-sky-50! to-blue-100! text-blue-700! border! border-sky-200! hover:border-blue-400! hover:shadow-md! hover:scale-105! transition-all! duration-200!"
+                    @click="addRule"
+                    :disabled="advancedMode"
+                    size="default"
+                  >
+                    <Plus :size="18" class="mr-1" />
+                    添加规则
+                  </el-button>
+                </div>
                   <!-- 空状态提示 -->
                   <div v-if="rules.length === 0" class="text-center py-12">
                     <div class="flex flex-col items-center gap-3">
@@ -824,10 +810,10 @@ onMounted(() => {
                       </el-collapse-item>
                     </VueDraggable>
                   </el-collapse>
-                </div>
-              </el-collapse-item>
-            </el-collapse>
-          </div>
+              </div>
+            </el-tab-pane>
+          </el-tabs>
+        </div>
       </div>
 
       <!-- 高级模式：全屏代码编辑器 -->
@@ -900,13 +886,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* 淡入淡出过渡效果 */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
+@reference "../styles/tailwind.css";
 
 /* 高级编辑器样式优化 */
 :deep(.drl-editor-advanced .el-textarea__inner) {
@@ -923,15 +903,34 @@ onMounted(() => {
   box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3) !important;
 }
 
-/* 折叠面板箭头样式 */
-:deep(.el-collapse-item__arrow) {
-  margin-right: 1rem !important;
+/* el-tabs 边框样式优化 */
+:deep(.el-tabs--border-card) {
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: none !important;
 }
 
-/* 禁用 el-tag 的所有过渡动画 */
-:deep(.el-tag) {
-  transition: none !important;
-  animation: none !important;
+:deep(.el-tabs--border-card > .el-tabs__header) {
+  @apply bg-transparent;
+}
+
+:deep(.el-tabs--border-card > .el-tabs__header .el-tabs__item) {
+  @apply border-none;
+  border-right: 1px solid rgba(226, 232, 240, 0.8) !important;
+}
+
+:deep(.el-tabs--border-card > .el-tabs__header .el-tabs__item:last-child) {
+  border-right: none !important;
+}
+
+:deep(.el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active) {
+  @apply bg-transparent;
+  color: #3b82f6 !important;
+  border-bottom: 2px solid #3b82f6 !important;
+}
+
+:deep(.el-tabs--border-card > .el-tabs__content) {
+  @apply p-2;
 }
 
 /* 规则拖拽时的幽灵元素样式 */

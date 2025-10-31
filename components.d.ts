@@ -32,6 +32,8 @@ declare module 'vue' {
     ElSegmentedItem: typeof import('element-plus/es')['ElSegmentedItem']
     ElSelect: typeof import('element-plus/es')['ElSelect']
     ElSwitch: typeof import('element-plus/es')['ElSwitch']
+    ElTabPane: typeof import('element-plus/es')['ElTabPane']
+    ElTabs: typeof import('element-plus/es')['ElTabs']
     ElTag: typeof import('element-plus/es')['ElTag']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     HelpDialog: typeof import('./src/components/HelpDialog.vue')['default']

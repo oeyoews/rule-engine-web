@@ -42,3 +42,9 @@ html {
 	border-color: #dc2626 !important;
 	box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06), 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
 }
+
+/* 禁用 el-tag 的所有过渡动画 */
+:deep(.el-tag) {
+  transition: none !important;
+  animation: none !important;
+}
