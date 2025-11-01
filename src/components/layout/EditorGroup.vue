@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { ElMessageBox } from 'element-plus'
-import ConfigEditor from '../editor/ConfigEditor.vue'
-import RuleEditor from '../editor/RuleEditor.vue'
-import AdvancedEditor from '../editor/AdvancedEditor.vue'
-import PreviewEditor from '../editor/PreviewEditor.vue'
+import { ref, computed, h, watch } from 'vue'
+import { ElMessageBox, ElMessage } from 'element-plus'
+import { X, XCircle, XSquare, Settings, ClipboardList, Code2, Eye } from 'lucide-vue-next'
+import ContextMenu from '@imengyu/vue3-context-menu'
+import ConfigEditor from '@/components/editor/ConfigEditor.vue'
+import RuleEditor from '@/components/editor/RuleEditor.vue'
+import AdvancedEditor from '@/components/editor/AdvancedEditor.vue'
+import PreviewEditor from '@/components/editor/PreviewEditor.vue'
 import { useEditorState } from '@/composables/useEditorState'
 
 const editorState = useEditorState()
@@ -60,6 +62,12 @@ const closeTab = async (id: string) => {
     }
   }
 
+  // 执行实际的关闭操作
+  removeTab(id)
+}
+
+// 内部函数：直接移除标签页（不显示确认对话框）
+const removeTab = (id: string) => {
   const index = tabs.value.findIndex(tab => tab.id === id)
   if (index !== -1) {
     tabs.value.splice(index, 1)
@@ -109,6 +117,123 @@ const activeTab = computed(() => {
   return tabs.value.find(tab => tab.id === activeTabId.value)
 })
 
+// 获取标签页类型对应的图标
+const getTabIcon = (type: EditorTab['type']) => {
+  const iconMap = {
+    config: Settings,
+    rule: ClipboardList,
+    advanced: Code2,
+    preview: Eye
+  }
+  return iconMap[type]
+}
+
+// 处理标签页切换
+const handleTabChange = async (tabId: string | number) => {
+  await switchTab(String(tabId))
+}
+
+// 处理标签页关闭
+const handleTabRemove = async (tabId: string | number) => {
+  await closeTab(String(tabId))
+}
+
+// 复制标签页
+const duplicateTab = (tab: EditorTab) => {
+  if (tab.type === 'rule' && tab.data?.ruleName) {
+    // 通过 ruleName 查找规则索引
+    const ruleIndex = editorState.rules.value.findIndex(r => r.name === tab.data?.ruleName)
+    if (ruleIndex !== -1) {
+      openRuleEditor(ruleIndex)
+    }
+  } else if (tab.type === 'rule' && tab.data?.index !== undefined) {
+    // 向后兼容：使用 index
+    openRuleEditor(tab.data.index)
+  } else if (tab.type === 'config') {
+    openConfigEditor()
+  } else if (tab.type === 'advanced') {
+    openAdvancedEditor()
+  } else if (tab.type === 'preview') {
+    openPreviewEditor()
+  }
+  ElMessage.success('标签页已复制')
+}
+
+// 切换到左侧标签页
+const switchToLeftTab = (currentIndex: number) => {
+  if (currentIndex > 0) {
+    const leftTab = tabs.value[currentIndex - 1]
+    if (leftTab) {
+      switchTab(leftTab.id)
+    }
+  }
+}
+
+// 切换到右侧标签页
+const switchToRightTab = (currentIndex: number) => {
+  if (currentIndex < tabs.value.length - 1) {
+    const rightTab = tabs.value[currentIndex + 1]
+    if (rightTab) {
+      switchTab(rightTab.id)
+    }
+  }
+}
+
+// 重新加载标签页
+const reloadTab = () => {
+  ElMessage.info('重新加载功能暂未实现')
+}
+
+// 处理标签页栏右键菜单
+const handleTabsBarContextMenu = (event: MouseEvent, tabId: string) => {
+  event.preventDefault()
+  event.stopPropagation()
+
+  const tab = tabs.value.find(t => t.id === tabId)
+  if (!tab) return
+
+  // const index = tabs.value.findIndex(t => t.id === tabId)
+  const hasMultipleTabs = tabs.value.length > 1
+
+  ContextMenu.showContextMenu({
+    x: event.clientX,
+    y: event.clientY,
+    items: [
+      {
+        label: '关闭',
+        icon: () => h(X, { size: 14 }),
+        disabled: !hasMultipleTabs,
+        onClick: async () => {
+          await closeTab(tab.id)
+        }
+      },
+      {
+        label: '关闭其他',
+        icon: () => h(XCircle, { size: 14 }),
+        disabled: !hasMultipleTabs,
+        onClick: async () => {
+          const tabsToClose = tabs.value.filter(t => t.id !== tab.id)
+          for (const t of tabsToClose) {
+            await closeTab(t.id)
+          }
+        }
+      },
+      {
+        label: '关闭所有',
+        icon: () => h(XSquare, { size: 14 }),
+        disabled: !hasMultipleTabs,
+        onClick: async () => {
+          const tabsToClose = [...tabs.value]
+          for (const t of tabsToClose) {
+            await closeTab(t.id)
+          }
+        },
+        divided: true
+      },
+    ]
+  })
+}
+
 // 提供编辑器操作方法
 const openConfigEditor = () => {
   const existingTab = tabs.value.find(tab => tab.type === 'config')
@@ -124,18 +249,84 @@ const openConfigEditor = () => {
 }
 
 const openRuleEditor = (ruleIndex: number) => {
-  const existingTab = tabs.value.find(tab => tab.type === 'rule' && tab.data?.index === ruleIndex)
+  const rule = editorState.rules.value[ruleIndex]
+  if (!rule) return ''
+
+  const ruleName = rule.name
+  // 使用 ruleName 查找已存在的标签页
+  const existingTab = tabs.value.find(tab =>
+    tab.type === 'rule' && tab.data?.ruleName === ruleName
+  )
+
   if (existingTab) {
     activeTabId.value = existingTab.id
+    // 更新标题为最新的规则名称
+    existingTab.title = ruleName || `规则 ${ruleIndex + 1}`
     return existingTab.id
   }
+
+  const title = ruleName || `规则 ${ruleIndex + 1}`
   return addTab({
     type: 'rule',
-    title: `规则 ${ruleIndex + 1}`,
+    title,
     component: RuleEditor,
-    data: { index: ruleIndex }
+    data: { ruleName: ruleName, index: ruleIndex } // 同时保存 ruleName 和 index 以保持兼容性
   })
 }
+
+// 监听规则名称变化，更新对应的标签页标题和 ruleName
+watch(
+  () => editorState.rules.value.map((r, idx) => ({ name: r.name, index: idx })),
+  () => {
+    tabs.value.forEach(tab => {
+      if (tab.type === 'rule' && tab.data?.ruleName) {
+        const oldRuleName = tab.data.ruleName
+        // 尝试找到新的规则名称（可能被重命名了）
+        let foundRule = editorState.rules.value.find(r => r.name === oldRuleName)
+
+        // 如果找不到，可能是规则被重命名了，尝试通过索引匹配
+        if (!foundRule && tab.data?.index !== undefined) {
+          const oldIndex = tab.data.index
+          if (oldIndex >= 0 && oldIndex < editorState.rules.value.length) {
+            foundRule = editorState.rules.value[oldIndex]
+            // 更新标签页的 ruleName
+            if (tab.data && foundRule) {
+              tab.data.ruleName = foundRule.name
+            }
+          }
+        }
+
+        if (foundRule) {
+          tab.title = foundRule.name || `规则 ${editorState.rules.value.findIndex(r => r.name === foundRule!.name) + 1}`
+          // 更新索引以保持同步
+          if (tab.data) {
+            tab.data.index = editorState.rules.value.findIndex(r => r.name === foundRule!.name)
+          }
+        }
+      }
+    })
+  },
+  { deep: true }
+)
+
+// 监听规则数组变化，如果规则被删除，关闭对应的标签页
+watch(
+  () => editorState.rules.value.length,
+  (newLength, oldLength) => {
+    if (newLength < oldLength) {
+      // 规则被删除了，检查是否有标签页指向已删除的规则
+      const existingRuleNames = new Set(editorState.rules.value.map(r => r.name))
+      tabs.value.forEach(tab => {
+        if (tab.type === 'rule' && tab.data?.ruleName) {
+          if (!existingRuleNames.has(tab.data.ruleName)) {
+            // 规则已被删除，直接关闭标签页（不显示确认对话框）
+            removeTab(tab.id)
+          }
+        }
+      })
+    }
+  }
+)
 
 const openAdvancedEditor = () => {
   const existingTab = tabs.value.find(tab => tab.type === 'advanced')
@@ -179,30 +370,32 @@ defineExpose({
 <template>
   <div class="editor-group flex flex-col flex-1 overflow-hidden bg-white">
     <!-- 标签页栏 -->
-    <div v-if="tabs.length > 0" class="tabs-bar flex items-center bg-gray-100 border-b border-gray-300 overflow-x-auto">
-      <div
-        v-for="tab in tabs"
-        :key="tab.id"
-        :class="[
-          'tab-item flex items-center gap-2 px-4 py-2 cursor-pointer border-r border-gray-300 transition-colors',
-          activeTabId === tab.id
-            ? 'bg-white text-gray-900'
-            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
-        ]"
-        @click="switchTab(tab.id)"
+    <div v-if="tabs.length > 0" class="tabs-bar">
+      <el-tabs
+        v-model="activeTabId"
+        type="card"
+        closable
+        @tab-change="handleTabChange"
+        @tab-remove="handleTabRemove"
       >
-        <span class="text-sm">{{ tab.title }}</span>
-        <el-button
-          v-if="tabs.length > 1"
-          text
-          circle
-          size="small"
-          class="ml-2 w-4 h-4 min-w-0 p-0 flex items-center justify-center hover:bg-gray-300"
-          @click.stop="closeTab(tab.id)"
+        <el-tab-pane
+          v-for="tab in tabs"
+          :key="tab.id"
+          :name="tab.id"
+          :label="tab.title"
+          :closable="tabs.length > 1"
         >
-          <span class="text-xs">×</span>
-        </el-button>
-      </div>
+          <template #label>
+            <span
+              class="tab-label flex items-center gap-2"
+              @contextmenu.prevent="handleTabsBarContextMenu($event, tab.id)"
+            >
+              <component :is="getTabIcon(tab.type)" :size="14" class="shrink-0" />
+              <span class="tab-title truncate">{{ tab.title }}</span>
+            </span>
+          </template>
+        </el-tab-pane>
+      </el-tabs>
     </div>
 
     <!-- 编辑器内容区域 -->
@@ -226,11 +419,100 @@ defineExpose({
 <style scoped>
 .tabs-bar {
   min-height: 36px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.tab-item {
+.tab-label {
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Element Plus Tabs 样式覆盖 */
+:deep(.el-tabs__header) {
+  margin: 0;
+  border-bottom: none;
+}
+
+:deep(.el-tabs__nav-wrap) {
+  background: #f9fafb;
+  padding: 0;
+}
+
+:deep(.el-tabs__nav-wrap::after) {
+  display: none;
+}
+
+:deep(.el-tabs__nav) {
+  border: none;
+}
+
+:deep(.el-tabs__item) {
+  padding: 10px 20px !important;
+  height: 36px;
+  line-height: 16px;
+  border: none !important;
+  border-right: 1px solid #e5e7eb !important;
+  border-top: 2px solid transparent !important;
+  background: #f3f4f6 !important;
+  color: #6b7280 !important;
   min-width: 120px;
   max-width: 300px;
+  transition: all 0.2s ease !important;
+  position: relative;
+  margin-right: 0 !important;
+  overflow: hidden;
+}
+
+:deep(.el-tabs__item > span) {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+:deep(.el-tabs__item:hover) {
+  background: #e5e7eb !important;
+  color: #111827 !important;
+}
+
+:deep(.el-tabs__item.is-active::before) {
+  display: none;
+}
+
+/* 第一个标签页的上边框 */
+:deep(.el-tabs__item:first-child) {
+  border-left: none !important;
+}
+
+/* 最后一个标签页的右边框 */
+:deep(.el-tabs__item:last-child) {
+  border-right: none !important;
+}
+
+
+:deep(.el-tabs__item .el-icon-close) {
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+:deep(.el-tabs__item .el-icon-close:hover) {
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .editor-content {

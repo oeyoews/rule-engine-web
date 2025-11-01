@@ -3,9 +3,9 @@ import { ref, provide } from 'vue'
 import ActivityBar from './ActivityBar.vue'
 import Sidebar from './Sidebar.vue'
 import EditorGroup from './EditorGroup.vue'
-import Panel from './Panel.vue'
 import StatusBar from './StatusBar.vue'
 import Resizer from './Resizer.vue'
+import Panel from './Panel.vue'
 
 // 布局状态
 const activeView = ref<string>('rules') // 当前活动的侧边栏视图

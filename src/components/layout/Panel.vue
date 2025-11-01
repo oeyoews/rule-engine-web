@@ -1,9 +1,11 @@
+<!-- 底部状态栏 -->
 <script setup lang="ts">
-import { ref, inject, computed } from 'vue'
+import { inject, computed, h } from 'vue'
 import { AlertTriangle, Terminal, FileText } from 'lucide-vue-next'
-import ProblemsPanel from '../panel/ProblemsPanel.vue'
-import OutputPanel from '../panel/OutputPanel.vue'
-import TerminalPanel from '../panel/TerminalPanel.vue'
+import { MenuBar } from '@imengyu/vue3-context-menu'
+import ProblemsPanel from '@/components/panel/ProblemsPanel.vue'
+import OutputPanel from '@/components/panel/OutputPanel.vue'
+import TerminalPanel from '@/components/panel/TerminalPanel.vue'
 
 const layoutState = inject<{
   activePanel: any
@@ -23,6 +25,22 @@ const currentPanel = computed(() => {
 const CurrentPanelComponent = computed(() => {
   return currentPanel.value?.component || panels[0].component
 })
+
+// MenuBar 选项
+const menuBarOptions = computed(() => {
+  return {
+    items: panels.map(panel => ({
+      label: panel.label,
+      icon: () => h(panel.icon, { size: 14 }),
+      checked: layoutState?.activePanel?.value === panel.id,
+      onClick: () => {
+        if (layoutState?.activePanel) {
+          layoutState.activePanel.value = panel.id
+        }
+      }
+    }))
+  }
+})
 </script>
 
 <template>
@@ -32,22 +50,8 @@ const CurrentPanelComponent = computed(() => {
     :style="{ height: `${layoutState.panelHeight.value}px` }"
   >
     <!-- 面板标签栏 -->
-    <div class="panel-tabs flex items-center bg-gray-100 border-b border-gray-300">
-      <el-button
-        v-for="panel in panels"
-        :key="panel.id"
-        :class="[
-          'panel-tab flex items-center gap-2 px-4 py-2 cursor-pointer border-r border-gray-300 transition-colors rounded-none border-0',
-          layoutState?.activePanel?.value === panel.id
-            ? 'bg-white text-gray-900'
-            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
-        ]"
-        text
-        @click="layoutState.activePanel.value = panel.id"
-      >
-        <component :is="panel.icon" :size="14" />
-        <span class="text-sm">{{ panel.label }}</span>
-      </el-button>
+    <div class="panel-tabs bg-gray-100 border-b border-gray-300">
+      <MenuBar :options="menuBarOptions" />
     </div>
 
     <!-- 面板内容 -->
@@ -62,8 +66,28 @@ const CurrentPanelComponent = computed(() => {
   min-height: 32px;
 }
 
-.panel-tab {
+/* MenuBar 样式覆盖，使其看起来像标签页 */
+:deep(.mx-menu-bar) {
+  background: transparent !important;
+  border: none !important;
+}
+
+:deep(.mx-menu-bar-item) {
+  padding: 6px 12px !important;
+  border-right: 1px solid #d1d5db !important;
+  background: #f3f4f6 !important;
+  color: #6b7280 !important;
   min-width: 100px;
+}
+
+:deep(.mx-menu-bar-item:hover) {
+  background: #e5e7eb !important;
+  color: #111827 !important;
+}
+
+:deep(.mx-menu-bar-item.mx-menu-bar-item-checked) {
+  background: #ffffff !important;
+  color: #111827 !important;
 }
 </style>
 

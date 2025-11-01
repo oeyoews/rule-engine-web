@@ -18,6 +18,7 @@ import RuleActionBuilder from '../RuleActionBuilder.vue'
 interface Props {
   data?: {
     index?: number
+    ruleName?: string
   }
 }
 
@@ -26,6 +27,14 @@ const editorState = useEditorState()
 
 // 当前编辑的规则
 const rule = computed(() => {
+  // 优先使用 ruleName 查找
+  if (props.data?.ruleName) {
+    const foundRule = editorState.rules.value.find(r => r.name === props.data?.ruleName)
+    if (foundRule) {
+      return foundRule
+    }
+  }
+  // 回退到使用 index
   const index = props.data?.index
   if (index !== undefined && index >= 0 && index < editorState.rules.value.length) {
     return editorState.rules.value[index]

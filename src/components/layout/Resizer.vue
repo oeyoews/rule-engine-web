@@ -88,36 +88,44 @@ defineExpose({
 }
 
 .resizer-vertical {
-  width: 4px;
+  width: 0;
   cursor: col-resize;
 }
 
 .resizer-horizontal {
-  height: 4px;
+  height: 0;
   cursor: row-resize;
-}
-
-.resizer:hover,
-.resizer.resizing {
-  background-color: rgba(64, 126, 201, 0.5);
 }
 
 .resizer-handle {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  transition: background-color 0.15s ease;
 }
 
 .resizer-vertical .resizer-handle {
-  width: 100%;
+  width: 4px;
   height: 100%;
+  left: -2px;
+  top: 0;
+  background-color: transparent;
 }
 
 .resizer-horizontal .resizer-handle {
   width: 100%;
-  height: 100%;
+  height: 4px;
+  top: -2px;
+  left: 0;
+  background-color: transparent;
+}
+
+.resizer-vertical:hover .resizer-handle,
+.resizer-vertical.resizing .resizer-handle {
+  background-color: rgba(64, 126, 201, 0.5);
+}
+
+.resizer-horizontal:hover .resizer-handle,
+.resizer-horizontal.resizing .resizer-handle {
+  background-color: rgba(64, 126, 201, 0.5);
 }
 </style>
 

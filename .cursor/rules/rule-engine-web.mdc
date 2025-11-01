@@ -6,3 +6,4 @@ alwaysApply: true
 * 样式使用tailwindcss, 不要写scope
 * 使用element plus 的弹窗时候， 总是需要单独抽离出去， 并且使用definemodel.
 * ui 使用element plus 库
+* js/ts 语法使用ES6+ 语法

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Search } from 'lucide-vue-next'
+import SidebarToolbar from '@/components/common/SidebarToolbar.vue'
 
 const searchQuery = ref('')
 const searchResults = ref<any[]>([])
@@ -14,12 +15,7 @@ const handleSearch = () => {
 <template>
   <div class="search-view flex flex-col h-full">
     <!-- 工具栏 -->
-    <div class="toolbar px-4 py-2.5 border-b border-gray-300 flex items-center justify-between bg-gray-50">
-      <div class="flex items-center gap-2">
-        <Search :size="16" class="text-gray-600" />
-        <h3 class="text-sm font-semibold text-gray-900">搜索</h3>
-      </div>
-    </div>
+    <SidebarToolbar :icon="Search" title="搜索" />
 
     <!-- 内容区域 -->
     <div class="flex-1 overflow-auto p-4">

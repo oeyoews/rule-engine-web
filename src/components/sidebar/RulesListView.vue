@@ -5,6 +5,7 @@ import { Plus, Trash2, Grip, CheckCircle, XCircle, Zap, FileText, ClipboardList,
 import { useEditorState } from '@/composables/useEditorState'
 import { VueDraggable } from 'vue-draggable-plus'
 import ContextMenu from '@imengyu/vue3-context-menu'
+import SidebarToolbar from '@/components/common/SidebarToolbar.vue'
 
 const editorState = useEditorState()
 
@@ -140,107 +141,107 @@ const handleContextMenu = (event: MouseEvent, index: number) => {
 <template>
   <div class="rules-list-view flex flex-col h-full">
     <!-- 工具栏 -->
-    <div class="toolbar px-4 py-2.5 border-b border-gray-300 flex items-center justify-between bg-gray-50">
-      <div class="flex items-center gap-2">
-        <ClipboardList :size="16" class="text-gray-600" />
-        <h3 class="text-sm font-semibold text-gray-900">规则列表</h3>
-      </div>
-      <el-button
-        type="primary"
-        size="small"
-        @click="addRule"
-      >
-        <Plus :size="14" class="mr-1" />
-        添加规则
-      </el-button>
-    </div>
+    <SidebarToolbar :icon="ClipboardList" title="规则列表">
+      <template #actions>
+        <el-button
+          type="primary"
+          size="small"
+          @click="addRule"
+        >
+          <Plus :size="14" class="mr-1" />
+          添加规则
+        </el-button>
+      </template>
+    </SidebarToolbar>
 
     <!-- 规则列表 -->
-    <div class="rules-list flex-1 overflow-auto p-2">
-      <!-- 空状态 -->
-      <div v-if="editorState.rules.value.length === 0" class="text-center py-12">
-        <div class="flex flex-col items-center gap-3">
-          <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
-            <FileText :size="40" class="text-gray-400" />
-          </div>
-          <p class="text-gray-500 text-sm">暂无规则</p>
-          <el-button
-            type="primary"
-            @click="addRule"
-          >
-            添加第一个规则
-          </el-button>
-        </div>
-      </div>
-
-      <!-- 规则项目 -->
-      <VueDraggable
-        v-model="editorState.rules.value"
-        :animation="200"
-        handle=".rule-drag-handle"
-        ghostClass="rule-dragging-ghost"
-      >
-        <div
-          v-for="(rule, index) in editorState.rules.value"
-          :key="index"
-          class="rule-item bg-white hover:bg-gray-50 border border-gray-200 rounded p-3 mb-2 cursor-pointer transition-colors shadow-sm"
-          @click="openRuleEditor(index)"
-          @contextmenu.prevent="handleContextMenu($event, index)"
-        >
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3 flex-1 min-w-0">
-              <!-- 拖拽手柄 -->
-              <div class="rule-drag-handle flex items-center justify-center size-6 cursor-move hover:bg-gray-200 rounded transition-colors">
-                <Grip :size="14" class="text-gray-500" />
-              </div>
-
-              <!-- 规则编号 -->
-              <div class="flex items-center justify-center size-6 bg-indigo-600 rounded-full text-white font-bold text-xs shrink-0">
-                {{ index + 1 }}
-              </div>
-
-              <!-- 规则信息 -->
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="font-semibold text-gray-900 text-sm truncate">
-                    {{ rule.name || '规则 ' + (index + 1) }}
-                  </span>
-                  <el-tag v-if="rule.salience > 0" size="small" class="bg-violet-600 text-white border-none">
-                    <span class="inline-flex items-center gap-1">
-                      <Zap :size="12" />
-                      {{ rule.salience }}
-                    </span>
-                  </el-tag>
-                  <el-tag
-                    size="small"
-                    :class="rule.enabled ? 'bg-emerald-600 text-white border-none' : 'bg-gray-400 text-white border-none'"
-                  >
-                    <span class="inline-flex items-center gap-1">
-                      <CheckCircle v-if="rule.enabled" :size="12" />
-                      <XCircle v-else :size="12" />
-                      {{ rule.enabled ? '启用' : '禁用' }}
-                    </span>
-                  </el-tag>
-                </div>
-                <div class="text-xs text-gray-500 truncate">
-                  {{ rule.when || '无条件' }}
-                </div>
-              </div>
+    <el-scrollbar class="rules-list flex-1">
+      <div class="px-2 py-2 pr-4">
+        <!-- 空状态 -->
+        <div v-if="editorState.rules.value.length === 0" class="text-center py-12">
+          <div class="flex flex-col items-center gap-3">
+            <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
+              <FileText :size="40" class="text-gray-400" />
             </div>
-
-            <!-- 删除按钮 -->
-            <!-- <el-button
-              text
-              circle
-              @click.stop="confirmRemoveRule(index)"
-              title="删除规则"
+            <p class="text-gray-500 text-sm">暂无规则</p>
+            <el-button
+              type="primary"
+              @click="addRule"
             >
-              <Trash2 :size="16" class="text-gray-500 hover:text-red-600" />
-            </el-button> -->
+              添加第一个规则
+            </el-button>
           </div>
         </div>
-      </VueDraggable>
-    </div>
+
+        <!-- 规则项目 -->
+        <VueDraggable
+          v-model="editorState.rules.value"
+          :animation="200"
+          handle=".rule-drag-handle"
+          ghostClass="rule-dragging-ghost"
+        >
+          <div
+            v-for="(rule, index) in editorState.rules.value"
+            :key="index"
+            class="rule-item bg-white hover:bg-gray-50 border border-gray-200 rounded p-3 mb-2 cursor-pointer transition-colors shadow-sm"
+            @click="openRuleEditor(index)"
+            @contextmenu.prevent="handleContextMenu($event, index)"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <!-- 拖拽手柄 -->
+                <div class="rule-drag-handle flex items-center justify-center size-6 cursor-move hover:bg-gray-200 rounded transition-colors">
+                  <Grip :size="14" class="text-gray-500" />
+                </div>
+
+                <!-- 规则编号 -->
+                <div class="flex items-center justify-center size-6 bg-indigo-600 rounded-full text-white font-bold text-xs shrink-0">
+                  {{ index + 1 }}
+                </div>
+
+                <!-- 规则信息 -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="font-semibold text-gray-900 text-sm truncate">
+                      {{ rule.name || '规则 ' + (index + 1) }}
+                    </span>
+                    <el-tag v-if="rule.salience > 0" size="small" class="bg-violet-600 text-white border-none">
+                      <span class="inline-flex items-center gap-1">
+                        <Zap :size="12" />
+                        {{ rule.salience }}
+                      </span>
+                    </el-tag>
+                    <el-tag
+                      size="small"
+                      :class="rule.enabled ? 'bg-emerald-600 text-white border-none' : 'bg-gray-400 text-white border-none'"
+                    >
+                      <span class="inline-flex items-center gap-1">
+                        <CheckCircle v-if="rule.enabled" :size="12" />
+                        <XCircle v-else :size="12" />
+                        {{ rule.enabled ? '启用' : '禁用' }}
+                      </span>
+                    </el-tag>
+                  </div>
+                  <div class="text-xs text-gray-500 truncate">
+                    {{ rule.when || '无条件' }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- 删除按钮 -->
+              <!-- <el-button
+                text
+                circle
+                @click.stop="confirmRemoveRule(index)"
+                title="删除规则"
+              >
+                <Trash2 :size="16" class="text-gray-500 hover:text-red-600" />
+              </el-button> -->
+            </div>
+          </div>
+        </VueDraggable>
+      </div>
+    </el-scrollbar>
   </div>
 </template>
 

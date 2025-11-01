@@ -61,6 +61,7 @@ declare module 'vue' {
     SearchView: typeof import('./src/components/sidebar/SearchView.vue')['default']
     SectionTitle: typeof import('./src/components/common/SectionTitle.vue')['default']
     Sidebar: typeof import('./src/components/layout/Sidebar.vue')['default']
+    SidebarToolbar: typeof import('./src/components/common/SidebarToolbar.vue')['default']
     StatusBar: typeof import('./src/components/layout/StatusBar.vue')['default']
     TerminalPanel: typeof import('./src/components/panel/TerminalPanel.vue')['default']
     VSCodeLayout: typeof import('./src/components/layout/VSCodeLayout.vue')['default']
