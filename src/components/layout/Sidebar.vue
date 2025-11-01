@@ -28,7 +28,7 @@ const CurrentViewComponent = computed(() => {
 
 <template>
   <div
-    class="sidebar bg-gray-800 border-r border-gray-700 overflow-hidden flex flex-col"
+    class="sidebar bg-gray-50 border-r border-gray-300 overflow-hidden flex flex-col"
     :style="{ width: `${layoutState?.sidebarWidth?.value || 250}px` }"
   >
     <div class="flex-1 overflow-auto">

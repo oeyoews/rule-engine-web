@@ -1,7 +1,7 @@
 import { computed, type Ref } from 'vue'
 import hljs from 'highlight.js/lib/core'
 import java from 'highlight.js/lib/languages/java'
-import 'highlight.js/styles/atom-one-dark.css'
+import 'highlight.js/styles/atom-one-light.css'
 
 // 注册 Java 语言
 hljs.registerLanguage('java', java)

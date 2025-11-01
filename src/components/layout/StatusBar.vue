@@ -29,7 +29,7 @@ const statusItems = computed(() => {
 </script>
 
 <template>
-  <div class="status-bar h-6 bg-blue-600 text-white flex items-center justify-between px-4 text-xs">
+  <div class="status-bar h-6 bg-blue-500 text-white flex items-center justify-between px-4 text-xs">
     <div class="flex items-center gap-4">
       <div
         v-for="(item, index) in statusItems"

@@ -5,3 +5,4 @@ alwaysApply: true
 * 图标使用lucide, 匹配合适的颜色, 不要使用emoji
 * 样式使用tailwindcss, 不要写scope
 * 使用element plus 的弹窗时候， 总是需要单独抽离出去， 并且使用definemodel.
+* ui 使用element plus 库

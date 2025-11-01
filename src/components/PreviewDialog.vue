@@ -97,7 +97,7 @@ const copyCode = async () => {
 
 <style scoped>
 .code-container {
-  background: linear-gradient(135deg, #282c34 0%, #1e2127 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
 .code-wrapper {
@@ -105,7 +105,7 @@ const copyCode = async () => {
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 14px;
   line-height: 1.6;
-  color: #abb2bf;
+  color: #1e293b;
 }
 
 :deep(.code-line) {
@@ -114,7 +114,7 @@ const copyCode = async () => {
 }
 
 :deep(.code-line:hover) {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 :deep(.line-number) {
@@ -122,16 +122,16 @@ const copyCode = async () => {
   width: 1.5em;
   padding-right: 1em;
   text-align: right;
-  color: #5c6370;
+  color: #64748b;
   user-select: none;
   flex-shrink: 0;
-  border-right: 1px solid #3e4451;
+  border-right: 1px solid #cbd5e1;
   margin-right: 1em;
 }
 
 :deep(.line-content) {
   flex: 1;
-  white-space: pre;  /* 保留空格和换行符 */
+  white-space: pre;
   word-break: break-word;
 }
 </style>

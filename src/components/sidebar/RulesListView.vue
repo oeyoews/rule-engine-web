@@ -79,15 +79,16 @@ const removeRule = (index: number) => {
 <template>
   <div class="rules-list-view flex flex-col h-full">
     <!-- 工具栏 -->
-    <div class="toolbar px-4 py-2 border-b border-gray-700 flex items-center justify-between">
-      <h3 class="text-sm font-semibold text-gray-200">规则列表</h3>
-      <button
+    <div class="toolbar px-4 py-2 border-b border-gray-300 flex items-center justify-between">
+      <h3 class="text-sm font-semibold text-gray-900">规则列表</h3>
+      <el-button
+        type="primary"
+        size="small"
         @click="addRule"
-        class="flex items-center gap-1 px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
       >
-        <Plus :size="14" />
+        <Plus :size="14" class="mr-1" />
         添加规则
-      </button>
+      </el-button>
     </div>
 
     <!-- 规则列表 -->
@@ -95,16 +96,16 @@ const removeRule = (index: number) => {
       <!-- 空状态 -->
       <div v-if="editorState.rules.value.length === 0" class="text-center py-12">
         <div class="flex flex-col items-center gap-3">
-          <div class="w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center">
+          <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
             <FileText :size="40" class="text-gray-400" />
           </div>
-          <p class="text-gray-400 text-sm">暂无规则</p>
-          <button
+          <p class="text-gray-500 text-sm">暂无规则</p>
+          <el-button
+            type="primary"
             @click="addRule"
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors"
           >
             添加第一个规则
-          </button>
+          </el-button>
         </div>
       </div>
 
@@ -118,14 +119,14 @@ const removeRule = (index: number) => {
         <div
           v-for="(rule, index) in editorState.rules.value"
           :key="index"
-          class="rule-item bg-gray-700 hover:bg-gray-650 rounded p-3 mb-2 cursor-pointer transition-colors"
+          class="rule-item bg-white hover:bg-gray-50 border border-gray-200 rounded p-3 mb-2 cursor-pointer transition-colors shadow-sm"
           @click="openRuleEditor(index)"
         >
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3 flex-1 min-w-0">
               <!-- 拖拽手柄 -->
-              <div class="rule-drag-handle flex items-center justify-center size-6 cursor-move hover:bg-gray-600 rounded transition-colors">
-                <Grip :size="14" class="text-gray-400" />
+              <div class="rule-drag-handle flex items-center justify-center size-6 cursor-move hover:bg-gray-200 rounded transition-colors">
+                <Grip :size="14" class="text-gray-500" />
               </div>
 
               <!-- 规则编号 -->
@@ -136,7 +137,7 @@ const removeRule = (index: number) => {
               <!-- 规则信息 -->
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 mb-1">
-                  <span class="font-semibold text-gray-200 text-sm truncate">
+                  <span class="font-semibold text-gray-900 text-sm truncate">
                     {{ rule.name || '规则 ' + (index + 1) }}
                   </span>
                   <el-tag v-if="rule.salience > 0" size="small" class="bg-violet-600 text-white border-none">
@@ -147,7 +148,7 @@ const removeRule = (index: number) => {
                   </el-tag>
                   <el-tag
                     size="small"
-                    :class="rule.enabled ? 'bg-emerald-600 text-white border-none' : 'bg-gray-600 text-gray-300 border-none'"
+                    :class="rule.enabled ? 'bg-emerald-600 text-white border-none' : 'bg-gray-400 text-white border-none'"
                   >
                     <span class="inline-flex items-center gap-1">
                       <CheckCircle v-if="rule.enabled" :size="12" />
@@ -156,20 +157,21 @@ const removeRule = (index: number) => {
                     </span>
                   </el-tag>
                 </div>
-                <div class="text-xs text-gray-400 truncate">
+                <div class="text-xs text-gray-500 truncate">
                   {{ rule.when || '无条件' }}
                 </div>
               </div>
             </div>
 
             <!-- 删除按钮 -->
-            <button
+            <el-button
+              text
+              circle
               @click.stop="confirmRemoveRule(index)"
-              class="ml-2 p-1 hover:bg-red-600 rounded transition-colors shrink-0"
               title="删除规则"
             >
-              <Trash2 :size="16" class="text-gray-400 hover:text-white" />
-            </button>
+              <Trash2 :size="16" class="text-gray-500 hover:text-red-600" />
+            </el-button>
           </div>
         </div>
       </VueDraggable>
@@ -180,11 +182,11 @@ const removeRule = (index: number) => {
 <style scoped>
 .rule-dragging-ghost {
   opacity: 0.5;
-  background: #4b5563;
+  background: #e5e7eb;
   border: 2px dashed #818cf8;
 }
 
 .toolbar {
-  background: #1f2937;
+  background: #f9fafb;
 }
 </style>

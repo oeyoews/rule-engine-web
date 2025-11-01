@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, inject } from 'vue'
+import { inject, ref } from 'vue'
 import {
   FolderTree,
   Search,
@@ -8,6 +8,7 @@ import {
   Eye,
   HelpCircle
 } from 'lucide-vue-next'
+import HelpDialog from '../HelpDialog.vue'
 
 const layoutState = inject<{
   activeView: any
@@ -16,6 +17,8 @@ const layoutState = inject<{
 const layoutActions = inject<{
   setActiveView: (view: string) => void
 }>('layoutActions')
+
+const showHelpDialog = ref(false)
 
 const views = [
   { id: 'explorer', icon: FolderTree, label: '文件浏览器', tooltip: '文件浏览器' },
@@ -27,29 +30,42 @@ const views = [
 ]
 
 const handleClick = (viewId: string) => {
-  if (layoutActions) {
+  if (viewId === 'help') {
+    showHelpDialog.value = true
+  } else if (layoutActions) {
     layoutActions.setActiveView(viewId)
   }
 }
 </script>
 
 <template>
-  <div class="activity-bar w-12 bg-gray-800 border-r border-gray-700 flex flex-col items-center py-2">
-    <button
+  <div class="activity-bar w-12 bg-gray-100 border-r border-gray-300 flex flex-col items-center py-2">
+    <el-button
       v-for="view in views"
       :key="view.id"
       :class="[
-        'w-10 h-10 mb-1 flex items-center justify-center rounded transition-colors',
+        'w-10 h-10 mb-1 flex items-center justify-center rounded transition-colors border-0',
         layoutState?.activeView?.value === view.id
-          ? 'bg-gray-700 text-white'
-          : 'text-gray-400 hover:bg-gray-750 hover:text-gray-200'
+          ? 'bg-gray-200 text-gray-900'
+          : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
       ]"
       :title="view.tooltip"
+      text
       @click="handleClick(view.id)"
     >
       <component :is="view.icon" :size="20" />
-    </button>
+    </el-button>
   </div>
+
+  <!-- 帮助对话框 -->
+  <el-dialog
+    v-model="showHelpDialog"
+    title="使用帮助"
+    width="80%"
+    :close-on-click-modal="false"
+  >
+    <HelpDialog />
+  </el-dialog>
 </template>
 
 <style scoped>

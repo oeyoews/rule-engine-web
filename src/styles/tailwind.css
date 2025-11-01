@@ -48,3 +48,8 @@ html {
   transition: none !important;
   animation: none !important;
 }
+
+body {
+	margin: 0;
+	padding: 0;
+}

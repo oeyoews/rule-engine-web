@@ -78,7 +78,7 @@ provide('layoutActions', {
 </script>
 
 <template>
-  <div class="vscode-layout h-screen flex flex-col bg-gray-900 text-gray-100 overflow-hidden">
+  <div class="vscode-layout h-screen flex flex-col bg-white text-gray-900 overflow-hidden">
     <!-- 主内容区域 -->
     <div class="flex flex-1 overflow-hidden">
       <!-- 活动栏 -->
