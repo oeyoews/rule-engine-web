@@ -8,3 +8,4 @@ alwaysApply: true
 * ui 使用element plus 库
 * js/ts 语法使用ES6+ 语法
 * 不做太多的防御性编程， 不要生成技术文档md
+* 项目有自动导入插件， 一些组件不需要手动导入， 还有从vue导入的也不需要手动导入

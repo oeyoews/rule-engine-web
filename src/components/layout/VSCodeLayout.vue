@@ -52,17 +52,17 @@ watch(editorGroupRef, (newRef) => {
         <EditorGroup ref="editorGroupRef" />
 
         <!-- 底部面板调整大小 -->
-        <Resizer
+        <!-- <Resizer
           v-if="layoutStore.panelHeight > 0"
           direction="horizontal"
           :min-size="100"
           :max-size="600"
           :default-size="layoutStore.panelHeight"
           @resize="savePanelHeight"
-        />
+        /> -->
 
         <!-- 底部面板 -->
-        <Panel v-if="layoutStore.panelHeight > 0" />
+        <!-- <Panel v-if="layoutStore.panelHeight > 0" /> -->
       </div>
     </div>
 

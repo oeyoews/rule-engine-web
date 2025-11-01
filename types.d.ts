@@ -38,3 +38,14 @@ interface Action {
   params: Array<{ value: string }>
   description?: string
 }
+
+
+// 编辑器标签页类型
+interface EditorTab {
+  id: string
+  type: 'config' | 'rule' | 'advanced' | 'preview'
+  title: string
+  component: any
+  data?: any
+  modified?: boolean
+}

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Hash, CheckCircle, FileCode, ToggleRight, FolderTree, Search, ClipboardList, Settings, Eye, HelpCircle, Terminal, AlertCircle, FileText } from 'lucide-vue-next'
+import { Hash, CheckCircle, FileCode, ToggleRight } from 'lucide-vue-next'
 import { useEditorStore } from '@/stores/editorStore'
 import { useLayoutStore } from '@/stores/layoutStore'
+import { getIcon } from '@/utils/tabIcon'
 
 const layoutStore = useLayoutStore()
 const editorStore = useEditorStore()
@@ -23,39 +24,16 @@ const statusItems = computed(() => {
   ]
 })
 
-// 获取视图图标
-const getViewIcon = (view: string) => {
-  const iconMap: Record<string, any> = {
-    explorer: FolderTree,
-    search: Search,
-    rules: ClipboardList,
-    config: Settings,
-    preview: Eye,
-    help: HelpCircle
-  }
-  return iconMap[view] || null
-}
-
-// 获取面板图标
-const getPanelIcon = (panel: string) => {
-  const iconMap: Record<string, any> = {
-    problems: AlertCircle,
-    output: FileText,
-    terminal: Terminal
-  }
-  return iconMap[panel] || null
-}
-
 // 当前视图图标
 const activeViewIcon = computed(() => {
   const view = layoutStore.activeView || 'rules'
-  return getViewIcon(view)
+  return getIcon(view)
 })
 
 // 当前面板图标
 const activePanelIcon = computed(() => {
   const panel = layoutStore.activePanel
-  return panel ? getPanelIcon(panel) : null
+  return panel ? getIcon(panel) : null
 })
 </script>
 

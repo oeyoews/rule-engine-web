@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { ref, computed, h, watch, markRaw } from 'vue'
-import { ElMessageBox, ElMessage } from 'element-plus'
-import { X, XCircle, XSquare, Settings, ClipboardList, Code2, Eye } from 'lucide-vue-next'
+import { ElMessageBox } from 'element-plus'
+import { X, XCircle, XSquare } from 'lucide-vue-next'
 import ContextMenu from '@imengyu/vue3-context-menu'
 import ConfigEditor from '@/components/editor/ConfigEditor.vue'
 import RuleEditor from '@/components/editor/RuleEditor.vue'
 import AdvancedEditor from '@/components/editor/AdvancedEditor.vue'
 import PreviewEditor from '@/components/editor/PreviewEditor.vue'
 import { useEditorStore } from '@/stores/editorStore'
+import { getIcon } from '@/utils/tabIcon'
 
 // 使用 markRaw 标记组件，避免被响应式处理
 const ConfigEditorRaw = markRaw(ConfigEditor)
@@ -16,16 +16,6 @@ const AdvancedEditorRaw = markRaw(AdvancedEditor)
 const PreviewEditorRaw = markRaw(PreviewEditor)
 
 const editorStore = useEditorStore()
-
-// 编辑器标签页类型
-interface EditorTab {
-  id: string
-  type: 'config' | 'rule' | 'advanced' | 'preview'
-  title: string
-  component: any
-  data?: any
-  modified?: boolean
-}
 
 const tabs = ref<EditorTab[]>([])
 const activeTabId = ref<string>('')
@@ -47,7 +37,6 @@ const addTab = (tab: Omit<EditorTab, 'id'>) => {
 const closeTab = async (id: string) => {
   const tab = tabs.value.find(t => t.id === id)
 
-  // 如果是高级模式标签页，需要确认
   if (tab?.type === 'advanced') {
     try {
       await ElMessageBox.confirm(
@@ -63,12 +52,10 @@ const closeTab = async (id: string) => {
       // 用户确认，关闭高级模式状态
       editorStore.advancedMode = false
     } catch {
-      // 用户取消，不关闭标签页
       return
     }
   }
 
-  // 执行实际的关闭操作
   removeTab(id)
 }
 
@@ -123,17 +110,6 @@ const activeTab = computed(() => {
   return tabs.value.find(tab => tab.id === activeTabId.value)
 })
 
-// 获取标签页类型对应的图标
-const getTabIcon = (type: EditorTab['type']) => {
-  const iconMap = {
-    config: Settings,
-    rule: ClipboardList,
-    advanced: Code2,
-    preview: Eye
-  }
-  return iconMap[type]
-}
-
 // 处理标签页切换
 const handleTabChange = async (tabId: string | number) => {
   await switchTab(String(tabId))
@@ -142,52 +118,6 @@ const handleTabChange = async (tabId: string | number) => {
 // 处理标签页关闭
 const handleTabRemove = async (tabId: string | number) => {
   await closeTab(String(tabId))
-}
-
-// 复制标签页
-const duplicateTab = (tab: EditorTab) => {
-  if (tab.type === 'rule' && tab.data?.ruleName) {
-    // 通过 ruleName 查找规则索引
-    const ruleIndex = editorStore.rules.findIndex(r => r.name === tab.data?.ruleName)
-    if (ruleIndex !== -1) {
-      openRuleEditor(ruleIndex)
-    }
-  } else if (tab.type === 'rule' && tab.data?.index !== undefined) {
-    // 向后兼容：使用 index
-    openRuleEditor(tab.data.index)
-  } else if (tab.type === 'config') {
-    openConfigEditor()
-  } else if (tab.type === 'advanced') {
-    openAdvancedEditor()
-  } else if (tab.type === 'preview') {
-    openPreviewEditor()
-  }
-  ElMessage.success('标签页已复制')
-}
-
-// 切换到左侧标签页
-const switchToLeftTab = (currentIndex: number) => {
-  if (currentIndex > 0) {
-    const leftTab = tabs.value[currentIndex - 1]
-    if (leftTab) {
-      switchTab(leftTab.id)
-    }
-  }
-}
-
-// 切换到右侧标签页
-const switchToRightTab = (currentIndex: number) => {
-  if (currentIndex < tabs.value.length - 1) {
-    const rightTab = tabs.value[currentIndex + 1]
-    if (rightTab) {
-      switchTab(rightTab.id)
-    }
-  }
-}
-
-// 重新加载标签页
-const reloadTab = () => {
-  ElMessage.info('重新加载功能暂未实现')
 }
 
 // 处理标签页栏右键菜单
@@ -394,7 +324,7 @@ defineExpose({
               class="tab-label flex items-center gap-2"
               @contextmenu.prevent="handleTabsBarContextMenu($event, tab.id)"
             >
-              <component :is="getTabIcon(tab.type)" :size="14" class="shrink-0" />
+              <component :is="getIcon(tab.type)" :size="14" class="shrink-0" />
               <span class="tab-title truncate">{{ tab.title }}</span>
             </span>
           </template>

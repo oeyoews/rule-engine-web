@@ -240,8 +240,14 @@ onMounted(async () => {
 
 // 监听外部代码变化（如从代码模式切换回来）
 watch(() => props.modelValue, (newValue) => {
-  if (!isUpdatingFromCode.value && newValue) {
-    parseDrlCode(newValue)
+  if (!isUpdatingFromCode.value) {
+    if (newValue && newValue.trim()) {
+      parseDrlCode(newValue)
+    }
+    // 如果解析后没有条件，添加默认条件
+    if (conditions.value.length === 0) {
+      addCondition()
+    }
   }
 })
 </script>
