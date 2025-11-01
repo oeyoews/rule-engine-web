@@ -1,16 +1,14 @@
 <!-- 底部状态栏 -->
 <script setup lang="ts">
-import { inject, computed, h } from 'vue'
+import { computed, h } from 'vue'
 import { AlertTriangle, Terminal, FileText } from 'lucide-vue-next'
 import { MenuBar } from '@imengyu/vue3-context-menu'
 import ProblemsPanel from '@/components/panel/ProblemsPanel.vue'
 import OutputPanel from '@/components/panel/OutputPanel.vue'
 import TerminalPanel from '@/components/panel/TerminalPanel.vue'
+import { useLayoutStore } from '@/stores/layoutStore'
 
-const layoutState = inject<{
-  activePanel: any
-  panelHeight: any
-}>('layoutState')
+const layoutStore = useLayoutStore()
 
 const panels = [
   { id: 'problems', icon: AlertTriangle, label: '问题', component: ProblemsPanel },
@@ -19,7 +17,7 @@ const panels = [
 ]
 
 const currentPanel = computed(() => {
-  return panels.find(p => p.id === layoutState?.activePanel?.value) || panels[0]
+  return panels.find(p => p.id === layoutStore.activePanel) || panels[0]
 })
 
 const CurrentPanelComponent = computed(() => {
@@ -32,10 +30,11 @@ const menuBarOptions = computed(() => {
     items: panels.map(panel => ({
       label: panel.label,
       icon: () => h(panel.icon, { size: 14 }),
-      checked: layoutState?.activePanel?.value === panel.id,
+      checked: layoutStore.activePanel === panel.id,
       onClick: () => {
-        if (layoutState?.activePanel) {
-          layoutState.activePanel.value = panel.id
+        layoutStore.activePanel = panel.id
+        if (layoutStore.panelHeight === 0) {
+          layoutStore.panelHeight = 200
         }
       }
     }))
@@ -45,9 +44,9 @@ const menuBarOptions = computed(() => {
 
 <template>
   <div
-    v-if="layoutState?.panelHeight && layoutState.panelHeight.value > 0"
+    v-if="layoutStore.panelHeight > 0"
     class="panel flex flex-col border-t border-gray-300 bg-gray-50"
-    :style="{ height: `${layoutState.panelHeight.value}px` }"
+    :style="{ height: `${layoutStore.panelHeight}px` }"
   >
     <!-- 面板标签栏 -->
     <div class="panel-tabs bg-gray-100 border-b border-gray-300">

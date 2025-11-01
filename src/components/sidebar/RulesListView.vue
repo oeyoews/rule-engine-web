@@ -1,32 +1,26 @@
 <script setup lang="ts">
-import { inject, h, type Ref } from 'vue'
+import { h } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Trash2, Grip, CheckCircle, XCircle, Zap, FileText, ClipboardList, Pencil } from 'lucide-vue-next'
-import { useEditorState } from '@/composables/useEditorState'
+import { useEditorStore } from '@/stores/editorStore'
+import { useLayoutStore } from '@/stores/layoutStore'
 import { VueDraggable } from 'vue-draggable-plus'
 import ContextMenu from '@imengyu/vue3-context-menu'
 import SidebarToolbar from '@/components/common/SidebarToolbar.vue'
 
-const editorState = useEditorState()
-
-// 获取 EditorGroup 的引用（通过 inject）
-const editorGroupRef = inject<Ref<{
-  openRuleEditor: (index: number) => string
-  openAdvancedEditor: () => string
-  openConfigEditor: () => string
-  openPreviewEditor: () => string
-}> | null>('editorGroupRef')
+const editorStore = useEditorStore()
+const layoutStore = useLayoutStore()
 
 // 打开规则编辑器
 const openRuleEditor = (index: number) => {
-  if (editorGroupRef?.value) {
-    editorGroupRef.value.openRuleEditor(index)
+  if (layoutStore.editorGroupRef) {
+    layoutStore.editorGroupRef.openRuleEditor(index)
   }
 }
 
 // 添加规则
 const addRule = () => {
-  editorState.rules.value.push({
+  editorStore.rules.push({
     name: 'rule_' + Date.now(),
     enabled: true,
     salience: 10,
@@ -37,17 +31,17 @@ const addRule = () => {
     visualMode: true
   })
   // 自动展开新添加的规则
-  editorState.activeRules.value = editorState.rules.value.length - 1
+  editorStore.activeRules = editorStore.rules.length - 1
 
   // 打开规则编辑器
-  openRuleEditor(editorState.rules.value.length - 1)
+  openRuleEditor(editorStore.rules.length - 1)
 
   ElMessage.success('规则已添加')
 }
 
 // 确认删除规则
 const confirmRemoveRule = (index: number) => {
-  const rule = editorState.rules.value[index]
+  const rule = editorStore.rules[index]
   if (!rule) return
 
   const ruleName = rule.name || `规则 ${index + 1}`
@@ -69,20 +63,20 @@ const confirmRemoveRule = (index: number) => {
 
 // 删除规则
 const removeRule = (index: number) => {
-  editorState.rules.value.splice(index, 1)
+  editorStore.rules.splice(index, 1)
   // 删除规则后调整 activeRules
-  if (typeof editorState.activeRules.value === 'number' &&
-      editorState.activeRules.value >= editorState.rules.value.length &&
-      editorState.rules.value.length > 0) {
-    editorState.activeRules.value = editorState.rules.value.length - 1
-  } else if (editorState.rules.value.length === 0) {
-    editorState.activeRules.value = -1
+  if (typeof editorStore.activeRules === 'number' &&
+      editorStore.activeRules >= editorStore.rules.length &&
+      editorStore.rules.length > 0) {
+    editorStore.activeRules = editorStore.rules.length - 1
+  } else if (editorStore.rules.length === 0) {
+    editorStore.activeRules = -1
   }
 }
 
 // 重命名规则
 const renameRule = (index: number) => {
-  const rule = editorState.rules.value[index]
+  const rule = editorStore.rules[index]
   if (!rule) return
 
   const currentName = rule.name || `规则 ${index + 1}`
@@ -158,7 +152,7 @@ const handleContextMenu = (event: MouseEvent, index: number) => {
     <el-scrollbar class="rules-list flex-1">
       <div class="px-2 py-2 pr-4">
         <!-- 空状态 -->
-        <div v-if="editorState.rules.value.length === 0" class="text-center py-12">
+        <div v-if="editorStore.rules.length === 0" class="text-center py-12">
           <div class="flex flex-col items-center gap-3">
             <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
               <FileText :size="40" class="text-gray-400" />
@@ -175,13 +169,13 @@ const handleContextMenu = (event: MouseEvent, index: number) => {
 
         <!-- 规则项目 -->
         <VueDraggable
-          v-model="editorState.rules.value"
+          v-model="editorStore.rules"
           :animation="200"
           handle=".rule-drag-handle"
           ghostClass="rule-dragging-ghost"
         >
           <div
-            v-for="(rule, index) in editorState.rules.value"
+            v-for="(rule, index) in editorStore.rules"
             :key="index"
             class="rule-item bg-white hover:bg-gray-50 border border-gray-200 rounded p-3 mb-2 cursor-pointer transition-colors shadow-sm"
             @click="openRuleEditor(index)"

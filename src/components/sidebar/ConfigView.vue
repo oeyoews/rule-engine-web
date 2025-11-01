@@ -1,17 +1,14 @@
 <script setup lang="ts">
-import { inject, type Ref } from 'vue'
 import { Settings } from 'lucide-vue-next'
 import SidebarToolbar from '@/components/common/SidebarToolbar.vue'
+import { useLayoutStore } from '@/stores/layoutStore'
 
-// 获取 EditorGroup 的引用（通过 inject）
-const editorGroupRef = inject<Ref<{
-  openConfigEditor: () => string
-}> | null>('editorGroupRef')
+const layoutStore = useLayoutStore()
 
 // 打开配置编辑器
 const openConfigEditor = () => {
-  if (editorGroupRef?.value) {
-    editorGroupRef.value.openConfigEditor()
+  if (layoutStore.editorGroupRef) {
+    layoutStore.editorGroupRef.openConfigEditor()
   }
 }
 </script>

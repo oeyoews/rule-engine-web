@@ -1,80 +1,31 @@
 <script setup lang="ts">
-import { ref, provide } from 'vue'
+import { ref, watch } from 'vue'
 import ActivityBar from './ActivityBar.vue'
 import Sidebar from './Sidebar.vue'
 import EditorGroup from './EditorGroup.vue'
 import StatusBar from './StatusBar.vue'
 import Resizer from './Resizer.vue'
 import Panel from './Panel.vue'
+import { useLayoutStore } from '@/stores/layoutStore'
 
-// 布局状态
-const activeView = ref<string>('rules') // 当前活动的侧边栏视图
-const sidebarWidth = ref<number>(250) // 侧边栏宽度
-const panelHeight = ref<number>(0) // 底部面板高度（0表示隐藏）
-const activePanel = ref<string>('') // 当前活动的底部面板
+const layoutStore = useLayoutStore()
 
 // EditorGroup 引用
 const editorGroupRef = ref<InstanceType<typeof EditorGroup> | null>(null)
 
-// 从 localStorage 加载面板大小
-const loadPanelSizes = () => {
-  const savedSidebarWidth = localStorage.getItem('vscode-sidebar-width')
-  if (savedSidebarWidth) {
-    sidebarWidth.value = parseInt(savedSidebarWidth, 10)
-  }
-  const savedPanelHeight = localStorage.getItem('vscode-panel-height')
-  if (savedPanelHeight) {
-    panelHeight.value = parseInt(savedPanelHeight, 10)
-  }
-}
-
 // 保存面板大小到 localStorage
 const saveSidebarWidth = (width: number) => {
-  sidebarWidth.value = width
-  localStorage.setItem('vscode-sidebar-width', width.toString())
+  layoutStore.saveSidebarWidth(width)
 }
 
 const savePanelHeight = (height: number) => {
-  panelHeight.value = height
-  if (height > 0) {
-    localStorage.setItem('vscode-panel-height', height.toString())
-  }
+  layoutStore.savePanelHeight(height)
 }
 
-// 初始化时加载保存的大小
-loadPanelSizes()
-
-// 提供布局状态给子组件
-provide('layoutState', {
-  activeView,
-  sidebarWidth,
-  panelHeight,
-  activePanel
-})
-
-// 提供 EditorGroup 引用给子组件
-provide('editorGroupRef', editorGroupRef)
-
-// 切换侧边栏视图
-const setActiveView = (view: string) => {
-  activeView.value = view
-}
-
-// 切换底部面板
-const togglePanel = (panel: string) => {
-  if (activePanel.value === panel && panelHeight.value > 0) {
-    panelHeight.value = 0
-    activePanel.value = ''
-  } else {
-    activePanel.value = panel
-    panelHeight.value = panelHeight.value || 200
-  }
-}
-
-provide('layoutActions', {
-  setActiveView,
-  togglePanel
-})
+// 监听 editorGroupRef 的变化并更新到 store
+watch(editorGroupRef, (newRef) => {
+  layoutStore.editorGroupRef = newRef
+}, { immediate: true })
 </script>
 
 <template>
@@ -92,7 +43,7 @@ provide('layoutActions', {
         direction="vertical"
         :min-size="150"
         :max-size="600"
-        :default-size="sidebarWidth"
+        :default-size="layoutStore.sidebarWidth"
         @resize="saveSidebarWidth"
       />
 
@@ -102,16 +53,16 @@ provide('layoutActions', {
 
         <!-- 底部面板调整大小 -->
         <Resizer
-          v-if="panelHeight > 0"
+          v-if="layoutStore.panelHeight > 0"
           direction="horizontal"
           :min-size="100"
           :max-size="600"
-          :default-size="panelHeight"
+          :default-size="layoutStore.panelHeight"
           @resize="savePanelHeight"
         />
 
         <!-- 底部面板 -->
-        <Panel v-if="panelHeight > 0" />
+        <Panel v-if="layoutStore.panelHeight > 0" />
       </div>
     </div>
 

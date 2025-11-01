@@ -1,18 +1,16 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { computed } from 'vue'
 import ExplorerView from '@/components/sidebar/ExplorerView.vue'
 import SearchView from '@/components/sidebar/SearchView.vue'
 import RulesListView from '@/components/sidebar/RulesListView.vue'
 import ConfigView from '@/components/sidebar/ConfigView.vue'
 import PreviewView from '@/components/sidebar/PreviewView.vue'
 import HelpView from '@/components/sidebar/HelpView.vue'
+import { useLayoutStore } from '@/stores/layoutStore'
 
-const layoutState = inject<{
-  activeView: any
-  sidebarWidth: any
-}>('layoutState')
+const layoutStore = useLayoutStore()
 
-const currentView = computed(() => layoutState?.activeView?.value || 'rules')
+const currentView = computed(() => layoutStore.activeView || 'rules')
 
 const views: Record<string, any> = {
   explorer: ExplorerView,
@@ -31,7 +29,7 @@ const CurrentViewComponent = computed(() => {
 <template>
   <div
     class="sidebar bg-gray-50 border-r border-gray-300 overflow-hidden flex flex-col"
-    :style="{ width: `${layoutState?.sidebarWidth?.value || 250}px` }"
+    :style="{ width: `${layoutStore.sidebarWidth || 250}px` }"
   >
     <div class="flex-1 overflow-auto">
       <component :is="CurrentViewComponent" />

@@ -1,17 +1,14 @@
 <script setup lang="ts">
-import { inject, type Ref } from 'vue'
 import { Eye } from 'lucide-vue-next'
 import SidebarToolbar from '@/components/common/SidebarToolbar.vue'
+import { useLayoutStore } from '@/stores/layoutStore'
 
-// 获取 EditorGroup 的引用（通过 inject）
-const editorGroupRef = inject<Ref<{
-  openPreviewEditor: () => string
-}> | null>('editorGroupRef')
+const layoutStore = useLayoutStore()
 
 // 打开预览编辑器
 const openPreviewEditor = () => {
-  if (editorGroupRef?.value) {
-    editorGroupRef.value.openPreviewEditor()
+  if (layoutStore.editorGroupRef) {
+    layoutStore.editorGroupRef.openPreviewEditor()
   }
 }
 </script>

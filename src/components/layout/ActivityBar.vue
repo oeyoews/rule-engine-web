@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { inject } from 'vue'
 import {
   FolderTree,
   Search,
@@ -8,14 +7,9 @@ import {
   Eye,
   HelpCircle
 } from 'lucide-vue-next'
+import { useLayoutStore } from '@/stores/layoutStore'
 
-const layoutState = inject<{
-  activeView: any
-}>('layoutState')
-
-const layoutActions = inject<{
-  setActiveView: (view: string) => void
-}>('layoutActions')
+const layoutStore = useLayoutStore()
 
 const views = [
   // { id: 'explorer', icon: FolderTree, label: '文件浏览器', tooltip: '文件浏览器' },
@@ -27,9 +21,7 @@ const views = [
 ]
 
 const handleClick = (viewId: string) => {
-  if (layoutActions) {
-    layoutActions.setActiveView(viewId)
-  }
+  layoutStore.setActiveView(viewId)
 }
 </script>
 
@@ -40,7 +32,7 @@ const handleClick = (viewId: string) => {
       :key="view.id"
       :class="[
         'size-10 mb-1 flex items-center justify-center rounded transition-colors border-0',
-        layoutState?.activeView?.value === view.id
+        layoutStore.activeView === view.id
           ? 'bg-gray-200 text-gray-900'
           : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
       ]"

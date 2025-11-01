@@ -11,19 +11,19 @@ import {
   Upload,
   Lightbulb
 } from 'lucide-vue-next'
-import { useEditorState } from '@/composables/useEditorState'
+import { useEditorStore } from '@/stores/editorStore'
 import { packageOptions, importOptions, globalOptions } from '@/constants/drlOptions'
 import { sampleConfig, sampleRules } from '@/constants/sampleData'
 import { extractClassNamesFromRules, getMissingImports, extractPackagePrefix } from '@/utils/importDetector'
 import { parseDrlFile, validateDrlFile } from '@/utils/drlParser'
 
-const editorState = useEditorState()
+const editorStore = useEditorStore()
 
 // 检测缺失的导入
 const missingImports = computed(() => {
-  const classNames = extractClassNamesFromRules(editorState.rules.value)
-  const packagePrefix = extractPackagePrefix(editorState.config.value.imports)
-  return getMissingImports(editorState.config.value.imports, classNames, packagePrefix)
+  const classNames = extractClassNamesFromRules(editorStore.rules)
+  const packagePrefix = extractPackagePrefix(editorStore.config.imports)
+  return getMissingImports(editorStore.config.imports, classNames, packagePrefix)
 })
 
 // 是否有缺失的导入
@@ -34,7 +34,7 @@ const hasMissingImports = computed(() => missingImports.value.length > 0)
  */
 const autoAddImports = () => {
   if (missingImports.value.length > 0) {
-    editorState.config.value.imports = [...editorState.config.value.imports, ...missingImports.value]
+    editorStore.config.imports = [...editorStore.config.imports, ...missingImports.value]
     ElMessage.success(`已自动添加 ${missingImports.value.length} 个导入`)
   } else {
     ElMessage.info('没有需要添加的导入')
@@ -43,13 +43,13 @@ const autoAddImports = () => {
 
 // 监听规则变化，自动导入模式下自动添加缺失的导入
 watch(
-  () => [editorState.rules.value, editorState.autoImportMode.value],
+  () => [editorStore.rules, editorStore.autoImportMode],
   () => {
-    if (editorState.autoImportMode.value && hasMissingImports.value && !editorState.advancedMode.value) {
+    if (editorStore.autoImportMode && hasMissingImports.value && !editorStore.advancedMode) {
       // 延迟执行，避免频繁触发
       setTimeout(() => {
         if (missingImports.value.length > 0) {
-          editorState.config.value.imports = [...editorState.config.value.imports, ...missingImports.value]
+          editorStore.config.imports = [...editorStore.config.imports, ...missingImports.value]
         }
       }, 500)
     }
@@ -61,10 +61,10 @@ watch(
  * 加载示例规则
  */
 const loadSample = () => {
-  editorState.config.value = { ...sampleConfig }
-  editorState.rules.value = [...sampleRules]
-  if (editorState.rules.value.length > 0) {
-    editorState.activeRules.value = 0
+  editorStore.config = { ...sampleConfig }
+  editorStore.rules = [...sampleRules]
+  if (editorStore.rules.length > 0) {
+    editorStore.activeRules = 0
   }
   ElMessage.success('已加载示例规则')
 }
@@ -90,7 +90,7 @@ const importDrlFile = (file: File) => {
       const parsed = parseDrlFile(content)
 
       // 填充配置
-      editorState.config.value = {
+      editorStore.config = {
         package: parsed.package,
         imports: parsed.imports,
         globals: parsed.globals,
@@ -98,11 +98,11 @@ const importDrlFile = (file: File) => {
       }
 
       // 填充规则
-      editorState.rules.value = parsed.rules
+      editorStore.rules = parsed.rules
 
       // 展开第一个规则
-      if (editorState.rules.value.length > 0) {
-        editorState.activeRules.value = 0
+      if (editorStore.rules.length > 0) {
+        editorStore.activeRules = 0
       }
 
       ElMessage.success(`成功导入 ${parsed.rules.length} 个规则`)
@@ -177,7 +177,7 @@ const handleFileUpload = (file: File) => {
       </div>
 
       <!-- 全局配置表单 -->
-      <el-form :model="editorState.config.value" label-width="120px" label-position="top">
+      <el-form :model="editorStore.config" label-width="120px" label-position="top">
         <el-form-item>
           <template #label>
             <div class="flex items-center gap-2">
@@ -186,7 +186,7 @@ const handleFileUpload = (file: File) => {
             </div>
           </template>
           <el-select
-            v-model="editorState.config.value.package"
+            v-model="editorStore.config.package"
             filterable
             allow-create
             default-first-option
@@ -216,11 +216,11 @@ const handleFileUpload = (file: File) => {
                 <span>导入类</span>
               </div>
               <div class="flex items-center gap-2 bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-sm ml-2">
-                <span class="text-xs font-medium" :class="editorState.autoImportMode.value ? 'text-emerald-600' : 'text-gray-500'">
-                  {{ editorState.autoImportMode.value ? '自动导入' : '手动导入' }}
+                <span class="text-xs font-medium" :class="editorStore.autoImportMode ? 'text-emerald-600' : 'text-gray-500'">
+                  {{ editorStore.autoImportMode ? '自动导入' : '手动导入' }}
                 </span>
                 <el-switch
-                  v-model="editorState.autoImportMode.value"
+                  v-model="editorStore.autoImportMode"
                   active-color="#10b981"
                   inactive-color="#94a3b8"
                   size="small"
@@ -229,7 +229,7 @@ const handleFileUpload = (file: File) => {
             </div>
           </template>
           <el-select
-            v-model="editorState.config.value.imports"
+            v-model="editorStore.config.imports"
             multiple
             filterable
             allow-create
@@ -254,12 +254,12 @@ const handleFileUpload = (file: File) => {
             </el-option>
           </el-select>
           <!-- 自动导入模式提示 -->
-          <div v-if="editorState.autoImportMode.value" class="mt-2 flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 w-full">
+          <div v-if="editorStore.autoImportMode" class="mt-2 flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 w-full">
             <CheckCircle :size="16" class="shrink-0" />
             <p class="text-xs font-medium">自动导入已启用，系统将自动检测并添加缺失的类导入</p>
           </div>
           <!-- 手动导入模式提示 -->
-          <div v-else-if="!editorState.autoImportMode.value && hasMissingImports" class="mt-2 flex items-center gap-3 justify-between text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5 w-full">
+          <div v-else-if="!editorStore.autoImportMode && hasMissingImports" class="mt-2 flex items-center gap-3 justify-between text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5 w-full">
             <div class="flex items-center gap-2 flex-1 min-w-0">
               <AlertTriangle :size="26" class="shrink-0 mt-0.5 mr-2" />
               <div class="flex-1 text-xs min-w-0">
@@ -286,7 +286,7 @@ const handleFileUpload = (file: File) => {
             </div>
           </template>
           <el-select
-            v-model="editorState.config.value.globals"
+            v-model="editorStore.config.globals"
             multiple
             placeholder="选择全局变量"
             class="w-full"
@@ -317,7 +317,7 @@ const handleFileUpload = (file: File) => {
             </div>
           </template>
           <el-input
-            v-model="editorState.config.value.description"
+            v-model="editorStore.config.description"
             type="textarea"
             :rows="3"
             placeholder="请输入规则文件的描述信息"
