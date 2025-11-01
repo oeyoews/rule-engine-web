@@ -5,6 +5,7 @@ import SearchView from '@/components/sidebar/SearchView.vue'
 import RulesListView from '@/components/sidebar/RulesListView.vue'
 import ConfigView from '@/components/sidebar/ConfigView.vue'
 import PreviewView from '@/components/sidebar/PreviewView.vue'
+import HelpView from '@/components/sidebar/HelpView.vue'
 
 const layoutState = inject<{
   activeView: any
@@ -18,7 +19,8 @@ const views: Record<string, any> = {
   search: SearchView,
   rules: RulesListView,
   config: ConfigView,
-  preview: PreviewView
+  preview: PreviewView,
+  help: HelpView
 }
 
 const CurrentViewComponent = computed(() => {

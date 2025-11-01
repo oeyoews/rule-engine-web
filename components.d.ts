@@ -46,6 +46,7 @@ declare module 'vue' {
     ElUpload: typeof import('element-plus/es')['ElUpload']
     ExplorerView: typeof import('./src/components/sidebar/ExplorerView.vue')['default']
     HelpDialog: typeof import('./src/components/HelpDialog.vue')['default']
+    HelpView: typeof import('./src/components/sidebar/HelpView.vue')['default']
     OutputPanel: typeof import('./src/components/panel/OutputPanel.vue')['default']
     Panel: typeof import('./src/components/layout/Panel.vue')['default']
     PreviewDialog: typeof import('./src/components/PreviewDialog.vue')['default']

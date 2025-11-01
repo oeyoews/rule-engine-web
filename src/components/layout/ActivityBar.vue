@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, ref } from 'vue'
+import { inject } from 'vue'
 import {
   FolderTree,
   Search,
@@ -8,7 +8,6 @@ import {
   Eye,
   HelpCircle
 } from 'lucide-vue-next'
-import HelpDialog from '../HelpDialog.vue'
 
 const layoutState = inject<{
   activeView: any
@@ -17,8 +16,6 @@ const layoutState = inject<{
 const layoutActions = inject<{
   setActiveView: (view: string) => void
 }>('layoutActions')
-
-const showHelpDialog = ref(false)
 
 const views = [
   // { id: 'explorer', icon: FolderTree, label: '文件浏览器', tooltip: '文件浏览器' },
@@ -30,9 +27,7 @@ const views = [
 ]
 
 const handleClick = (viewId: string) => {
-  if (viewId === 'help') {
-    showHelpDialog.value = true
-  } else if (layoutActions) {
+  if (layoutActions) {
     layoutActions.setActiveView(viewId)
   }
 }
@@ -56,16 +51,6 @@ const handleClick = (viewId: string) => {
       <component :is="view.icon" :size="20" />
     </el-button>
   </div>
-
-  <!-- 帮助对话框 -->
-  <el-dialog
-    v-model="showHelpDialog"
-    title="使用帮助"
-    width="50%"
-    :close-on-click-modal="false"
-  >
-    <HelpDialog />
-  </el-dialog>
 </template>
 
 <style scoped>

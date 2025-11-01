@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, watch, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import {
-  Tag,
   Settings,
   Target,
   Search,
@@ -9,11 +9,15 @@ import {
   Wand2,
   Power,
   RotateCcw,
-  Lock
+  Lock,
+  Code2,
+  FileText
 } from 'lucide-vue-next'
 import { useEditorState } from '@/composables/useEditorState'
 import RuleConditionBuilder from '../RuleConditionBuilder.vue'
 import RuleActionBuilder from '../RuleActionBuilder.vue'
+import { generateSingleRuleCode } from '@/utils/drl'
+import { parseSingleRule } from '@/utils/drlParser'
 
 interface Props {
   data?: {
@@ -24,6 +28,10 @@ interface Props {
 
 const props = defineProps<Props>()
 const editorState = useEditorState()
+
+// 代码编辑器模式
+const codeEditorMode = ref(false)
+const ruleCode = ref('')
 
 // 当前编辑的规则
 const rule = computed(() => {
@@ -42,6 +50,42 @@ const rule = computed(() => {
   return null
 })
 
+// 切换到代码编辑器模式
+const switchToCodeEditor = () => {
+  if (!rule.value) return
+
+  // 生成当前规则的代码
+  ruleCode.value = generateSingleRuleCode(rule.value)
+  codeEditorMode.value = true
+}
+
+// 切换到表单模式
+const switchToFormEditor = () => {
+  if (!rule.value) return
+
+  // 尝试解析代码并更新到表单
+  try {
+    const parsedRule = parseSingleRule(ruleCode.value)
+    if (parsedRule) {
+      // 更新规则属性（保留原有的 visualMode）
+      const originalVisualMode = rule.value.visualMode
+      Object.assign(rule.value, {
+        ...parsedRule,
+        visualMode: originalVisualMode // 保持原有的 visualMode
+      })
+      ElMessage.success('代码已同步到表单')
+    } else {
+      ElMessage.warning('代码解析失败，请检查格式')
+      return
+    }
+  } catch (error) {
+    ElMessage.error('代码解析出错：' + (error instanceof Error ? error.message : '未知错误'))
+    return
+  }
+
+  codeEditorMode.value = false
+}
+
 // 监听切换到高级模式标签页时，同步表单数据到编辑器
 watch(
   () => editorState.advancedMode.value,
@@ -53,6 +97,22 @@ watch(
   }
 )
 
+// 监听规则变化，如果切换到代码编辑器模式，更新代码
+watch(
+  () => rule.value,
+  (newRule) => {
+    if (newRule && codeEditorMode.value) {
+      // 规则存在且在代码编辑器模式，更新代码
+      ruleCode.value = generateSingleRuleCode(newRule)
+    } else if (!newRule && codeEditorMode.value) {
+      // 规则不存在但在代码编辑器模式，退出代码编辑器模式
+      codeEditorMode.value = false
+      ruleCode.value = ''
+    }
+  },
+  { deep: true }
+)
+
 // 如果没有规则，显示提示
 if (!rule.value) {
   // 可以在模板中显示提示
@@ -62,131 +122,178 @@ if (!rule.value) {
 <template>
   <div class="rule-editor p-6">
     <template v-if="rule">
-      <el-form :model="rule" label-width="120px" label-position="left" class="space-y-4">
-        <!-- <el-form-item>
-          <template #label>
-            <div class="flex items-center gap-2">
-              <Tag :size="16" class="text-indigo-600" />
-              <span>规则名称</span>
-            </div>
-          </template>
-          <el-input v-model="rule.name" maxlength="50" show-word-limit placeholder="输入规则名称">
-          </el-input>
-        </el-form-item> -->
-
-        <el-form-item>
-          <template #label>
-            <div class="flex items-center gap-2">
-              <Settings :size="16" class="text-teal-600" />
-              <span>规则配置</span>
-            </div>
-          </template>
-          <div class="flex flex-wrap gap-4 p-2 rounded-lg border border-green-400 w-full">
-            <el-checkbox v-model="rule.enabled" size="large" class="cb-enabled hover:bg-white px-3 py-2 rounded transition-colors">
-              <span class="inline-flex items-center gap-2">
-                <Power :size="16" :class="rule.enabled ? 'text-green-600' : 'text-gray-400'" />
-                <span class="text-sm font-medium">启用规则</span>
-              </span>
-            </el-checkbox>
-            <el-checkbox v-model="rule.noLoop" size="large" class="cb-noloop hover:bg-white px-3 py-2 rounded transition-colors">
-              <span class="inline-flex items-center gap-2">
-                <RotateCcw :size="16" :class="rule.noLoop ? 'text-orange-600' : 'text-gray-400'" />
-                <span class="text-sm font-medium">防止循环</span>
-              </span>
-            </el-checkbox>
-            <el-checkbox v-model="rule.lockOnActive" size="large" class="cb-lock hover:bg-white px-3 py-2 rounded transition-colors">
-              <span class="inline-flex items-center gap-2">
-                <Lock :size="16" :class="rule.lockOnActive ? 'text-purple-600' : 'text-gray-400'" />
-                <span class="text-sm font-medium">锁定激活</span>
-              </span>
-            </el-checkbox>
+      <!-- 代码编辑器模式 -->
+      <div v-if="codeEditorMode" class="space-y-4">
+        <!-- 工具栏 -->
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <Code2 :size="18" class="text-indigo-600" />
+            <span class="font-semibold text-gray-900">代码编辑器模式</span>
           </div>
-        </el-form-item>
+          <el-button type="primary" @click="switchToFormEditor">
+            <FileText :size="14" class="mr-1" />
+            返回表单编辑
+          </el-button>
+        </div>
 
-        <el-form-item>
-          <template #label>
-            <div class="flex items-center gap-2">
-              <Target :size="16" class="text-purple-600" />
-              <span>优先级</span>
-            </div>
-          </template>
-          <el-input-number v-model="rule.salience" :min="0" :max="999" :step="1"></el-input-number>
-        </el-form-item>
+        <!-- 代码编辑区 -->
+        <el-scrollbar max-height="calc(100vh - 250px)" class="bg-gray-50 border-2 border-gray-300 rounded-lg shadow-lg overflow-hidden">
+          <el-input
+            v-model="ruleCode"
+            type="textarea"
+            :autosize="{ minRows: 20 }"
+            placeholder="在此手动编辑规则代码..."
+            style="font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 14px; line-height: 1.6;"
+            class="rule-code-editor"
+            resize="none"
+          />
+        </el-scrollbar>
 
-        <el-divider />
+        <div class="mt-3 flex items-center gap-3 text-sm text-blue-700 bg-linear-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg p-3 shadow-sm">
+          <FileText :size="20" class="shrink-0 mt-0.5 text-blue-600" />
+          <div>
+            <p class="font-semibold mb-1">代码编辑器提示</p>
+            <p class="text-xs text-gray-700 leading-relaxed">您正在直接编辑规则代码。修改后点击"返回表单编辑"按钮可以将代码同步到表单中。</p>
+          </div>
+        </div>
+      </div>
 
-        <!-- 可视化模式切换 -->
-        <el-form-item label-width="250px">
-          <template #label>
-            <div class="flex items-center justify-between w-full">
+      <!-- 表单编辑器模式 -->
+      <template v-else>
+        <!-- 工具栏 -->
+        <div class="flex items-center justify-end mb-4">
+          <el-button type="primary" plain @click="switchToCodeEditor">
+            <Code2 :size="14" class="mr-1" />
+            切换到代码编辑器
+          </el-button>
+        </div>
+
+        <el-form :model="rule" label-width="120px" label-position="left" class="space-y-4">
+          <!-- <el-form-item>
+            <template #label>
               <div class="flex items-center gap-2">
-                <Wand2 :size="16" class="text-violet-600" />
-                <span>编辑模式</span>
+                <Tag :size="16" class="text-indigo-600" />
+                <span>规则名称</span>
               </div>
-              <el-switch
-                v-model="rule.visualMode"
-                class="ml-4"
-                active-text="可视化"
-              />
+            </template>
+            <el-input v-model="rule.name" maxlength="50" show-word-limit placeholder="输入规则名称">
+            </el-input>
+          </el-form-item> -->
+
+          <el-form-item>
+            <template #label>
+              <div class="flex items-center gap-2">
+                <Settings :size="16" class="text-teal-600" />
+                <span>规则配置</span>
+              </div>
+            </template>
+            <div class="flex flex-wrap gap-4 p-2 rounded-lg border border-green-400 w-full">
+              <el-checkbox v-model="rule.enabled" size="large" class="cb-enabled hover:bg-white px-3 py-2 rounded transition-colors">
+                <span class="inline-flex items-center gap-2">
+                  <Power :size="16" :class="rule.enabled ? 'text-green-600' : 'text-gray-400'" />
+                  <span class="text-sm font-medium">启用规则</span>
+                </span>
+              </el-checkbox>
+              <el-checkbox v-model="rule.noLoop" size="large" class="cb-noloop hover:bg-white px-3 py-2 rounded transition-colors">
+                <span class="inline-flex items-center gap-2">
+                  <RotateCcw :size="16" :class="rule.noLoop ? 'text-orange-600' : 'text-gray-400'" />
+                  <span class="text-sm font-medium">防止循环</span>
+                </span>
+              </el-checkbox>
+              <el-checkbox v-model="rule.lockOnActive" size="large" class="cb-lock hover:bg-white px-3 py-2 rounded transition-colors">
+                <span class="inline-flex items-center gap-2">
+                  <Lock :size="16" :class="rule.lockOnActive ? 'text-purple-600' : 'text-gray-400'" />
+                  <span class="text-sm font-medium">锁定激活</span>
+                </span>
+              </el-checkbox>
             </div>
-          </template>
-        </el-form-item>
+          </el-form-item>
 
-        <!-- 条件 (when) -->
-        <el-form-item :label-width="rule.visualMode ? '0' : '100'">
-          <template #label v-if="!rule.visualMode">
-            <div class="flex items-center gap-2">
-              <Search :size="16" class="text-cyan-600" />
-              <span>条件</span>
-            </div>
-          </template>
+          <el-form-item>
+            <template #label>
+              <div class="flex items-center gap-2">
+                <Target :size="16" class="text-purple-600" />
+                <span>优先级</span>
+              </div>
+            </template>
+            <el-input-number v-model="rule.salience" :min="0" :max="999" :step="1"></el-input-number>
+          </el-form-item>
 
-          <!-- 可视化模式 -->
-          <RuleConditionBuilder
-            v-show="rule.visualMode"
-            v-model="rule.when"
-          />
+          <el-divider />
 
-          <!-- 代码模式 -->
-          <el-input
-            v-show="!rule.visualMode"
-            v-model="rule.when"
-            type="textarea"
-            :rows="3"
-            placeholder="例如: $p: Person($age: age >= 18)"
-            style="font-family: 'Consolas', 'Monaco', 'Courier New', monospace;"
-            size="large">
-          </el-input>
-        </el-form-item>
+          <!-- 可视化模式切换 -->
+          <el-form-item label-width="250px">
+            <template #label>
+              <div class="flex items-center justify-between w-full">
+                <div class="flex items-center gap-2">
+                  <Wand2 :size="16" class="text-violet-600" />
+                  <span>编辑模式</span>
+                </div>
+                <el-switch
+                  v-model="rule.visualMode"
+                  class="ml-4"
+                  active-text="可视化"
+                />
+              </div>
+            </template>
+          </el-form-item>
 
-        <!-- 动作-->
-        <el-form-item :label-width="rule.visualMode ? '0' : '100'">
-          <template #label v-if="!rule.visualMode">
-            <div class="flex items-center gap-2">
-              <Zap :size="16" class="text-orange-600" />
-              <span>动作</span>
-            </div>
-          </template>
+          <!-- 条件 (when) -->
+          <el-form-item :label-width="rule.visualMode ? '0' : '100'">
+            <template #label v-if="!rule.visualMode">
+              <div class="flex items-center gap-2">
+                <Search :size="16" class="text-cyan-600" />
+                <span>条件</span>
+              </div>
+            </template>
 
-          <!-- 可视化模式 -->
-          <RuleActionBuilder
-            v-show="rule.visualMode"
-            v-model="rule.then"
-            :when-condition="rule.when"
-          />
+            <!-- 可视化模式 -->
+            <RuleConditionBuilder
+              v-show="rule.visualMode"
+              v-model="rule.when"
+            />
 
-          <!-- 代码模式 -->
-          <el-input
-            v-show="!rule.visualMode"
-            v-model="rule.then"
-            type="textarea"
-            :rows="4"
-            placeholder="例如: $p.setAdult(true); update($p);"
-            style="font-family: 'Consolas', 'Monaco', 'Courier New', monospace;"
-            size="large">
-          </el-input>
-        </el-form-item>
-      </el-form>
+            <!-- 代码模式 -->
+            <el-input
+              v-show="!rule.visualMode"
+              v-model="rule.when"
+              type="textarea"
+              :rows="3"
+              placeholder="例如: $p: Person($age: age >= 18)"
+              style="font-family: 'Consolas', 'Monaco', 'Courier New', monospace;"
+              size="large">
+            </el-input>
+          </el-form-item>
+
+          <!-- 动作-->
+          <el-form-item :label-width="rule.visualMode ? '0' : '100'">
+            <template #label v-if="!rule.visualMode">
+              <div class="flex items-center gap-2">
+                <Zap :size="16" class="text-orange-600" />
+                <span>动作</span>
+              </div>
+            </template>
+
+            <!-- 可视化模式 -->
+            <RuleActionBuilder
+              v-show="rule.visualMode"
+              v-model="rule.then"
+              :when-condition="rule.when"
+            />
+
+            <!-- 代码模式 -->
+            <el-input
+              v-show="!rule.visualMode"
+              v-model="rule.then"
+              type="textarea"
+              :rows="4"
+              placeholder="例如: $p.setAdult(true); update($p);"
+              style="font-family: 'Consolas', 'Monaco', 'Courier New', monospace;"
+              size="large">
+            </el-input>
+          </el-form-item>
+        </el-form>
+      </template>
     </template>
 
     <div v-else class="text-center py-12">
@@ -234,5 +341,21 @@ if (!rule.value) {
 :deep(.cb-lock.is-checked .el-checkbox__label),
 :deep(.cb-lock .el-checkbox__input.is-checked + .el-checkbox__label) {
   color: #7c3aed !important;
+}
+
+/* 代码编辑器样式优化 */
+:deep(.rule-code-editor .el-textarea__inner) {
+  background: #ffffff !important;
+  color: #1e293b !important;
+  border: 1px solid #e2e8f0 !important;
+  padding: 1rem !important;
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+  box-shadow: none !important;
+}
+
+:deep(.rule-code-editor .el-textarea__inner:focus) {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+  border-color: #3b82f6 !important;
 }
 </style>

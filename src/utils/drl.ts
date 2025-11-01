@@ -67,59 +67,68 @@ export const generateDrlHeader = (description?: string, drlId?: string, timestam
 }
 
 /**
+ * 生成单个规则的 DRL 代码
+ */
+export function generateSingleRuleCode(rule: Rule): string {
+  let code = `rule "${rule.name}"${NEW_LINE}`
+
+  // 使用枚举映射生成规则属性
+  Object.values(RuleAttribute).forEach(attr => {
+    const generator = attributeGenerators[attr]
+    if (generator) {
+      const attributeCode = generator(rule)
+      if (attributeCode) {
+        code += attributeCode
+      }
+    }
+  })
+
+  // 关键字不缩进
+  code += `when${NEW_LINE}`
+  if (rule.when && rule.when.trim()) {
+    // 处理 when 条件的缩进（一级缩进：4 个空格）
+    const whenLines = rule.when.split(NEW_LINE)
+    whenLines.forEach(line => {
+      if (line.trim()) {
+        code += indentLine(line) + NEW_LINE
+      } else {
+        code += NEW_LINE
+      }
+    })
+  } else {
+    // when 条件为空时，添加注释提示
+    code += indentLine('// TODO: 请在此处添加规则条件') + NEW_LINE
+  }
+  // 关键字不缩进
+  code += `then${NEW_LINE}`
+  if (rule.then && rule.then.trim()) {
+    // 处理 then 动作的缩进（一级缩进：4 个空格）
+    const thenLines = rule.then.split(NEW_LINE)
+    thenLines.forEach(line => {
+      if (line.trim()) {
+        code += indentLine(line) + NEW_LINE
+      } else {
+        code += NEW_LINE
+      }
+    })
+  } else {
+    // then 动作为空时，添加注释提示
+    code += indentLine('// TODO: 请在此处添加规则动作') + NEW_LINE
+  }
+  // 关键字不缩进
+  code += `end${NEW_LINE}`
+
+  return code
+}
+
+/**
  * 生成规则部分代码（不含header和package）
  */
 function generateRulesCode(rules: Rule[]): string {
   let code = ''
 
   rules.forEach(rule => {
-    code += `rule "${rule.name}"${NEW_LINE}`
-
-    // 使用枚举映射生成规则属性
-    Object.values(RuleAttribute).forEach(attr => {
-      const generator = attributeGenerators[attr]
-      if (generator) {
-        const attributeCode = generator(rule)
-        if (attributeCode) {
-          code += attributeCode
-        }
-      }
-    })
-
-    // 关键字不缩进
-    code += `when${NEW_LINE}`
-    if (rule.when && rule.when.trim()) {
-      // 处理 when 条件的缩进（一级缩进：4 个空格）
-      const whenLines = rule.when.split(NEW_LINE)
-      whenLines.forEach(line => {
-        if (line.trim()) {
-          code += indentLine(line) + NEW_LINE
-        } else {
-          code += NEW_LINE
-        }
-      })
-    } else {
-      // when 条件为空时，添加注释提示
-      code += indentLine('// TODO: 请在此处添加规则条件') + NEW_LINE
-    }
-    // 关键字不缩进
-    code += `then${NEW_LINE}`
-    if (rule.then && rule.then.trim()) {
-      // 处理 then 动作的缩进（一级缩进：4 个空格）
-      const thenLines = rule.then.split(NEW_LINE)
-      thenLines.forEach(line => {
-        if (line.trim()) {
-          code += indentLine(line) + NEW_LINE
-        } else {
-          code += NEW_LINE
-        }
-      })
-    } else {
-      // then 动作为空时，添加注释提示
-      code += indentLine('// TODO: 请在此处添加规则动作') + NEW_LINE
-    }
-    // 关键字不缩进
-    code += `end${NEW_LINE}${NEW_LINE}`
+    code += generateSingleRuleCode(rule) + NEW_LINE
   })
 
   return code

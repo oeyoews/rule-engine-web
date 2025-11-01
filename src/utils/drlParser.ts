@@ -102,6 +102,80 @@ export function parseDrlFile(content: string): ParsedDrl {
 }
 
 /**
+ * 解析单个规则的 DRL 代码
+ */
+export function parseSingleRule(content: string): Rule | null {
+  const ruleRegex = /rule\s+"([^"]+)"([\s\S]*?)end/i
+  const ruleMatch = ruleRegex.exec(content.trim())
+
+  if (!ruleMatch) {
+    return null
+  }
+
+  const ruleName = ruleMatch[1]
+  const ruleBody = ruleMatch[2]
+
+  if (!ruleName || !ruleBody) {
+    return null
+  }
+
+  // 初始化规则对象
+  const rule: Rule = {
+    name: ruleName,
+    enabled: true,
+    salience: 0,
+    noLoop: false,
+    lockOnActive: false,
+    when: '',
+    then: '',
+    visualMode: false // 从代码解析的规则默认使用代码模式
+  }
+
+  // 提取规则属性
+  const enabledMatch = ruleBody.match(/enabled\s+(false)/i)
+  if (enabledMatch) {
+    rule.enabled = false
+  }
+
+  const salienceMatch = ruleBody.match(/salience\s+(\d+)/i)
+  if (salienceMatch?.[1]) {
+    rule.salience = parseInt(salienceMatch[1])
+  }
+
+  const noLoopMatch = ruleBody.match(/no-loop\s+true/i)
+  if (noLoopMatch) {
+    rule.noLoop = true
+  }
+
+  const lockOnActiveMatch = ruleBody.match(/lock-on-active\s+true/i)
+  if (lockOnActiveMatch) {
+    rule.lockOnActive = true
+  }
+
+  // 提取 when 部分
+  const whenMatch = ruleBody.match(/when\s+([\s\S]*?)(?=then)/i)
+  if (whenMatch?.[1]) {
+    // 移除缩进（每行前面的缩进，可能是 4 个空格或 tab）
+    rule.when = whenMatch[1].trim().split('\n').map(line => {
+      // 移除前导空格或 tab
+      return line.replace(/^[\s\t]+/, '')
+    }).filter(line => line.trim()).join('\n')
+  }
+
+  // 提取 then 部分
+  const thenMatch = ruleBody.match(/then\s+([\s\S]*?)(?=\nend|\n$|$)/i)
+  if (thenMatch?.[1]) {
+    // 移除缩进（每行前面的缩进，可能是 4 个空格或 tab）
+    rule.then = thenMatch[1].trim().split('\n').map(line => {
+      // 移除前导空格或 tab
+      return line.replace(/^[\s\t]+/, '')
+    }).filter(line => line.trim()).join('\n')
+  }
+
+  return rule
+}
+
+/**
  * 验证 DRL 文件格式
  */
 export function validateDrlFile(content: string): { valid: boolean; error?: string } {

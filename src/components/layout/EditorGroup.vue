@@ -374,7 +374,6 @@ defineExpose({
       <el-tabs
         v-model="activeTabId"
         type="card"
-        closable
         @tab-change="handleTabChange"
         @tab-remove="handleTabRemove"
       >
@@ -383,7 +382,6 @@ defineExpose({
           :key="tab.id"
           :name="tab.id"
           :label="tab.title"
-          :closable="tabs.length > 1"
         >
           <template #label>
             <span
