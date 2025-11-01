@@ -12,8 +12,6 @@ interface Condition {
   value: string
 }
 
-// 折叠状态
-const activeConditions = ref<string[]>([])
 
 const props = defineProps<{
   modelValue: string
@@ -65,21 +63,6 @@ const operatorColorMap: Record<string, string> = {
   'memberOf': 'text-teal-600'
 }
 
-// 生成操作符对应的浅色 el-tag 颜色类
-const operatorTagClass = (op: string): string => {
-  const map: Record<string, string> = {
-    '==': 'bg-purple-50! text-purple-700! border-purple-200!',
-    '!=': 'bg-rose-50! text-rose-700! border-rose-200!',
-    '>': 'bg-orange-50! text-orange-700! border-orange-200!',
-    '<': 'bg-blue-50! text-blue-600! border-blue-200!',
-    '>=': 'bg-orange-50! text-orange-700! border-orange-200!',
-    '<=': 'bg-blue-50! text-blue-600! border-blue-200!',
-    'contains': 'bg-emerald-50! text-emerald-700! border-emerald-200!',
-    'matches': 'bg-indigo-50! text-indigo-600! border-indigo-200!',
-    'memberOf': 'bg-teal-50! text-teal-700! border-teal-200!'
-  }
-  return map[op] || 'bg-slate-50! text-slate-700! border-slate-200!'
-}
 
 // 逻辑操作符功能已移除，每个规则只能有一个条件
 
@@ -111,7 +94,6 @@ const addCondition = () => {
       value: ''
     }
     conditions.value.push(newCondition)
-    activeConditions.value.push(newCondition.id)
     updateDrlCode()
   }
 }
@@ -260,30 +242,7 @@ watch(() => props.modelValue, (newValue) => {
       <el-tag size="small" type="primary">可视化</el-tag>
     </div>
 
-    <el-collapse v-model="activeConditions">
-      <el-collapse-item
-        v-if="currentCondition"
-        :key="currentCondition.id"
-        :name="currentCondition.id"
-      >
-        <template #title>
-          <div class="flex items-center gap-2 py-1 w-full">
-            <div class="text-sm font-medium text-gray-700">
-              条件:
-              <span class="inline-flex flex-wrap items-center gap-1 ml-1 align-middle">
-                <el-tag size="small" effect="plain" class="bg-cyan-50! text-cyan-700! border-cyan-200!">${{ currentCondition.variable }}</el-tag>
-                <span class="text-slate-400">:</span>
-                <el-tag size="small" effect="plain" class="bg-fuchsia-50! text-fuchsia-700! border-fuchsia-200!">{{ currentCondition.className || '(未选择类)' }}</el-tag>
-                <template v-if="currentCondition.field">
-                  <el-tag size="small" effect="plain" class="bg-slate-50! text-slate-700! border-slate-200!">.{{ currentCondition.field }}</el-tag>
-                  <el-tag size="small" effect="plain" :class="operatorTagClass(currentCondition.operator)">{{ currentCondition.operator }}</el-tag>
-                  <el-tag size="small" effect="plain" class="bg-slate-50! text-slate-700! border-slate-200!">{{ currentCondition.value || '?' }}</el-tag>
-                </template>
-              </span>
-            </div>
-          </div>
-        </template>
-        <div class="ml-4 p-3 bg-blue-50 rounded-lg border border-blue-200 mt-2">
+    <div v-if="currentCondition" class="p-3 bg-blue-50 rounded-lg border border-blue-200">
           <div class="grid grid-cols-12 gap-2 items-center">
             <!-- 变量名 -->
             <div class="col-span-2">
@@ -407,23 +366,15 @@ watch(() => props.modelValue, (newValue) => {
               </el-input>
             </div>
           </div>
-        </div>
-      </el-collapse-item>
-    </el-collapse>
+    </div>
 
     <!-- 生成的代码预览 -->
-    <div class="mt-3 ml-4">
-      <el-collapse>
-        <el-collapse-item name="preview">
-          <template #title>
-            <div class="flex items-center gap-2">
-              <Code2 :size="18" class="text-blue-600 shrink-0" />
-              <span class="text-sm">查看生成的代码</span>
-            </div>
-          </template>
-          <pre class="bg-gray-900 text-green-400 p-3 rounded text-xs font-mono">{{ generateDrlCode() || '// 请配置条件' }}</pre>
-        </el-collapse-item>
-      </el-collapse>
+    <div class="mt-3">
+      <div class="mb-2 flex items-center gap-2">
+        <Code2 :size="16" class="text-blue-600 shrink-0" />
+        <span class="text-sm font-medium text-gray-700">生成的代码</span>
+      </div>
+      <pre class="bg-gray-900 text-green-400 p-3 rounded text-xs font-mono">{{ generateDrlCode() || '// 请配置条件' }}</pre>
     </div>
   </div>
 </template>
@@ -446,40 +397,6 @@ watch(() => props.modelValue, (newValue) => {
   animation: none !important;
 }
 
-/* 折叠面板标题样式 */
-.condition-item :deep(.el-collapse-item__header) {
-  background: #eff6ff;
-  border: 1px solid #dbeafe;
-  border-radius: 0.5rem;
-  padding: 0.5rem;
-  margin-bottom: 0;
-  transition: all 0.2s;
-}
-
-.condition-item :deep(.el-collapse-item__header:hover) {
-  background: #dbeafe;
-  border-color: #60a5fa;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-}
-
-.condition-item :deep(.el-collapse-item__wrap) {
-  border: none;
-  background: transparent;
-}
-
-.condition-item :deep(.el-collapse-item__content) {
-  padding-bottom: 0;
-}
-
-/* 条件内容区域样式 */
-.condition-item :deep(.el-collapse-item__content) .bg-blue-50 {
-  transition: all 0.2s;
-}
-
-.condition-item :deep(.el-collapse-item__content) .bg-blue-50:hover {
-  border-color: #60a5fa;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-}
 </style>
 
 

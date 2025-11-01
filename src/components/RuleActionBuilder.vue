@@ -16,8 +16,6 @@ const classData = ref<ClassData | null>(null)
 const actions = ref<Action[]>([])
 const isUpdatingFromCode = ref(false) // 防止循环更新
 
-// 折叠状态
-const activeActions = ref<string[]>([])
 
 // 动作类型选项
 const actionTypes = [
@@ -106,7 +104,6 @@ const addAction = () => {
       params: []
     }
     actions.value.push(newAction)
-    activeActions.value.push(newAction.id)
     updateDrlCode()
   }
 }
@@ -356,26 +353,7 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
       <el-tag size="small" type="success">可视化</el-tag>
     </div>
 
-    <el-collapse v-model="activeActions">
-      <el-collapse-item
-        v-if="currentAction"
-        :key="currentAction.id"
-        :name="currentAction.id"
-      >
-        <template #title>
-          <div class="flex items-center gap-2 py-1 w-full">
-            <div class="text-sm font-medium text-gray-700">
-              动作:
-              <el-tag size="small" :type="currentAction?.type === 'method' || currentAction?.type === 'function' ? 'primary' : 'success'" class="ml-1">
-                {{ currentAction ? (actionTypes.find(t => t.value === (currentAction?.type || ''))?.label || currentAction.type) : '' }}
-              </el-tag>
-              <span v-if="currentAction && currentAction.object" class="text-green-600 ml-4">
-                {{ currentAction.object }}<span v-if="currentAction.method" class="text-gray-500">.{{ currentAction.method }}()</span>
-              </span>
-            </div>
-          </div>
-        </template>
-        <div class="p-3 bg-green-50 rounded-lg border border-green-200 mt-2 ml-4">
+    <div v-if="currentAction" class="p-3 bg-green-50 rounded-lg border border-green-200">
           <div class="mb-3">
             <label class="text-xs text-gray-600 mb-1 block">① 动作类型</label>
             <el-segmented
@@ -623,23 +601,15 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
               </el-input>
             </div>
           </div>
-        </div>
-      </el-collapse-item>
-    </el-collapse>
+    </div>
 
     <!-- 生成的代码预览 -->
-    <div class="mt-3 ml-4">
-      <el-collapse>
-        <el-collapse-item name="preview">
-          <template #title>
-            <div class="flex items-center gap-2">
-              <Code2 :size="16" class="text-green-600 shrink-0" />
-              <span class="text-sm">查看生成的代码</span>
-            </div>
-          </template>
-          <pre class="bg-gray-900 text-orange-400 p-3 rounded text-xs font-mono">{{ generateDrlCode() || '// 请配置动作' }}</pre>
-        </el-collapse-item>
-      </el-collapse>
+    <div class="mt-3">
+      <div class="mb-2 flex items-center gap-2">
+        <Code2 :size="16" class="text-green-600 shrink-0" />
+        <span class="text-sm font-medium text-gray-700">生成的代码</span>
+      </div>
+      <pre class="bg-gray-900 text-orange-400 p-3 rounded text-xs font-mono">{{ generateDrlCode() || '// 请配置动作' }}</pre>
     </div>
   </div>
 </template>
@@ -663,40 +633,6 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
   animation: none !important;
 }
 
-/* 折叠面板标题样式 */
-.action-item :deep(.el-collapse-item__header) {
-  background: #f0fdf4;
-  border: 1px solid #d1fae5;
-  border-radius: 0.5rem;
-  padding: 0.5rem;
-  margin-bottom: 0;
-  transition: all 0.2s;
-}
-
-.action-item :deep(.el-collapse-item__header:hover) {
-  background: #dcfce7;
-  border-color: #4ade80;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-}
-
-.action-item :deep(.el-collapse-item__wrap) {
-  border: none;
-  background: transparent;
-}
-
-.action-item :deep(.el-collapse-item__content) {
-  padding-bottom: 0;
-}
-
-/* 动作内容区域样式 */
-.action-item :deep(.el-collapse-item__content) .bg-green-50 {
-  transition: all 0.2s;
-}
-
-.action-item :deep(.el-collapse-item__content) .bg-green-50:hover {
-  border-color: #4ade80;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-}
 </style>
 
 
