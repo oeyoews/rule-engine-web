@@ -4,9 +4,6 @@ import { ElMessage } from 'element-plus'
 import {
   Settings,
   Target,
-  Search,
-  Zap,
-  Wand2,
   Power,
   RotateCcw,
   Lock,
@@ -67,11 +64,10 @@ const switchToFormEditor = () => {
   try {
     const parsedRule = parseSingleRule(ruleCode.value)
     if (parsedRule) {
-      // 更新规则属性（保留原有的 visualMode）
-      const originalVisualMode = rule.value.visualMode
+      // 更新规则属性（始终使用可视化模式）
       Object.assign(rule.value, {
         ...parsedRule,
-        visualMode: originalVisualMode // 保持原有的 visualMode
+        visualMode: true // 始终使用可视化模式
       })
       ElMessage.success('代码已同步到表单')
     } else {
@@ -113,10 +109,6 @@ watch(
   { deep: true }
 )
 
-// 如果没有规则，显示提示
-if (!rule.value) {
-  // 可以在模板中显示提示
-}
 </script>
 
 <template>
@@ -221,76 +213,19 @@ if (!rule.value) {
 
           <el-divider />
 
-          <!-- 可视化模式切换 -->
-          <el-form-item label-width="250px">
-            <template #label>
-              <div class="flex items-center justify-between w-full">
-                <div class="flex items-center gap-2">
-                  <Wand2 :size="16" class="text-violet-600" />
-                  <span>编辑模式</span>
-                </div>
-                <el-switch
-                  v-model="rule.visualMode"
-                  class="ml-4"
-                  active-text="可视化"
-                />
-              </div>
-            </template>
-          </el-form-item>
-
           <!-- 条件 (when) -->
-          <el-form-item :label-width="rule.visualMode ? '0' : '100'">
-            <template #label v-if="!rule.visualMode">
-              <div class="flex items-center gap-2">
-                <Search :size="16" class="text-cyan-600" />
-                <span>条件</span>
-              </div>
-            </template>
-
-            <!-- 可视化模式 -->
+          <el-form-item label-width="0">
             <RuleConditionBuilder
-              v-show="rule.visualMode"
               v-model="rule.when"
             />
-
-            <!-- 代码模式 -->
-            <el-input
-              v-show="!rule.visualMode"
-              v-model="rule.when"
-              type="textarea"
-              :rows="3"
-              placeholder="例如: $p: Person($age: age >= 18)"
-              style="font-family: 'Consolas', 'Monaco', 'Courier New', monospace;"
-              size="large">
-            </el-input>
           </el-form-item>
 
           <!-- 动作-->
-          <el-form-item :label-width="rule.visualMode ? '0' : '100'">
-            <template #label v-if="!rule.visualMode">
-              <div class="flex items-center gap-2">
-                <Zap :size="16" class="text-orange-600" />
-                <span>动作</span>
-              </div>
-            </template>
-
-            <!-- 可视化模式 -->
+          <el-form-item label-width="0">
             <RuleActionBuilder
-              v-show="rule.visualMode"
               v-model="rule.then"
               :when-condition="rule.when"
             />
-
-            <!-- 代码模式 -->
-            <el-input
-              v-show="!rule.visualMode"
-              v-model="rule.then"
-              type="textarea"
-              :rows="4"
-              placeholder="例如: $p.setAdult(true); update($p);"
-              style="font-family: 'Consolas', 'Monaco', 'Courier New', monospace;"
-              size="large">
-            </el-input>
           </el-form-item>
         </el-form>
       </template>

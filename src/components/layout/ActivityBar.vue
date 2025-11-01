@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import {
-  FolderTree,
   Search,
   ClipboardList,
   Settings,
@@ -13,10 +12,10 @@ const layoutStore = useLayoutStore()
 
 const views = [
   // { id: 'explorer', icon: FolderTree, label: '文件浏览器', tooltip: '文件浏览器' },
-  { id: 'search', icon: Search, label: '搜索', tooltip: '搜索' },
   { id: 'rules', icon: ClipboardList, label: '规则列表', tooltip: '规则列表' },
-  { id: 'config', icon: Settings, label: '配置', tooltip: '全局配置' },
+  { id: 'search', icon: Search, label: '搜索', tooltip: '搜索' },
   { id: 'preview', icon: Eye, label: '预览', tooltip: '代码预览' },
+  { id: 'config', icon: Settings, label: '配置', tooltip: '全局配置' },
   { id: 'help', icon: HelpCircle, label: '帮助', tooltip: '使用帮助' }
 ]
 
@@ -53,5 +52,3 @@ const handleClick = (viewId: string) => {
   margin-left: 0;
 }
 </style>
-
-

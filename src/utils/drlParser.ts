@@ -59,7 +59,7 @@ export function parseDrlFile(content: string): ParsedDrl {
       lockOnActive: false,
       when: '',
       then: '',
-      visualMode: false // 导入的规则默认使用代码模式
+      visualMode: true // 默认使用可视化模式
     }
 
     // 提取规则属性
@@ -128,7 +128,7 @@ export function parseSingleRule(content: string): Rule | null {
     lockOnActive: false,
     when: '',
     then: '',
-    visualMode: false // 从代码解析的规则默认使用代码模式
+    visualMode: true // 默认使用可视化模式
   }
 
   // 提取规则属性

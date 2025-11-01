@@ -7,5 +7,4 @@
 * 子树
 * 默认是editor
 * 去掉代码预览
-
-* use pinia instead of createstate
+* 高亮tab显示

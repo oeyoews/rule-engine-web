@@ -7,3 +7,4 @@ alwaysApply: true
 * 使用element plus 的弹窗时候， 总是需要单独抽离出去， 并且使用definemodel.
 * ui 使用element plus 库
 * js/ts 语法使用ES6+ 语法
+* 不做太多的防御性编程， 不要生成技术文档md

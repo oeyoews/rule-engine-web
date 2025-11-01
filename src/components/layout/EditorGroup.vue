@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, h, watch } from 'vue'
+import { ref, computed, h, watch, markRaw } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { X, XCircle, XSquare, Settings, ClipboardList, Code2, Eye } from 'lucide-vue-next'
 import ContextMenu from '@imengyu/vue3-context-menu'
@@ -8,6 +8,12 @@ import RuleEditor from '@/components/editor/RuleEditor.vue'
 import AdvancedEditor from '@/components/editor/AdvancedEditor.vue'
 import PreviewEditor from '@/components/editor/PreviewEditor.vue'
 import { useEditorStore } from '@/stores/editorStore'
+
+// 使用 markRaw 标记组件，避免被响应式处理
+const ConfigEditorRaw = markRaw(ConfigEditor)
+const RuleEditorRaw = markRaw(RuleEditor)
+const AdvancedEditorRaw = markRaw(AdvancedEditor)
+const PreviewEditorRaw = markRaw(PreviewEditor)
 
 const editorStore = useEditorStore()
 
@@ -244,7 +250,7 @@ const openConfigEditor = () => {
   return addTab({
     type: 'config',
     title: '全局配置',
-    component: ConfigEditor
+    component: ConfigEditorRaw
   })
 }
 
@@ -269,7 +275,7 @@ const openRuleEditor = (ruleIndex: number) => {
   return addTab({
     type: 'rule',
     title,
-    component: RuleEditor,
+    component: RuleEditorRaw,
     data: { ruleName: ruleName, index: ruleIndex } // 同时保存 ruleName 和 index 以保持兼容性
   })
 }
@@ -340,7 +346,7 @@ const openAdvancedEditor = () => {
   return addTab({
     type: 'advanced',
     title: '高级模式',
-    component: AdvancedEditor
+    component: AdvancedEditorRaw
   })
 }
 
@@ -353,7 +359,7 @@ const openPreviewEditor = () => {
   return addTab({
     type: 'preview',
     title: '代码预览',
-    component: PreviewEditor
+    component: PreviewEditorRaw
   })
 }
 
