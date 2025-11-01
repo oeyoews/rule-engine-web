@@ -16,12 +16,18 @@ const openPreviewEditor = () => {
 </script>
 
 <template>
-  <div class="preview-view p-4">
-    <div class="space-y-4">
-      <div class="flex items-center gap-2 mb-4">
-        <Eye :size="18" class="text-emerald-600" />
+  <div class="preview-view flex flex-col h-full">
+    <!-- 工具栏 -->
+    <div class="toolbar px-4 py-2.5 border-b border-gray-300 flex items-center justify-between bg-gray-50">
+      <div class="flex items-center gap-2">
+        <Eye :size="16" class="text-gray-600" />
         <h3 class="text-sm font-semibold text-gray-900">代码预览</h3>
       </div>
+    </div>
+
+    <!-- 内容区域 -->
+    <div class="flex-1 overflow-auto p-4">
+      <div class="space-y-4">
 
       <div class="text-gray-600 text-sm mb-4">
         <p class="mb-2">预览生成的 DRL 代码：</p>
@@ -41,6 +47,7 @@ const openPreviewEditor = () => {
         <Eye :size="16" class="mr-2" />
         打开代码预览
       </el-button>
+      </div>
     </div>
   </div>
 </template>

@@ -12,12 +12,18 @@ const handleSearch = () => {
 </script>
 
 <template>
-  <div class="search-view p-4">
-    <div class="mb-4">
-      <div class="flex items-center gap-2 mb-2">
+  <div class="search-view flex flex-col h-full">
+    <!-- 工具栏 -->
+    <div class="toolbar px-4 py-2.5 border-b border-gray-300 flex items-center justify-between bg-gray-50">
+      <div class="flex items-center gap-2">
         <Search :size="16" class="text-gray-600" />
-        <span class="text-sm font-medium text-gray-900">搜索</span>
+        <h3 class="text-sm font-semibold text-gray-900">搜索</h3>
       </div>
+    </div>
+
+    <!-- 内容区域 -->
+    <div class="flex-1 overflow-auto p-4">
+      <div class="mb-4">
       <input
         v-model="searchQuery"
         type="text"
@@ -27,8 +33,9 @@ const handleSearch = () => {
       />
     </div>
 
-    <div v-if="searchResults.length === 0" class="text-gray-500 text-xs text-center py-8">
-      暂无搜索结果
+      <div v-if="searchResults.length === 0" class="text-gray-500 text-xs text-center py-8">
+        暂无搜索结果
+      </div>
     </div>
   </div>
 </template>

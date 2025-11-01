@@ -16,12 +16,18 @@ const openConfigEditor = () => {
 </script>
 
 <template>
-  <div class="config-view p-4">
-    <div class="space-y-4">
-      <div class="flex items-center gap-2 mb-4">
-        <Settings :size="18" class="text-indigo-600" />
+  <div class="config-view flex flex-col h-full">
+    <!-- 工具栏 -->
+    <div class="toolbar px-4 py-2.5 border-b border-gray-300 flex items-center justify-between bg-gray-50">
+      <div class="flex items-center gap-2">
+        <Settings :size="16" class="text-gray-600" />
         <h3 class="text-sm font-semibold text-gray-900">全局配置</h3>
       </div>
+    </div>
+
+    <!-- 内容区域 -->
+    <div class="flex-1 overflow-auto p-4">
+      <div class="space-y-4">
 
       <div class="text-gray-600 text-sm mb-4">
         <p class="mb-2">配置全局规则文件的基本信息：</p>
@@ -41,6 +47,7 @@ const openConfigEditor = () => {
         <Settings :size="16" class="mr-2" />
         打开配置编辑器
       </el-button>
+      </div>
     </div>
   </div>
 </template>

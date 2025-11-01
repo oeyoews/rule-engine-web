@@ -54,7 +54,7 @@ if (!rule.value) {
   <div class="rule-editor p-6">
     <template v-if="rule">
       <el-form :model="rule" label-width="120px" label-position="left" class="space-y-4">
-        <el-form-item>
+        <!-- <el-form-item>
           <template #label>
             <div class="flex items-center gap-2">
               <Tag :size="16" class="text-indigo-600" />
@@ -63,7 +63,7 @@ if (!rule.value) {
           </template>
           <el-input v-model="rule.name" maxlength="50" show-word-limit placeholder="输入规则名称">
           </el-input>
-        </el-form-item>
+        </el-form-item> -->
 
         <el-form-item>
           <template #label>

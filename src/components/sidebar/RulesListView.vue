@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { inject, type Ref } from 'vue'
+import { inject, h, type Ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Trash2, Grip, CheckCircle, XCircle, Zap, FileText } from 'lucide-vue-next'
+import { Plus, Trash2, Grip, CheckCircle, XCircle, Zap, FileText, ClipboardList, Pencil } from 'lucide-vue-next'
 import { useEditorState } from '@/composables/useEditorState'
 import { VueDraggable } from 'vue-draggable-plus'
+import ContextMenu from '@imengyu/vue3-context-menu'
 
 const editorState = useEditorState()
 
@@ -45,7 +46,10 @@ const addRule = () => {
 
 // 确认删除规则
 const confirmRemoveRule = (index: number) => {
-  const ruleName = editorState.rules.value[index].name || `规则 ${index + 1}`
+  const rule = editorState.rules.value[index]
+  if (!rule) return
+
+  const ruleName = rule.name || `规则 ${index + 1}`
   ElMessageBox.confirm(
     `确定要删除规则"${ruleName}"吗？此操作不可恢复。`,
     '删除确认',
@@ -74,13 +78,73 @@ const removeRule = (index: number) => {
     editorState.activeRules.value = -1
   }
 }
+
+// 重命名规则
+const renameRule = (index: number) => {
+  const rule = editorState.rules.value[index]
+  if (!rule) return
+
+  const currentName = rule.name || `规则 ${index + 1}`
+
+  ElMessageBox.prompt(
+    '请输入新的规则名称',
+    '重命名规则',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      inputValue: currentName,
+      inputPattern: /^.{1,50}$/,
+      inputErrorMessage: '规则名称长度应在1-50个字符之间'
+    }
+  ).then(({ value }) => {
+    if (value && value.trim()) {
+      rule.name = value.trim()
+      ElMessage.success('规则已重命名')
+    } else {
+      ElMessage.warning('规则名称不能为空')
+    }
+  }).catch(() => {
+    // 用户取消
+  })
+}
+
+// 处理右键菜单
+const handleContextMenu = (event: MouseEvent, index: number) => {
+  event.preventDefault()
+  event.stopPropagation()
+
+  ContextMenu.showContextMenu({
+    x: event.clientX,
+    y: event.clientY,
+    items: [
+      {
+        label: '重命名',
+        icon: () => h(Pencil, { size: 14 }),
+        onClick: () => {
+          renameRule(index)
+        },
+        divided: true
+      },
+      {
+        label: '删除',
+        icon: () => h(Trash2, { size: 14 }),
+        onClick: () => {
+          confirmRemoveRule(index)
+        },
+      }
+    ]
+  })
+}
 </script>
 
 <template>
   <div class="rules-list-view flex flex-col h-full">
     <!-- 工具栏 -->
-    <div class="toolbar px-4 py-2 border-b border-gray-300 flex items-center justify-between">
-      <h3 class="text-sm font-semibold text-gray-900">规则列表</h3>
+    <div class="toolbar px-4 py-2.5 border-b border-gray-300 flex items-center justify-between bg-gray-50">
+      <div class="flex items-center gap-2">
+        <ClipboardList :size="16" class="text-gray-600" />
+        <h3 class="text-sm font-semibold text-gray-900">规则列表</h3>
+      </div>
       <el-button
         type="primary"
         size="small"
@@ -121,6 +185,7 @@ const removeRule = (index: number) => {
           :key="index"
           class="rule-item bg-white hover:bg-gray-50 border border-gray-200 rounded p-3 mb-2 cursor-pointer transition-colors shadow-sm"
           @click="openRuleEditor(index)"
+          @contextmenu.prevent="handleContextMenu($event, index)"
         >
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3 flex-1 min-w-0">
@@ -164,14 +229,14 @@ const removeRule = (index: number) => {
             </div>
 
             <!-- 删除按钮 -->
-            <el-button
+            <!-- <el-button
               text
               circle
               @click.stop="confirmRemoveRule(index)"
               title="删除规则"
             >
               <Trash2 :size="16" class="text-gray-500 hover:text-red-600" />
-            </el-button>
+            </el-button> -->
           </div>
         </div>
       </VueDraggable>
@@ -186,7 +251,4 @@ const removeRule = (index: number) => {
   border: 2px dashed #818cf8;
 }
 
-.toolbar {
-  background: #f9fafb;
-}
 </style>

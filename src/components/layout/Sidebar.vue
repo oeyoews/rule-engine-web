@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
-import ExplorerView from '../sidebar/ExplorerView.vue'
-import SearchView from '../sidebar/SearchView.vue'
-import RulesListView from '../sidebar/RulesListView.vue'
-import ConfigView from '../sidebar/ConfigView.vue'
-import PreviewView from '../sidebar/PreviewView.vue'
+import ExplorerView from '@/components/sidebar/ExplorerView.vue'
+import SearchView from '@/components/sidebar/SearchView.vue'
+import RulesListView from '@/components/sidebar/RulesListView.vue'
+import ConfigView from '@/components/sidebar/ConfigView.vue'
+import PreviewView from '@/components/sidebar/PreviewView.vue'
 
 const layoutState = inject<{
   activeView: any

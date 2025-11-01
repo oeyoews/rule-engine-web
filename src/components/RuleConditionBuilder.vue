@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Plus, Trash2, Grip, Ampersand, Split, Box, Hash, Equal, EqualNot, ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft, Regex, Code2, Filter } from 'lucide-vue-next'
+import { Box, Hash, Equal, EqualNot, ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft, Regex, Code2, Filter } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassField } from '@/utils/classImport'
-import { VueDraggable } from 'vue-draggable-plus'
 
 interface Condition {
   id: string
@@ -11,7 +10,6 @@ interface Condition {
   field: string
   operator: string
   value: string
-  logicOperator?: 'AND' | 'OR'
 }
 
 // 折叠状态
@@ -83,11 +81,10 @@ const operatorTagClass = (op: string): string => {
   return map[op] || 'bg-slate-50! text-slate-700! border-slate-200!'
 }
 
-// 逻辑操作符
-const logicOperators = [
-  { label: '并且 (AND)', value: 'AND', icon: Ampersand, color: 'text-blue-600' },
-  { label: '或者 (OR)', value: 'OR', icon: Split, color: 'text-orange-600' }
-]
+// 逻辑操作符功能已移除，每个规则只能有一个条件
+
+// 获取当前条件（用于模板）
+const currentCondition = computed(() => conditions.value[0])
 
 // 获取所有可用的类
 const availableClasses = computed(() => {
@@ -102,76 +99,51 @@ const getClassFields = (className: string): ClassField[] => {
   return classInfo?.fields || []
 }
 
-// 添加条件
+// 添加条件 - 确保只有一个条件
 const addCondition = () => {
-  const newCondition: Condition = {
-    id: Date.now().toString(),
-    variable: `p${conditions.value.length + 1}`,
-    className: '',
-    field: '',
-    operator: '==',
-    value: '',
-    logicOperator: conditions.value.length > 0 ? 'AND' : undefined
+  if (conditions.value.length === 0) {
+    const newCondition: Condition = {
+      id: Date.now().toString(),
+      variable: 'p',
+      className: '',
+      field: '',
+      operator: '==',
+      value: ''
+    }
+    conditions.value.push(newCondition)
+    activeConditions.value.push(newCondition.id)
+    updateDrlCode()
   }
-  conditions.value.push(newCondition)
-  // 自动展开新添加的条件
-  activeConditions.value.push(newCondition.id)
-  updateDrlCode()
 }
 
-// 删除条件
-const removeCondition = (id: string) => {
-  conditions.value = conditions.value.filter(c => c.id !== id)
-  // 如果删除后第一个条件有逻辑操作符，移除它
-  if (conditions.value.length > 0) {
-    const firstCondition = conditions.value[0]
-    if (firstCondition && firstCondition.logicOperator) {
-      firstCondition.logicOperator = undefined
-    }
-  }
-  updateDrlCode()
-}
+// 删除条件功能已移除，每个规则只能有一个条件
 
 // 生成 DRL when 代码
 const generateDrlCode = (): string => {
   if (conditions.value.length === 0) return ''
 
-  const lines: string[] = []
+  const condition = conditions.value[0]
+  if (!condition || !condition.className || !condition.field) return ''
 
-  conditions.value.forEach((condition, index) => {
-    if (!condition.className || !condition.field) return
+  // 生成条件表达式
+  const varPrefix = `$${condition.variable}`
 
-    let line = ''
+  if (condition.operator === 'contains') {
+    return `    ${varPrefix}: ${condition.className}(${condition.field} contains "${condition.value}")`
+  } else if (condition.operator === 'matches') {
+    return `    ${varPrefix}: ${condition.className}(${condition.field} matches "${condition.value}")`
+  } else if (condition.operator === 'memberOf') {
+    return `    ${varPrefix}: ${condition.className}(${condition.field} memberOf ${condition.value})`
+  } else {
+    // 判断值的类型来决定是否加引号
+    const fieldInfo = getClassFields(condition.className).find(f => f.name === condition.field)
+    const isStringType = fieldInfo?.type === 'String'
+    const valueStr = isStringType && !condition.value.startsWith('$')
+      ? `"${condition.value}"`
+      : condition.value
 
-    // 添加逻辑操作符
-    if (index > 0 && condition.logicOperator) {
-      line += `${condition.logicOperator.toLowerCase()} `
-    }
-
-    // 生成条件表达式
-    const varPrefix = `$${condition.variable}`
-
-    if (condition.operator === 'contains') {
-      line += `${varPrefix}: ${condition.className}(${condition.field} contains "${condition.value}")`
-    } else if (condition.operator === 'matches') {
-      line += `${varPrefix}: ${condition.className}(${condition.field} matches "${condition.value}")`
-    } else if (condition.operator === 'memberOf') {
-      line += `${varPrefix}: ${condition.className}(${condition.field} memberOf ${condition.value})`
-    } else {
-      // 判断值的类型来决定是否加引号
-      const fieldInfo = getClassFields(condition.className).find(f => f.name === condition.field)
-      const isStringType = fieldInfo?.type === 'String'
-      const valueStr = isStringType && !condition.value.startsWith('$')
-        ? `"${condition.value}"`
-        : condition.value
-
-      line += `${varPrefix}: ${condition.className}(${condition.field} ${condition.operator} ${valueStr})`
-    }
-
-    lines.push(`    ${line}`)
-  })
-
-  return lines.join('\n')
+    return `    ${varPrefix}: ${condition.className}(${condition.field} ${condition.operator} ${valueStr})`
+  }
 }
 
 // 更新 DRL 代码
@@ -184,7 +156,7 @@ const updateDrlCode = () => {
   }, 0)
 }
 
-// 解析 DRL 代码（初始化时使用）
+// 解析 DRL 代码（初始化时使用）- 只解析第一个条件
 const parseDrlCode = (code: string) => {
   if (!code || code.trim().length === 0) {
     conditions.value = []
@@ -192,40 +164,18 @@ const parseDrlCode = (code: string) => {
   }
 
   try {
-    const parsedConditions: Condition[] = []
-
     // 移除多余的空格和换行
     const cleanCode = code.trim().replace(/\s+/g, ' ')
 
-    // 分割 and/or 逻辑操作符（不区分大小写）
-    const parts = cleanCode.split(/\s+(and|or)\s+/i)
+    // 只解析第一个条件（移除 and/or 后面的部分）
+    const firstConditionMatch = cleanCode.match(/^\s*\$(\w+)\s*:\s*(\w+)\s*\(([^)]+)\)/)
 
-    let currentLogicOp: 'AND' | 'OR' | undefined = undefined
+    if (firstConditionMatch) {
+      const variable = firstConditionMatch[1]
+      const className = firstConditionMatch[2]
+      const fieldExpression = firstConditionMatch[3]?.trim()
 
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i]?.trim()
-
-      if (!part) continue
-
-      // 检查是否是逻辑操作符
-      if (part.toLowerCase() === 'and') {
-        currentLogicOp = 'AND'
-        continue
-      } else if (part.toLowerCase() === 'or') {
-        currentLogicOp = 'OR'
-        continue
-      }
-
-      // 解析条件：$变量: 类名(字段 操作符 值)
-      const conditionMatch = part.match(/\$(\w+)\s*:\s*(\w+)\s*\(([^)]+)\)/)
-
-      if (conditionMatch) {
-        const variable = conditionMatch[1]
-        const className = conditionMatch[2]
-        const fieldExpression = conditionMatch[3]?.trim()
-
-        if (!variable || !className || !fieldExpression) continue
-
+      if (variable && className && fieldExpression) {
         // 解析字段表达式
         let field = ''
         let operator = '=='
@@ -254,31 +204,24 @@ const parseDrlCode = (code: string) => {
             field = opMatch[1]?.trim() || ''
             operator = opMatch[2]?.trim() || '=='
             value = opMatch[3]?.trim().replace(/['"]/g, '') || ''
-          } else {
-            // 如果无法解析，跳过这个条件
-            continue
           }
         }
 
-        parsedConditions.push({
-          id: Date.now().toString() + Math.random(),
+        conditions.value = [{
+          id: Date.now().toString(),
           variable: variable,
           className: className,
           field: field,
           operator: operator,
-          value: value,
-          logicOperator: parsedConditions.length > 0 ? currentLogicOp : undefined
-        })
-
-        // 重置逻辑操作符
-        currentLogicOp = undefined
+          value: value
+        }]
+        return
       }
     }
 
-    conditions.value = parsedConditions
+    conditions.value = []
   } catch (error) {
     console.error('解析 DRL when 代码失败:', error)
-    // 解析失败时保持为空，让用户在代码模式下编辑
     conditions.value = []
   }
 }
@@ -305,94 +248,43 @@ watch(() => props.modelValue, (newValue) => {
 
 <template>
   <div class="condition-builder">
-    <div class="flex items-center justify-between mb-3">
-      <div class="flex items-center gap-2">
-        <Filter :size="16" class="text-blue-600 shrink-0" />
-        <span class="text-sm font-medium text-gray-700">条件构建器</span>
-        <el-tag size="small" type="primary">可视化</el-tag>
-      </div>
-      <el-button
-        size="small"
-        type="primary"
-        :icon="Plus"
-        @click="addCondition"
-      >
-        添加条件
-      </el-button>
+    <div class="flex items-center gap-2 mb-3">
+      <Filter :size="16" class="text-blue-600 shrink-0" />
+      <span class="text-sm font-medium text-gray-700">条件构建器</span>
+      <el-tag size="small" type="primary">可视化</el-tag>
     </div>
 
     <el-collapse v-model="activeConditions">
-      <VueDraggable
-        v-model="conditions"
-        :animation="200"
-        :handle="conditions.length > 1 ? '.drag-handle' : undefined"
-        :disabled="conditions.length <= 1"
-        ghostClass="dragging-ghost"
-        @end="updateDrlCode"
+      <el-collapse-item
+        v-if="currentCondition"
+        :key="currentCondition.id"
+        :name="currentCondition.id"
       >
-        <el-collapse-item
-          v-for="(condition, index) in conditions"
-          :key="condition.id"
-          :name="condition.id"
-        >
-          <template #title>
-            <div class="flex items-center gap-2 py-1 w-full">
-              <div
-                v-if="conditions.length > 1"
-                class="drag-handle flex items-center justify-center size-8 cursor-move hover:bg-gray-200 rounded transition-colors shrink-0 ml-2"
-              >
-                <Grip :size="16" class="text-blue-400" />
-              </div>
-              <div
-                v-else
-                class="flex items-center justify-center size-8 shrink-0 ml-2 opacity-30"
-              >
-                <Grip :size="16" class="text-gray-400" />
-              </div>
-              <div v-if="index > 0" class="shrink-0">
-                <el-tag size="small" :type="condition.logicOperator === 'AND' ? 'primary' : 'warning'">
-                  {{ condition.logicOperator }}
-                </el-tag>
-              </div>
-              <div class="text-sm font-medium text-gray-700">
-                条件{{ index + 1 }}:
-                <span class="inline-flex flex-wrap items-center gap-1 ml-1 align-middle">
-                  <el-tag size="small" effect="plain" class="bg-cyan-50! text-cyan-700! border-cyan-200!">${{ condition.variable }}</el-tag>
-                  <span class="text-slate-400">:</span>
-                  <el-tag size="small" effect="plain" class="bg-fuchsia-50! text-fuchsia-700! border-fuchsia-200!">{{ condition.className || '(未选择类)' }}</el-tag>
-                  <template v-if="condition.field">
-                    <el-tag size="small" effect="plain" class="bg-slate-50! text-slate-700! border-slate-200!">.{{ condition.field }}</el-tag>
-                    <el-tag size="small" effect="plain" :class="operatorTagClass(condition.operator)">{{ condition.operator }}</el-tag>
-                    <el-tag size="small" effect="plain" class="bg-slate-50! text-slate-700! border-slate-200!">{{ condition.value || '?' }}</el-tag>
-                  </template>
-                </span>
-              </div>
+        <template #title>
+          <div class="flex items-center gap-2 py-1 w-full">
+            <div class="text-sm font-medium text-gray-700">
+              条件:
+              <span class="inline-flex flex-wrap items-center gap-1 ml-1 align-middle">
+                <el-tag size="small" effect="plain" class="bg-cyan-50! text-cyan-700! border-cyan-200!">${{ currentCondition.variable }}</el-tag>
+                <span class="text-slate-400">:</span>
+                <el-tag size="small" effect="plain" class="bg-fuchsia-50! text-fuchsia-700! border-fuchsia-200!">{{ currentCondition.className || '(未选择类)' }}</el-tag>
+                <template v-if="currentCondition.field">
+                  <el-tag size="small" effect="plain" class="bg-slate-50! text-slate-700! border-slate-200!">.{{ currentCondition.field }}</el-tag>
+                  <el-tag size="small" effect="plain" :class="operatorTagClass(currentCondition.operator)">{{ currentCondition.operator }}</el-tag>
+                  <el-tag size="small" effect="plain" class="bg-slate-50! text-slate-700! border-slate-200!">{{ currentCondition.value || '?' }}</el-tag>
+                </template>
+              </span>
             </div>
-          </template>
-          <div class="ml-4 p-3 bg-blue-50 rounded-lg border border-blue-200 mt-2">
-            <!-- 逻辑操作符 -->
-            <div v-if="index > 0" class="mb-3">
-              <label class="text-xs text-gray-600 mb-1 block">① 逻辑操作符</label>
-              <el-radio-group v-model="condition.logicOperator" size="small" @change="updateDrlCode">
-                <el-radio-button
-                  v-for="op in logicOperators"
-                  :key="op.value"
-                  :label="op.value"
-                >
-                  <span class="inline-flex items-center gap-1.5">
-                    <component :is="op.icon" :size="14" :class="op.color" />
-                    <span>{{ op.label }}</span>
-                  </span>
-                </el-radio-button>
-              </el-radio-group>
-            </div>
-
-            <div class="grid grid-cols-12 gap-2 items-center">
-              <!-- 变量名 -->
+          </div>
+        </template>
+        <div class="ml-4 p-3 bg-blue-50 rounded-lg border border-blue-200 mt-2">
+          <div class="grid grid-cols-12 gap-2 items-center">
+            <!-- 变量名 -->
             <div class="col-span-2">
-              <label class="text-xs text-gray-600 mb-1 block">{{ index > 0 ? '②' : '①' }} 变量名</label>
+              <label class="text-xs text-gray-600 mb-1 block">① 变量名</label>
               <el-input
-                v-model="condition.variable"
+                v-if="currentCondition"
+                v-model="currentCondition.variable"
                 size="small"
                 placeholder="p"
                 @change="updateDrlCode"
@@ -405,9 +297,10 @@ watch(() => props.modelValue, (newValue) => {
 
             <!-- 类名 -->
             <div class="col-span-2">
-              <label class="text-xs text-gray-600 mb-1 block">{{ index > 0 ? '③' : '②' }} 类</label>
+              <label class="text-xs text-gray-600 mb-1 block">② 类</label>
               <el-select
-                v-model="condition.className"
+                v-if="currentCondition"
+                v-model="currentCondition.className"
                 size="small"
                 placeholder="选择类"
                 filterable
@@ -427,7 +320,6 @@ watch(() => props.modelValue, (newValue) => {
                     <Box :size="16" class="text-indigo-600" />
                     <div class="flex flex-col">
                       <span>{{ cls.name }}</span>
-                      <!-- <span class="text-xs text-gray-500">{{ cls.description }}</span> -->
                     </div>
                   </div>
                 </el-option>
@@ -436,21 +328,22 @@ watch(() => props.modelValue, (newValue) => {
 
             <!-- 字段 -->
             <div class="col-span-2">
-              <label class="text-xs text-gray-600 mb-1 block">{{ index > 0 ? '④' : '③' }} 字段</label>
+              <label class="text-xs text-gray-600 mb-1 block">③ 字段</label>
               <el-select
-                v-model="condition.field"
+                v-if="currentCondition"
+                v-model="currentCondition.field"
                 size="small"
                 placeholder="选择字段"
                 filterable
                 @change="updateDrlCode"
-                :disabled="!condition.className"
+                :disabled="!currentCondition.className"
                 class="w-full"
               >
                 <template #prefix>
                   <Hash :size="14" class="text-teal-600 ml-1" />
                 </template>
                 <el-option
-                  v-for="field in getClassFields(condition.className)"
+                  v-for="field in getClassFields(currentCondition.className)"
                   :key="field.name"
                   :label="field.name"
                   :value="field.name"
@@ -459,7 +352,6 @@ watch(() => props.modelValue, (newValue) => {
                     <Hash :size="16" class="text-teal-600" />
                     <div class="flex flex-col">
                       <span>{{ field.name }}</span>
-                      <!-- <span class="text-xs text-gray-500">{{ field.type }} - {{ field.description }}</span> -->
                     </div>
                   </div>
                 </el-option>
@@ -468,15 +360,16 @@ watch(() => props.modelValue, (newValue) => {
 
             <!-- 操作符 -->
             <div class="col-span-2">
-              <label class="text-xs text-gray-600 mb-1 block">{{ index > 0 ? '⑤' : '④' }} 操作符</label>
+              <label class="text-xs text-gray-600 mb-1 block">④ 操作符</label>
               <el-select
-                v-model="condition.operator"
+                v-if="currentCondition"
+                v-model="currentCondition.operator"
                 size="small"
                 @change="updateDrlCode"
                 class="w-full"
               >
                 <template #prefix>
-                  <component :is="operatorIconMap[condition.operator] || Equal" :size="14" :class="operatorColorMap[condition.operator] || 'text-purple-600'" class="ml-1" />
+                  <component :is="operatorIconMap[currentCondition.operator] || Equal" :size="14" :class="operatorColorMap[currentCondition.operator] || 'text-purple-600'" class="ml-1" />
                 </template>
                 <el-option
                   v-for="op in operators"
@@ -494,9 +387,10 @@ watch(() => props.modelValue, (newValue) => {
 
             <!-- 值 -->
             <div class="col-span-3">
-              <label class="text-xs text-gray-600 mb-1 block">{{ index > 0 ? '⑥' : '⑤' }} 值</label>
+              <label class="text-xs text-gray-600 mb-1 block">⑤ 值</label>
               <el-input
-                v-model="condition.value"
+                v-if="currentCondition"
+                v-model="currentCondition.value"
                 size="small"
                 placeholder="输入值"
                 @change="updateDrlCode"
@@ -505,25 +399,10 @@ watch(() => props.modelValue, (newValue) => {
                   <Code2 :size="14" class="text-emerald-600 ml-1" />
                 </template>
               </el-input>
-              </div>
-            </div>
-
-            <!-- 删除按钮 -->
-            <div class="flex justify-end mt-3 pt-3 border-t border-blue-300">
-              <el-button
-                @click.stop="removeCondition(condition.id)"
-                :disabled="conditions.length === 1"
-                size="small"
-                plain
-                class="group bg-red-50! border-red-200! text-red-600! hover:bg-red-100! hover:border-red-300! hover:text-red-700! focus:outline-none! focus:ring-2! focus:ring-red-200! active:translate-y-[1px]! transition-all! duration-150! rounded-md!"
-              >
-                <Trash2 :size="16" class="mr-1 transition-colors duration-150 group-hover:text-red-700" />
-                删除条件
-              </el-button>
             </div>
           </div>
-        </el-collapse-item>
-      </VueDraggable>
+        </div>
+      </el-collapse-item>
     </el-collapse>
 
     <!-- 生成的代码预览 -->
@@ -596,4 +475,5 @@ watch(() => props.modelValue, (newValue) => {
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 </style>
+
 

@@ -21,7 +21,7 @@ const layoutActions = inject<{
 const showHelpDialog = ref(false)
 
 const views = [
-  { id: 'explorer', icon: FolderTree, label: '文件浏览器', tooltip: '文件浏览器' },
+  // { id: 'explorer', icon: FolderTree, label: '文件浏览器', tooltip: '文件浏览器' },
   { id: 'search', icon: Search, label: '搜索', tooltip: '搜索' },
   { id: 'rules', icon: ClipboardList, label: '规则列表', tooltip: '规则列表' },
   { id: 'config', icon: Settings, label: '配置', tooltip: '全局配置' },
@@ -44,7 +44,7 @@ const handleClick = (viewId: string) => {
       v-for="view in views"
       :key="view.id"
       :class="[
-        'w-10 h-10 mb-1 flex items-center justify-center rounded transition-colors border-0',
+        'size-10 mb-1 flex items-center justify-center rounded transition-colors border-0',
         layoutState?.activeView?.value === view.id
           ? 'bg-gray-200 text-gray-900'
           : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
@@ -61,7 +61,7 @@ const handleClick = (viewId: string) => {
   <el-dialog
     v-model="showHelpDialog"
     title="使用帮助"
-    width="80%"
+    width="50%"
     :close-on-click-modal="false"
   >
     <HelpDialog />
@@ -72,5 +72,9 @@ const handleClick = (viewId: string) => {
 .activity-bar {
   min-width: 48px;
 }
+.el-button+.el-button {
+  margin-left: 0;
+}
 </style>
+
 
