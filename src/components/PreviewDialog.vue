@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import {
   Download, Copy, Check
 } from 'lucide-vue-next'
@@ -7,12 +6,7 @@ import { useClipboard } from '@vueuse/core'
 import { ElMessage } from 'element-plus'
 import { downloadFile } from '../utils/drl'
 import CodeStatistics from './common/CodeStatistics.vue'
-import hljs from 'highlight.js/lib/core'
-import java from 'highlight.js/lib/languages/java'
-import 'highlight.js/styles/atom-one-dark.css'
-
-// 注册 Java 语言
-hljs.registerLanguage('java', java)
+import { useCodeHighlight } from '../composables/useCodeHighlight'
 
 // Props
 const props = defineProps<{
@@ -21,24 +15,15 @@ const props = defineProps<{
   enabledRulesCount: number
 }>()
 
-// 代码行数
-const codeLines = computed(() => props.code.split('\n').length)
+// 使用代码高亮 composable
+const { highlightedCode, codeLines } = useCodeHighlight(
+  () => props.code,
+  {
+    language: 'java',
+    showLineNumbers: true
+  }
+)
 
-// 高亮后的代码（带行号）
-const highlightedCode = computed(() => {
-  const highlighted = hljs.highlight(props.code, { language: 'java' }).value
-  const lines = highlighted.split('\n')
-
-  return lines.map((line, index) => {
-    const lineNumber = index + 1
-    return `<div class="code-line">
-      <span class="line-number">${lineNumber}</span>
-      <span class="line-content">${line || ' '}</span>
-    </div>`
-  }).join('')
-})
-
-// 使用 VueUse 的 useClipboard (legacy 模式)
 const { copy, copied, isSupported } = useClipboard({ legacy: true })
 
 /**
