@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import '@/styles/tailwind.css';
+import '@/styles/el-ui-custom.css';
 import App from '@/App.vue';
 import ElementPlus from 'element-plus';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';

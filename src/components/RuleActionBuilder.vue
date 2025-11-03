@@ -626,13 +626,6 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
   background: #d1fae5;
   border: 2px dashed #10b981;
 }
-
-/* 禁用 el-tag 的所有过渡动画 */
-:deep(.el-tag) {
-  transition: none !important;
-  animation: none !important;
-}
-
 </style>
 
 

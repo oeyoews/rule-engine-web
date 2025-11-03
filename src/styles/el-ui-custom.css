@@ -1,0 +1,9 @@
+/* 禁用 el-tag 的所有过渡动画 */
+.el-tag {
+  transition: none !important;
+  animation: none !important;
+}
+
+.el-dialog {
+	border-radius: 12px !important;
+}

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
 import { Box, Hash, Equal, Code2, Filter } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassField } from '@/utils/classImport'
 import {
@@ -16,7 +15,6 @@ const modelValue = defineModel<string>()
 const classData = ref<ClassData | null>(null)
 const conditions = ref<Condition[]>([])
 const isUpdatingFromCode = ref(false) // 防止循环更新
-
 
 // 逻辑操作符功能已移除，每个规则只能有一个条件
 
@@ -51,8 +49,6 @@ const addCondition = () => {
     updateDrlCode()
   }
 }
-
-// 删除条件功能已移除，每个规则只能有一个条件
 
 // 生成 DRL when 代码
 const generateDrlCode = (): string => {
@@ -260,13 +256,4 @@ watch(modelValue, (newValue) => {
   background: #dbeafe;
   border: 2px dashed #60a5fa;
 }
-
-/* 禁用 el-tag 的所有过渡动画 */
-:deep(.el-tag) {
-  transition: none !important;
-  animation: none !important;
-}
-
 </style>
-
-

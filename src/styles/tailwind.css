@@ -8,24 +8,13 @@ html {
 	text-autospace: normal;
 }
 
+body {
+	margin: 0;
+	padding: 0;
+}
+
 /* 支持黑暗模式 */
 @custom-variant dark (&:where(.dark, .dark *));
-
-/* vue-flow 节点工具栏样式 */
-.vue-flow__node-toolbar {
-	@apply bg-gray-200 px-2 py-1;
-	display: flex;
-	border-radius: 4px;
-}
-
-.vue-flow__minimap {
-	transform: scale(75%);
-	transform-origin: bottom right;
-}
-
-.el-dialog {
-	border-radius: 12px !important;
-}
 
 /* DRL 编辑器样式 */
 .drl-editor .el-textarea__inner {
@@ -41,15 +30,4 @@ html {
 .drl-editor .el-textarea__inner:focus {
 	border-color: #dc2626 !important;
 	box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06), 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
-}
-
-/* 禁用 el-tag 的所有过渡动画 */
-:deep(.el-tag) {
-  transition: none !important;
-  animation: none !important;
-}
-
-body {
-	margin: 0;
-	padding: 0;
 }
