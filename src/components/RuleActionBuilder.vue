@@ -1,31 +1,18 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Phone, RefreshCw, PlusCircle, Trash2, Edit, Zap, Variable, Code2, Box, Sparkles } from 'lucide-vue-next'
+import { Variable, Code2, Box, Sparkles, Plus, Trash2, Edit, Grip } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassMethod } from '@/utils/classImport'
+import { actionTypes } from '@/constants/actions'
+import { VueDraggable } from 'vue-draggable-plus'
 
+const modelValue = defineModel<string>()
 const props = defineProps<{
-  modelValue: string
   whenCondition?: string
-}>()
-
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: string): void
 }>()
 
 const classData = ref<ClassData | null>(null)
 const actions = ref<Action[]>([])
 const isUpdatingFromCode = ref(false) // 防止循环更新
-
-
-// 动作类型选项
-const actionTypes = [
-  { label: '调用方法', value: 'method', icon: Phone, color: 'text-blue-600' },
-  { label: '更新对象 (update)', value: 'update', icon: RefreshCw, color: 'text-green-600' },
-  { label: '插入对象 (insert)', value: 'insert', icon: PlusCircle, color: 'text-cyan-600' },
-  { label: '删除对象 (retract)', value: 'retract', icon: Trash2, color: 'text-red-600' },
-  { label: '修改对象 (modify)', value: 'modify', icon: Edit, color: 'text-orange-600' },
-  { label: '调用函数', value: 'function', icon: Zap, color: 'text-purple-600' }
-]
 
 /**
  * 从 when 条件中提取变量
@@ -93,25 +80,27 @@ const getObjectMethods = (objectName: string): ClassMethod[] => {
   return classInfo?.methods || []
 }
 
-// 添加动作 - 确保只有一个动作
+// 添加动作
 const addAction = () => {
-  if (actions.value.length === 0) {
-    const newAction: Action = {
-      id: Date.now().toString(),
-      type: 'method',
-      object: '',
-      method: '',
-      params: []
-    }
-    actions.value.push(newAction)
+  const newAction: Action = {
+    id: Date.now().toString(),
+    type: 'method',
+    object: '',
+    method: '',
+    params: []
+  }
+  actions.value.push(newAction)
+  updateDrlCode()
+}
+
+// 删除动作
+const removeAction = (id: string) => {
+  const index = actions.value.findIndex(a => a.id === id)
+  if (index > -1) {
+    actions.value.splice(index, 1)
     updateDrlCode()
   }
 }
-
-// 删除动作功能已移除，每个规则只能有一个动作
-
-// 获取当前动作（用于模板）
-const currentAction = computed(() => actions.value[0])
 
 // 当方法改变时，更新参数列表
 const onMethodChange = (action: Action) => {
@@ -127,11 +116,8 @@ const onMethodChange = (action: Action) => {
   updateDrlCode()
 }
 
-// 生成 DRL then 代码 - 只生成第一个动作
-const generateDrlCode = (): string => {
-  if (actions.value.length === 0) return ''
-
-  const action = actions.value[0]
+// 生成单个动作的代码
+const generateSingleActionCode = (action: Action): string => {
   if (!action) return ''
 
   let line = ''
@@ -192,17 +178,112 @@ const generateDrlCode = (): string => {
   return line ? `    ${line}` : ''
 }
 
+// 生成 DRL then 代码 - 生成所有动作
+const generateDrlCode = (): string => {
+  if (actions.value.length === 0) return ''
+
+  const lines = actions.value
+    .map(action => generateSingleActionCode(action))
+    .filter(line => line.length > 0)
+
+  return lines.join('\n')
+}
+
 // 更新 DRL 代码
 const updateDrlCode = () => {
   isUpdatingFromCode.value = true
   const code = generateDrlCode()
-  emit('update:modelValue', code)
+  modelValue.value = code
   setTimeout(() => {
     isUpdatingFromCode.value = false
   }, 0)
 }
 
-// 解析 DRL 代码（初始化时使用）- 只解析第一个动作
+// 解析单个语句为动作
+const parseStatement = (statement: string, index: number): Action | null => {
+  let action: Action | null = null
+
+  // 解析 update($变量)
+  const updateMatch = statement.match(/update\s*\(\s*(\$\w+)\s*\)/)
+  if (updateMatch) {
+    action = {
+      id: `${Date.now()}-${index}`,
+      type: 'update',
+      object: updateMatch[1] || '',
+      method: '',
+      params: []
+    }
+  }
+
+  // 解析 insert(new 类名(...))
+  const insertMatch = statement.match(/insert\s*\(\s*new\s+(\w+)\s*\(([^)]*)\)\s*\)/)
+  if (!action && insertMatch) {
+    const className = insertMatch[1]
+    const paramsStr = insertMatch[2]?.trim() || ''
+    const params = paramsStr ? paramsStr.split(',').map(p => ({ value: p.trim().replace(/['"]/g, '') })) : []
+
+    action = {
+      id: `${Date.now()}-${index}`,
+      type: 'insert',
+      object: className || '',
+      method: '',
+      params: params
+    }
+  }
+
+  // 解析 delete/retract($变量)
+  const deleteMatch = statement.match(/(?:delete|retract)\s*\(\s*(\$\w+)\s*\)/)
+  if (!action && deleteMatch) {
+    action = {
+      id: `${Date.now()}-${index}`,
+      type: 'retract',
+      object: deleteMatch[1] || '',
+      method: '',
+      params: []
+    }
+  }
+
+  // 解析 modify($变量) { 方法(...) }
+  const modifyMatch = statement.match(/modify\s*\(\s*(\$\w+)\s*\)\s*\{\s*(\w+)\s*\(([^)]*)\)\s*\}/)
+  if (!action && modifyMatch) {
+    const object = modifyMatch[1]
+    const method = modifyMatch[2]
+    const paramsStr = modifyMatch[3]?.trim() || ''
+    const params = paramsStr ? paramsStr.split(',').map(p => ({ value: p.trim().replace(/['"]/g, '') })) : []
+
+    action = {
+      id: `${Date.now()}-${index}`,
+      type: 'modify',
+      object: object || '',
+      method: method || '',
+      params: params
+    }
+  }
+
+  // 解析普通方法调用：$变量.方法(...) 或 对象.方法(...)
+  const methodMatch = statement.match(/(\$?\w+)\.(\w+)\s*\(([^)]*)\)/)
+  if (!action && methodMatch) {
+    const object = methodMatch[1]
+    const method = methodMatch[2]
+    const paramsStr = methodMatch[3]?.trim() || ''
+    const params = paramsStr ? paramsStr.split(',').map(p => ({ value: p.trim().replace(/['"]/g, '') })) : []
+
+    // 判断是方法调用还是函数调用
+    const isVariable = object?.startsWith('$')
+
+    action = {
+      id: `${Date.now()}-${index}`,
+      type: isVariable ? 'method' : 'function',
+      object: object || '',
+      method: method || '',
+      params: params
+    }
+  }
+
+  return action
+}
+
+// 解析 DRL 代码（初始化时使用）- 解析所有动作
 const parseDrlCode = (code: string) => {
   if (!code || code.trim().length === 0) {
     actions.value = []
@@ -210,103 +291,25 @@ const parseDrlCode = (code: string) => {
   }
 
   try {
-    // 按分号分割多个语句，只取第一个
-    const statements = code.split(';').map(s => s.trim()).filter(s => s.length > 0)
+    // 移除缩进并分割语句（按分号和换行分割）
+    const cleanedCode = code.replace(/^\s+/gm, '').trim()
+    const statements = cleanedCode.split(/[;\n]/).map(s => s.trim()).filter(s => s.length > 0)
+
     if (statements.length === 0) {
       actions.value = []
       return
     }
 
-    const statement = statements[0]
-    if (!statement) {
-      actions.value = []
-      return
-    }
+    const parsedActions: Action[] = []
 
-    let action: Action | null = null
-
-    // 解析 update($变量)
-    const updateMatch = statement.match(/update\s*\(\s*(\$\w+)\s*\)/)
-    if (updateMatch) {
-      action = {
-        id: Date.now().toString(),
-        type: 'update',
-        object: updateMatch[1] || '',
-        method: '',
-        params: []
+    statements.forEach((statement, index) => {
+      const action = parseStatement(statement, index)
+      if (action) {
+        parsedActions.push(action)
       }
-    }
+    })
 
-    // 解析 insert(new 类名(...))
-    const insertMatch = statement.match(/insert\s*\(\s*new\s+(\w+)\s*\(([^)]*)\)\s*\)/)
-    if (!action && insertMatch) {
-      const className = insertMatch[1]
-      const paramsStr = insertMatch[2]?.trim() || ''
-      const params = paramsStr ? paramsStr.split(',').map(p => ({ value: p.trim().replace(/['"]/g, '') })) : []
-
-      action = {
-        id: Date.now().toString(),
-        type: 'insert',
-        object: className || '',
-        method: '',
-        params: params
-      }
-    }
-
-    // 解析 delete/retract($变量)
-    const deleteMatch = statement.match(/(?:delete|retract)\s*\(\s*(\$\w+)\s*\)/)
-    if (!action && deleteMatch) {
-      action = {
-        id: Date.now().toString(),
-        type: 'retract',
-        object: deleteMatch[1] || '',
-        method: '',
-        params: []
-      }
-    }
-
-    // 解析 modify($变量) { 方法(...) }
-    const modifyMatch = statement.match(/modify\s*\(\s*(\$\w+)\s*\)\s*\{\s*(\w+)\s*\(([^)]*)\)\s*\}/)
-    if (!action && modifyMatch) {
-      const object = modifyMatch[1]
-      const method = modifyMatch[2]
-      const paramsStr = modifyMatch[3]?.trim() || ''
-      const params = paramsStr ? paramsStr.split(',').map(p => ({ value: p.trim().replace(/['"]/g, '') })) : []
-
-      action = {
-        id: Date.now().toString(),
-        type: 'modify',
-        object: object || '',
-        method: method || '',
-        params: params
-      }
-    }
-
-    // 解析普通方法调用：$变量.方法(...) 或 对象.方法(...)
-    const methodMatch = statement.match(/(\$?\w+)\.(\w+)\s*\(([^)]*)\)/)
-    if (!action && methodMatch) {
-      const object = methodMatch[1]
-      const method = methodMatch[2]
-      const paramsStr = methodMatch[3]?.trim() || ''
-      const params = paramsStr ? paramsStr.split(',').map(p => ({ value: p.trim().replace(/['"]/g, '') })) : []
-
-      // 判断是方法调用还是函数调用
-      const isVariable = object?.startsWith('$')
-
-      action = {
-        id: Date.now().toString(),
-        type: isVariable ? 'method' : 'function',
-        object: object || '',
-        method: method || '',
-        params: params
-      }
-    }
-
-    if (action) {
-      actions.value = [action]
-    } else {
-      actions.value = []
-    }
+    actions.value = parsedActions
   } catch (error) {
     console.error('解析 DRL then 代码失败:', error)
     actions.value = []
@@ -317,23 +320,23 @@ const parseDrlCode = (code: string) => {
 onMounted(async () => {
   classData.value = await loadClassData()
 
-  if (props.modelValue && props.modelValue.trim()) {
-    parseDrlCode(props.modelValue)
+  if (modelValue.value && modelValue.value.trim()) {
+    parseDrlCode(modelValue.value)
   } else {
     // 只有在没有初始值时才添加默认动作
-    addAction()
+    // addAction()
   }
 })
 
 // 监听外部代码变化（如从代码模式切换回来）
-watch(() => props.modelValue, (newValue) => {
+watch(modelValue, (newValue) => {
   if (!isUpdatingFromCode.value) {
     if (newValue && newValue.trim()) {
       parseDrlCode(newValue)
-    } else {
-      // 如果代码为空或只有空白，清空动作并添加默认动作
-      actions.value = []
-    }
+  } else {
+    // 如果代码为空或只有空白，清空动作
+    actions.value = []
+  }
     // 如果解析后没有动作，或者代码为空，添加默认动作
     if (actions.value.length === 0) {
       addAction()
@@ -350,213 +353,203 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
 
 <template>
   <div class="w-full">
-    <div class="flex items-center gap-2 mb-3">
-      <Sparkles :size="18" class="text-green-600 shrink-0" />
-      <span class="text-sm font-medium text-gray-700">动作构建器</span>
-      <el-tag size="small" type="success">可视化</el-tag>
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2">
+        <Sparkles :size="18" class="text-green-600 shrink-0" />
+        <span class="text-sm font-medium text-gray-700">动作构建器</span>
+        <el-tag size="small" type="success">可视化</el-tag>
+      </div>
+      <el-button type="primary" size="small" @click="addAction">
+        <Plus :size="14" class="mr-1" />
+        添加动作
+      </el-button>
     </div>
 
-    <div v-if="currentAction" class="p-3 bg-green-50 rounded-lg border border-green-200">
-          <div class="mb-3">
-            <label class="text-xs text-gray-600 mb-1 block">① 动作类型</label>
-            <el-segmented
-              v-if="currentAction"
-              v-model="currentAction.type"
-              size="default"
-              @change="updateDrlCode"
-              class="w-full"
-              :options="actionTypes.map(type => ({
-                label: type.label,
-                value: type.value,
-                icon: type.icon,
-                color: type.color
-              }))"
-            >
-              <template #default="scope">
-                <span class="inline-flex items-center gap-1.5">
-                  <component
-                    :is="scope.item.icon"
-                    :size="14"
-                    :class="scope.item.color"
-                  />
-                  <span>{{ scope.item.label }}</span>
-                </span>
-              </template>
-            </el-segmented>
+    <VueDraggable
+      v-if="actions.length > 0"
+      v-model="actions"
+      :animation="200"
+      handle=".action-drag-handle"
+      ghostClass="action-dragging-ghost"
+      @end="updateDrlCode"
+      class="space-y-3"
+    >
+      <div
+        v-for="action in actions"
+        :key="action.id"
+        class="p-3 bg-green-50 rounded-lg border border-green-200"
+      >
+        <div class="flex items-start justify-between mb-3">
+          <div class="action-drag-handle flex items-center justify-center size-6 cursor-move hover:bg-green-200 rounded transition-colors shrink-0 mt-1">
+            <Grip :size="14" class="text-green-600" />
           </div>
-
-          <!-- 调用方法 -->
-          <div v-if="currentAction && (currentAction.type === 'method' || currentAction.type === 'function')" class="space-y-2">
-            <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label class="text-xs text-gray-600 mb-1 block">② 对象/类</label>
-                <el-select
-                  v-if="currentAction.type === 'method'"
-                  v-model="currentAction.object"
-                  size="small"
-                  placeholder="选择或输入变量名"
-                  filterable
-                  allow-create
-                  default-first-option
-                  @change="updateDrlCode"
-                  class="w-full"
+          <div class="flex-1">
+            <div class="mb-3">
+              <label class="text-xs text-gray-600 mb-1 block">① 动作类型</label>
+              <el-select
+                v-model="action.type"
+                size="small"
+                @change="updateDrlCode"
+                class="w-full"
+                placeholder="选择动作类型"
+              >
+                <template #prefix>
+                  <component
+                    :is="actionTypes.find(t => t.value === action?.type)?.icon"
+                    :size="14"
+                    :class="actionTypes.find(t => t.value === action?.type)?.color || 'text-gray-600'"
+                    class="ml-1"
+                  />
+                </template>
+                <el-option
+                  v-for="type in actionTypes"
+                  :key="type.value"
+                  :label="type.label"
+                  :value="type.value"
                 >
-                  <template #prefix>
-                    <Variable :size="14" class="text-blue-600 ml-1" />
-                  </template>
-                  <el-option-group label="条件中的变量">
-                    <el-option
-                      v-for="variable in extractVariablesFromWhen"
-                      :key="variable.value"
-                      :label="variable.label"
-                      :value="variable.value"
-                    >
-                      <div class="flex items-center gap-2">
-                        <Variable :size="16" class="text-blue-600" />
-                        <span>{{ variable.label }}</span>
-                      </div>
-                    </el-option>
-                  </el-option-group>
-                  <el-option-group v-if="extractVariablesFromWhen.length === 0" label="提示">
-                    <el-option
-                      value=""
-                      label="在条件中定义变量后会显示在这里"
-                      disabled
+                  <div class="flex items-center gap-2">
+                    <component
+                      :is="type.icon"
+                      :size="16"
+                      :class="type.color"
                     />
-                  </el-option-group>
-                </el-select>
-                <el-select
-                  v-else
-                  v-model="currentAction.object"
-                  size="small"
-                  placeholder="选择工具类"
-                  filterable
-                  @change="updateDrlCode"
-                  class="w-full"
-                >
-                  <template #prefix>
-                    <Box :size="14" class="text-indigo-600 ml-1" />
-                  </template>
-                  <el-option
-                    v-for="obj in availableObjects"
-                    :key="obj.value"
-                    :label="obj.label"
-                    :value="obj.value"
-                  >
-                    <div class="flex items-center gap-2">
-                      <Box :size="16" class="text-indigo-600" />
-                      <span>{{ obj.label }}</span>
-                    </div>
-                  </el-option>
-                </el-select>
-              </div>
-
-              <div>
-                <label class="text-xs text-gray-600 mb-1 block">③ 方法</label>
-                <el-select
-                  v-if="currentAction"
-                  v-model="currentAction.method"
-                  size="small"
-                  placeholder="选择方法"
-                  filterable
-                  @change="onMethodChange(currentAction)"
-                  :disabled="!currentAction.object"
-                  class="w-full"
-                >
-                  <template #prefix>
-                    <Code2 :size="14" class="text-green-600 ml-1" />
-                  </template>
-                  <el-option
-                    v-for="method in getObjectMethods(currentAction.object)"
-                    :key="method.name"
-                    :label="method.name"
-                    :value="method.name"
-                  >
-                    <div class="flex items-center gap-2">
-                      <Code2 :size="16" class="text-green-600" />
-                      <div class="flex flex-col">
-                        <span>{{ method.name }}</span>
-                      </div>
-                    </div>
-                  </el-option>
-                </el-select>
-              </div>
+                    <span>{{ type.label }}</span>
+                  </div>
+                </el-option>
+              </el-select>
             </div>
 
-            <!-- 方法参数 -->
-            <div v-if="currentAction && currentAction.params.length > 0" class="pl-4 border-l-2 border-green-300">
-              <label class="text-xs text-gray-600 mb-2 block">④ 参数</label>
-              <div class="space-y-2">
-                <div
-                  v-for="(param, pIndex) in currentAction.params"
-                  :key="pIndex"
-                  class="flex items-center gap-2"
-                >
-                  <span class="text-xs text-gray-500 w-20">
-                    {{ getMethodParams(currentAction)?.params[pIndex]?.name || `参数${pIndex + 1}` }}
-                    ({{ getMethodParams(currentAction)?.params[pIndex]?.type }})
-                  </span>
-                  <el-input
-                    v-model="param.value"
+            <!-- 调用方法 -->
+            <div v-if="action && (action.type === 'method' || action.type === 'function')" class="space-y-2">
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="text-xs text-gray-600 mb-1 block">② 对象/类</label>
+                  <el-select
+                    v-if="action.type === 'method'"
+                    v-model="action.object"
                     size="small"
-                    :placeholder="`输入${getMethodParams(currentAction)?.params[pIndex]?.type}`"
+                    placeholder="选择或输入变量名"
+                    filterable
+                    allow-create
+                    default-first-option
                     @change="updateDrlCode"
-                    class="flex-1"
+                    class="w-full"
                   >
                     <template #prefix>
-                      <Code2 :size="14" class="text-emerald-600 ml-1" />
+                      <Variable :size="14" class="text-blue-600 ml-1" />
                     </template>
-                  </el-input>
+                    <el-option-group label="条件中的变量">
+                      <el-option
+                        v-for="variable in extractVariablesFromWhen"
+                        :key="variable.value"
+                        :label="variable.label"
+                        :value="variable.value"
+                      >
+                        <div class="flex items-center gap-2">
+                          <Variable :size="16" class="text-blue-600" />
+                          <span>{{ variable.label }}</span>
+                        </div>
+                      </el-option>
+                    </el-option-group>
+                    <el-option-group v-if="extractVariablesFromWhen.length === 0" label="提示">
+                      <el-option
+                        value=""
+                        label="在条件中定义变量后会显示在这里"
+                        disabled
+                      />
+                    </el-option-group>
+                  </el-select>
+                  <el-select
+                    v-else
+                    v-model="action.object"
+                    size="small"
+                    placeholder="选择工具类"
+                    filterable
+                    @change="updateDrlCode"
+                    class="w-full"
+                  >
+                    <template #prefix>
+                      <Box :size="14" class="text-indigo-600 ml-1" />
+                    </template>
+                    <el-option
+                      v-for="obj in availableObjects"
+                      :key="obj.value"
+                      :label="obj.label"
+                      :value="obj.value"
+                    >
+                      <div class="flex items-center gap-2">
+                        <Box :size="16" class="text-indigo-600" />
+                        <span>{{ obj.label }}</span>
+                      </div>
+                    </el-option>
+                  </el-select>
+                </div>
+
+                <div>
+                  <label class="text-xs text-gray-600 mb-1 block">③ 方法</label>
+                  <el-select
+                    v-model="action.method"
+                    size="small"
+                    placeholder="选择方法"
+                    filterable
+                    @change="onMethodChange(action)"
+                    :disabled="!action.object"
+                    class="w-full"
+                  >
+                    <template #prefix>
+                      <Code2 :size="14" class="text-green-600 ml-1" />
+                    </template>
+                    <el-option
+                      v-for="method in getObjectMethods(action.object)"
+                      :key="method.name"
+                      :label="method.name"
+                      :value="method.name"
+                    >
+                      <div class="flex items-center gap-2">
+                        <Code2 :size="16" class="text-green-600" />
+                        <div class="flex flex-col">
+                          <span>{{ method.name }}</span>
+                        </div>
+                      </div>
+                    </el-option>
+                  </el-select>
+                </div>
+              </div>
+
+              <!-- 方法参数 -->
+              <div v-if="action && action.params.length > 0" class="pl-4 border-l-2 border-green-300">
+                <label class="text-xs text-gray-600 mb-2 block">④ 参数</label>
+                <div class="space-y-2">
+                  <div
+                    v-for="(param, pIndex) in action.params"
+                    :key="pIndex"
+                    class="flex items-center gap-2"
+                  >
+                    <span class="text-xs text-gray-500 w-20">
+                      {{ getMethodParams(action)?.params[pIndex]?.name || `参数${pIndex + 1}` }}
+                      ({{ getMethodParams(action)?.params[pIndex]?.type }})
+                    </span>
+                    <el-input
+                      v-model="param.value"
+                      size="small"
+                      :placeholder="`输入${getMethodParams(action)?.params[pIndex]?.type}`"
+                      @change="updateDrlCode"
+                      class="flex-1"
+                    >
+                      <template #prefix>
+                        <Code2 :size="14" class="text-emerald-600 ml-1" />
+                      </template>
+                    </el-input>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Update/Insert/Retract -->
-          <div v-else-if="currentAction && ['update', 'insert', 'retract'].includes(currentAction.type)">
-            <label class="text-xs text-gray-600 mb-1 block">② 对象变量</label>
-            <el-select
-              v-model="currentAction.object"
-              size="small"
-              placeholder="选择或输入变量名"
-              filterable
-              allow-create
-              default-first-option
-              @change="updateDrlCode"
-              class="w-full"
-            >
-              <template #prefix>
-                <Variable :size="14" class="text-blue-600 ml-1" />
-              </template>
-              <el-option-group label="条件中的变量">
-                <el-option
-                  v-for="variable in extractVariablesFromWhen"
-                  :key="variable.value"
-                  :label="variable.label"
-                  :value="variable.value"
-                >
-                  <div class="flex items-center gap-2">
-                    <Variable :size="16" class="text-blue-600" />
-                    <span>{{ variable.label }}</span>
-                  </div>
-                </el-option>
-              </el-option-group>
-              <el-option-group v-if="extractVariablesFromWhen.length === 0" label="提示">
-                <el-option
-                  value=""
-                  label="在条件中定义变量后会显示在这里"
-                  disabled
-                />
-              </el-option-group>
-            </el-select>
-          </div>
-
-          <!-- Modify -->
-          <div v-else-if="currentAction && currentAction.type === 'modify'" class="space-y-2">
-            <div>
+            <!-- Update/Insert/Retract -->
+            <div v-else-if="action && ['update', 'insert', 'retract'].includes(action.type)">
               <label class="text-xs text-gray-600 mb-1 block">② 对象变量</label>
               <el-select
-                v-model="currentAction.object"
+                v-model="action.object"
                 size="small"
                 placeholder="选择或输入变量名"
                 filterable
@@ -590,20 +583,76 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
                 </el-option-group>
               </el-select>
             </div>
-            <div>
-              <label class="text-xs text-gray-600 mb-1 block">③ 修改方法</label>
-              <el-input
-                v-model="currentAction.method"
-                size="small"
-                placeholder="方法名"
-                @change="updateDrlCode"
-              >
-                <template #prefix>
-                  <Edit :size="14" class="text-orange-600 ml-1" />
-                </template>
-              </el-input>
+
+            <!-- Modify -->
+            <div v-else-if="action && action.type === 'modify'" class="space-y-2">
+              <div>
+                <label class="text-xs text-gray-600 mb-1 block">② 对象变量</label>
+                <el-select
+                  v-model="action.object"
+                  size="small"
+                  placeholder="选择或输入变量名"
+                  filterable
+                  allow-create
+                  default-first-option
+                  @change="updateDrlCode"
+                  class="w-full"
+                >
+                  <template #prefix>
+                    <Variable :size="14" class="text-blue-600 ml-1" />
+                  </template>
+                  <el-option-group label="条件中的变量">
+                    <el-option
+                      v-for="variable in extractVariablesFromWhen"
+                      :key="variable.value"
+                      :label="variable.label"
+                      :value="variable.value"
+                    >
+                      <div class="flex items-center gap-2">
+                        <Variable :size="16" class="text-blue-600" />
+                        <span>{{ variable.label }}</span>
+                      </div>
+                    </el-option>
+                  </el-option-group>
+                  <el-option-group v-if="extractVariablesFromWhen.length === 0" label="提示">
+                    <el-option
+                      value=""
+                      label="在条件中定义变量后会显示在这里"
+                      disabled
+                    />
+                  </el-option-group>
+                </el-select>
+              </div>
+              <div>
+                <label class="text-xs text-gray-600 mb-1 block">③ 修改方法</label>
+                <el-input
+                  v-model="action.method"
+                  size="small"
+                  placeholder="方法名"
+                  @change="updateDrlCode"
+                >
+                  <template #prefix>
+                    <Edit :size="14" class="text-orange-600 ml-1" />
+                  </template>
+                </el-input>
+              </div>
             </div>
           </div>
+          <div class="flex justify-end">
+            <el-button
+              type="danger"
+              size="small"
+              :icon="Trash2"
+              circle
+              @click="removeAction(action.id)"
+            />
+          </div>
+        </div>
+      </div>
+    </VueDraggable>
+
+    <div v-else class="p-3 bg-gray-50 rounded-lg border border-gray-200 text-center text-gray-500 text-sm">
+      暂无动作，点击"添加动作"按钮开始添加
     </div>
 
     <!-- 生成的代码预览 -->
@@ -624,7 +673,7 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
 }
 
 /* 拖拽时的幽灵元素样式 */
-.dragging-ghost {
+.action-dragging-ghost {
   opacity: 0.5;
   background: #d1fae5;
   border: 2px dashed #10b981;

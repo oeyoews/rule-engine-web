@@ -65,43 +65,56 @@ export function parseFieldExpression(fieldExpression: string): { field: string; 
 }
 
 /**
- * 解析 DRL when 代码为条件对象
+ * 解析 DRL when 代码为条件对象数组
  */
-export function parseWhenCode(code: string): Condition | null {
+export function parseWhenCode(code: string): Array<Condition & { logicalOp?: 'and' | 'or' }> {
   if (!code || code.trim().length === 0) {
-    return null
+    return []
   }
 
   try {
-    // 移除多余的空格和换行
-    const cleanCode = code.trim().replace(/\s+/g, ' ')
+    // 移除多余的空格，但保留换行
+    const lines = code.split('\n').map(l => l.trim()).filter(l => l.length > 0)
+    const conditions: Array<Condition & { logicalOp?: 'and' | 'or' }> = []
 
-    // 只解析第一个条件（移除 and/or 后面的部分）
-    const firstConditionMatch = cleanCode.match(/^\s*\$(\w+)\s*:\s*(\w+)\s*\(([^)]+)\)/)
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
 
-    if (firstConditionMatch) {
-      const variable = firstConditionMatch[1]
-      const className = firstConditionMatch[2]
-      const fieldExpression = firstConditionMatch[3]?.trim()
+      // 检查是否是逻辑运算符
+      const isAnd = /^\s*and\s+/i.test(line)
+      const isOr = /^\s*or\s+/i.test(line)
 
-      if (variable && className && fieldExpression) {
-        const { field, operator, value } = parseFieldExpression(fieldExpression)
+      // 提取条件（移除 and/or 前缀）
+      const conditionLine = line.replace(/^\s*(and|or)\s+/i, '').trim()
+      const conditionMatch = conditionLine.match(/^\s*\$(\w+)\s*:\s*(\w+)\s*\(([^)]+)\)/)
 
-        return {
-          id: Date.now().toString(),
-          variable: variable,
-          className: className,
-          field: field,
-          operator: operator,
-          value: value
+      if (conditionMatch) {
+        const variable = conditionMatch[1]
+        const className = conditionMatch[2]
+        const fieldExpression = conditionMatch[3]?.trim()
+
+        if (variable && className && fieldExpression) {
+          const { field, operator, value } = parseFieldExpression(fieldExpression)
+
+          const condition: Condition & { logicalOp?: 'and' | 'or' } = {
+            id: `${Date.now()}-${i}`,
+            variable: variable,
+            className: className,
+            field: field,
+            operator: operator,
+            value: value,
+            logicalOp: i > 0 ? (isOr ? 'or' : 'and') : undefined
+          }
+
+          conditions.push(condition)
         }
       }
     }
 
-    return null
+    return conditions
   } catch (error) {
     console.error('解析 DRL when 代码失败:', error)
-    return null
+    return []
   }
 }
 
@@ -133,16 +146,41 @@ function generateConditionExpression(
 }
 
 /**
- * 从条件对象生成 DRL when 代码
+ * 从条件对象数组生成 DRL when 代码
  */
 export function generateWhenCode(
-  condition: Condition | null,
+  conditions: Array<Condition & { logicalOp?: 'and' | 'or' }> | Condition | null,
   getClassFields?: (className: string) => ClassField[]
 ): string {
-  if (!condition || !condition.className || !condition.field) {
+  // 兼容单个条件的情况
+  if (!conditions) {
     return ''
   }
 
-  return generateConditionExpression(condition, getClassFields)
+  const conditionsArray = Array.isArray(conditions) ? conditions : [conditions]
+
+  if (conditionsArray.length === 0) {
+    return ''
+  }
+
+  const lines: string[] = []
+
+  conditionsArray.forEach((condition, index) => {
+    if (!condition.className || !condition.field) {
+      return
+    }
+
+    let line = generateConditionExpression(condition, getClassFields)
+
+    // 如果不是第一个条件，添加逻辑运算符
+    if (index > 0 && condition.logicalOp) {
+      const op = condition.logicalOp === 'or' ? 'or' : 'and'
+      line = `    ${op} ${line.trim()}`
+    }
+
+    lines.push(line)
+  })
+
+  return lines.join('\n')
 }
 
