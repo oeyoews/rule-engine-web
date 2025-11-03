@@ -11,8 +11,8 @@ import {
   FileText
 } from 'lucide-vue-next'
 import { useEditorStore } from '@/stores/editorStore'
-import RuleConditionBuilder from '../RuleConditionBuilder.vue'
-import RuleActionBuilder from '../RuleActionBuilder.vue'
+import RuleConditionBuilder from '@/components/RuleConditionBuilder.vue'
+import RuleActionBuilder from '@/components/RuleActionBuilder.vue'
 import { generateSingleRuleCode } from '@/utils/drl'
 import { parseSingleRule } from '@/utils/drlParser'
 
@@ -161,17 +161,6 @@ watch(
         </div>
 
         <el-form :model="rule" label-width="120px" label-position="left" class="space-y-4">
-          <!-- <el-form-item>
-            <template #label>
-              <div class="flex items-center gap-2">
-                <Tag :size="16" class="text-indigo-600" />
-                <span>规则名称</span>
-              </div>
-            </template>
-            <el-input v-model="rule.name" maxlength="50" show-word-limit placeholder="输入规则名称">
-            </el-input>
-          </el-form-item> -->
-
           <el-form-item>
             <template #label>
               <div class="flex items-center gap-2">

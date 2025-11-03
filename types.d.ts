@@ -49,3 +49,14 @@ interface EditorTab {
   data?: any
   modified?: boolean
 }
+
+
+interface Condition {
+  id: string
+  variable: string
+  className: string
+  field: string
+  operator: string
+  value: string
+}
+
