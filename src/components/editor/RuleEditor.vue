@@ -27,7 +27,7 @@ const props = defineProps<Props>()
 const editorStore = useEditorStore()
 
 // 代码编辑器模式
-const codeEditorMode = ref(false)
+const codeEditorMode = ref(true)
 const ruleCode = ref('')
 
 // 当前编辑的规则
@@ -69,6 +69,13 @@ const switchToFormEditor = () => {
         ...parsedRule,
         visualMode: true // 始终使用可视化模式
       })
+      // 确保 when 和 then 有默认值，即使解析出来是空字符串
+      if (!rule.value.when) {
+        rule.value.when = ''
+      }
+      if (!rule.value.then) {
+        rule.value.then = ''
+      }
       ElMessage.success('代码已同步到表单')
     } else {
       ElMessage.warning('代码解析失败，请检查格式')
@@ -106,7 +113,7 @@ watch(
       ruleCode.value = ''
     }
   },
-  { deep: true }
+  { deep: true, immediate: true }
 )
 
 </script>

@@ -13,13 +13,9 @@ import { generateWhenCode, parseWhenCode } from '@/utils/conditionParser'
 const modelValue = defineModel<string>()
 
 const classData = ref<ClassData | null>(null)
-const conditions = ref<Condition[]>([])
+const condition = ref<Condition | null>(null)
 const isUpdatingFromCode = ref(false) // 防止循环更新
 
-// 逻辑操作符功能已移除，每个规则只能有一个条件
-
-// 获取当前条件（用于模板）
-const currentCondition = computed(() => conditions.value[0])
 
 // 获取所有可用的类
 const availableClasses = computed(() => {
@@ -34,10 +30,10 @@ const getClassFields = (className: string): ClassField[] => {
   return classInfo?.fields || []
 }
 
-// 添加条件 - 确保只有一个条件
+// 添加条件
 const addCondition = () => {
-  if (conditions.value.length === 0) {
-    const newCondition: Condition = {
+  if (!condition.value) {
+    condition.value = {
       id: Date.now().toString(),
       variable: DEFAULT_VARIABLE,
       className: '',
@@ -45,17 +41,14 @@ const addCondition = () => {
       operator: DEFAULT_OPERATOR,
       value: ''
     }
-    conditions.value.push(newCondition)
     updateDrlCode()
   }
 }
 
 // 生成 DRL when 代码
 const generateDrlCode = (): string => {
-  if (conditions.value.length === 0) return ''
-
-  const condition = conditions.value[0] || null
-  return generateWhenCode(condition, getClassFields)
+  if (!condition.value) return ''
+  return generateWhenCode(condition.value, getClassFields)
 }
 
 // 更新 DRL 代码
@@ -68,10 +61,9 @@ const updateDrlCode = () => {
   }, 0)
 }
 
-// 解析 DRL 代码（初始化时使用）- 只解析第一个条件
+// 解析 DRL 代码（初始化时使用）
 const parseDrlCode = (code: string) => {
-  const condition = parseWhenCode(code)
-  conditions.value = condition ? [condition] : []
+  condition.value = parseWhenCode(code)
 }
 
 // 加载类数据
@@ -91,31 +83,33 @@ watch(modelValue, (newValue) => {
   if (!isUpdatingFromCode.value) {
     if (newValue && newValue.trim()) {
       parseDrlCode(newValue)
+    } else {
+      // 如果代码为空或只有空白，清空条件并添加默认条件
+      condition.value = null
     }
-    // 如果解析后没有条件，添加默认条件
-    if (conditions.value.length === 0) {
+    // 如果解析后没有条件，或者代码为空，添加默认条件
+    if (!condition.value) {
       addCondition()
     }
   }
-})
+}, { immediate: true })
 </script>
 
 <template>
-  <div class="condition-builder">
+  <div class="w-full">
     <div class="flex items-center gap-2 mb-3">
       <Filter :size="16" class="text-blue-600 shrink-0" />
       <span class="text-sm font-medium text-gray-700">条件构建器</span>
       <el-tag size="small" type="primary">可视化</el-tag>
     </div>
 
-    <div v-if="currentCondition" class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+    <div v-if="condition" class="p-3 bg-blue-50 rounded-lg border border-blue-200">
           <div class="grid grid-cols-12 gap-2 items-center">
             <!-- 变量名 -->
             <div class="col-span-2">
               <label class="text-xs text-gray-600 mb-1 block">① 变量名</label>
               <el-input
-                v-if="currentCondition"
-                v-model="currentCondition.variable"
+                v-model="condition.variable"
                 size="small"
                 placeholder="p"
                 @change="updateDrlCode"
@@ -130,8 +124,7 @@ watch(modelValue, (newValue) => {
             <div class="col-span-2">
               <label class="text-xs text-gray-600 mb-1 block">② 类</label>
               <el-select
-                v-if="currentCondition"
-                v-model="currentCondition.className"
+                v-model="condition.className"
                 size="small"
                 placeholder="选择类"
                 filterable
@@ -161,20 +154,19 @@ watch(modelValue, (newValue) => {
             <div class="col-span-2">
               <label class="text-xs text-gray-600 mb-1 block">③ 字段</label>
               <el-select
-                v-if="currentCondition"
-                v-model="currentCondition.field"
+                v-model="condition.field"
                 size="small"
                 placeholder="选择字段"
                 filterable
                 @change="updateDrlCode"
-                :disabled="!currentCondition.className"
+                :disabled="!condition.className"
                 class="w-full"
               >
                 <template #prefix>
                   <Hash :size="14" class="text-teal-600 ml-1" />
                 </template>
                 <el-option
-                  v-for="field in getClassFields(currentCondition.className)"
+                  v-for="field in getClassFields(condition.className)"
                   :key="field.name"
                   :label="field.name"
                   :value="field.name"
@@ -193,14 +185,13 @@ watch(modelValue, (newValue) => {
             <div class="col-span-2">
               <label class="text-xs text-gray-600 mb-1 block">④ 操作符</label>
               <el-select
-                v-if="currentCondition"
-                v-model="currentCondition.operator"
+                v-model="condition.operator"
                 size="small"
                 @change="updateDrlCode"
                 class="w-full"
               >
                 <template #prefix>
-                  <component :is="operatorIconMap[currentCondition.operator] || Equal" :size="14" :class="operatorColorMap[currentCondition.operator] || 'text-purple-600'" class="ml-1" />
+                  <component :is="operatorIconMap[condition.operator] || Equal" :size="14" :class="operatorColorMap[condition.operator] || 'text-purple-600'" class="ml-1" />
                 </template>
                 <el-option
                   v-for="op in operators"
@@ -220,8 +211,7 @@ watch(modelValue, (newValue) => {
             <div class="col-span-3">
               <label class="text-xs text-gray-600 mb-1 block">⑤ 值</label>
               <el-input
-                v-if="currentCondition"
-                v-model="currentCondition.value"
+                v-model="condition.value"
                 size="small"
                 placeholder="输入值"
                 @change="updateDrlCode"
@@ -246,10 +236,6 @@ watch(modelValue, (newValue) => {
 </template>
 
 <style scoped>
-.condition-builder {
-  width: 100%;
-}
-
 /* 拖拽时的幽灵元素样式 */
 .dragging-ghost {
   opacity: 0.5;

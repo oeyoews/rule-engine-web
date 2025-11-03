@@ -330,13 +330,16 @@ watch(() => props.modelValue, (newValue) => {
   if (!isUpdatingFromCode.value) {
     if (newValue && newValue.trim()) {
       parseDrlCode(newValue)
+    } else {
+      // 如果代码为空或只有空白，清空动作并添加默认动作
+      actions.value = []
     }
-    // 如果解析后没有动作，添加默认动作
+    // 如果解析后没有动作，或者代码为空，添加默认动作
     if (actions.value.length === 0) {
       addAction()
     }
   }
-})
+}, { immediate: true })
 
 // 获取方法的参数信息
 const getMethodParams = (action: Action): ClassMethod | undefined => {
