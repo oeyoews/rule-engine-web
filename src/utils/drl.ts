@@ -29,7 +29,7 @@ const attributeGenerators: Record<string, AttributeGenerator> = {
     return rule.enabled === false ? indentLine('enabled false') + NEW_LINE : null
   },
   [RuleAttribute.SALIENCE]: (rule: Rule) => {
-    return rule.salience !== undefined ? indentLine(`salience ${rule.salience}`) + NEW_LINE : null
+    return rule.salience !== undefined && rule.salience !== 0 ? indentLine(`salience ${rule.salience}`) + NEW_LINE : null
   },
   [RuleAttribute.NO_LOOP]: (rule: Rule) => {
     return rule.noLoop ? indentLine('no-loop true') + NEW_LINE : null
@@ -70,7 +70,14 @@ export const generateDrlHeader = (description?: string, drlId?: string, timestam
  * 生成单个规则的 DRL 代码
  */
 export function generateSingleRuleCode(rule: Rule): string {
-  let code = `rule "${rule.name}"${NEW_LINE}`
+  let code = ''
+
+  // 如果规则有描述，先添加注释（不缩进）
+  if (rule.description && rule.description.trim()) {
+    code += `// @description: ${rule.description.trim()}` + NEW_LINE
+  }
+
+  code += `rule "${rule.name}"${NEW_LINE}`
 
   // 使用枚举映射生成规则属性
   Object.values(RuleAttribute).forEach(attr => {

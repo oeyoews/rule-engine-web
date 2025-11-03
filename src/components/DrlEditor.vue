@@ -12,7 +12,7 @@ onMounted(() => {
     editorStore.rules.push({
       name: 'rule_' + Date.now(),
       enabled: true,
-      salience: 10,
+      salience: 0,
       noLoop: false,
       lockOnActive: false,
       when: '',

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { X, XCircle, XSquare } from 'lucide-vue-next'
 import ContextMenu from '@imengyu/vue3-context-menu'
 import ConfigEditor from '@/components/editor/ConfigEditor.vue'
@@ -38,22 +38,10 @@ const closeTab = async (id: string) => {
   const tab = tabs.value.find(t => t.id === id)
 
   if (tab?.type === 'advanced') {
-    try {
-      await ElMessageBox.confirm(
-        '您已退出高级模式。高级模式中的修改不会被保存，表单内容将保持不变。',
-        '退出高级模式',
-        {
-          confirmButtonText: '确定退出',
-          cancelButtonText: '取消',
-          type: 'warning',
-          distinguishCancelAndClose: true
-        }
-      )
-      // 用户确认，关闭高级模式状态
-      editorStore.advancedMode = false
-    } catch {
-      return
-    }
+    // 提示用户已离开高级模式
+    ElMessage.info('您已离开高级模式。高级模式中的修改不会被保存，表单内容将保持不变。')
+    // 关闭高级模式状态
+    editorStore.advancedMode = false
   }
 
   removeTab(id)
@@ -79,30 +67,16 @@ const removeTab = (id: string) => {
 const switchTab = async (id: string) => {
   const tab = tabs.value.find(t => t.id === id)
 
-  // 如果从高级模式切换，需要确认
+  // 如果从高级模式切换，提示用户
   const currentTab = tabs.value.find(t => t.id === activeTabId.value)
   if (currentTab?.type === 'advanced' && tab?.type !== 'advanced') {
-    try {
-      await ElMessageBox.confirm(
-        '您已退出高级模式。高级模式中的修改不会被保存，表单内容将保持不变。',
-        '退出高级模式',
-        {
-          confirmButtonText: '确定退出',
-          cancelButtonText: '取消',
-          type: 'warning',
-          distinguishCancelAndClose: true
-        }
-      )
-      // 用户确认，关闭高级模式状态，允许切换
-      editorStore.advancedMode = false
-      activeTabId.value = id
-    } catch {
-      // 用户取消，不切换标签页
-      return
-    }
-  } else {
-    activeTabId.value = id
+    // 提示用户已离开高级模式
+    ElMessage.info('您已离开高级模式。高级模式中的修改不会被保存，表单内容将保持不变。')
+    // 关闭高级模式状态
+    editorStore.advancedMode = false
   }
+
+  activeTabId.value = id
 }
 
 // 当前活动标签页

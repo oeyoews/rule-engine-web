@@ -8,13 +8,13 @@ import {
   RotateCcw,
   Lock,
   Code2,
-  FileText
+  FileText,
+  MessageSquare
 } from 'lucide-vue-next'
 import { useEditorStore } from '@/stores/editorStore'
 import RuleConditionBuilder from '@/components/RuleConditionBuilder.vue'
 import RuleActionBuilder from '@/components/RuleActionBuilder.vue'
 import { generateSingleRuleCode } from '@/utils/drl'
-import { parseSingleRule } from '@/utils/drlParser'
 
 interface Props {
   data?: {
@@ -60,33 +60,9 @@ const switchToCodeEditor = () => {
 const switchToFormEditor = () => {
   if (!rule.value) return
 
-  // 尝试解析代码并更新到表单
-  try {
-    const parsedRule = parseSingleRule(ruleCode.value)
-    if (parsedRule) {
-      // 更新规则属性（始终使用可视化模式）
-      Object.assign(rule.value, {
-        ...parsedRule,
-        visualMode: true // 始终使用可视化模式
-      })
-      // 确保 when 和 then 有默认值，即使解析出来是空字符串
-      if (!rule.value.when) {
-        rule.value.when = ''
-      }
-      if (!rule.value.then) {
-        rule.value.then = ''
-      }
-      ElMessage.success('代码已同步到表单')
-    } else {
-      ElMessage.warning('代码解析失败，请检查格式')
-      return
-    }
-  } catch (error) {
-    ElMessage.error('代码解析出错：' + (error instanceof Error ? error.message : '未知错误'))
-    return
-  }
-
+  // 只是切换回表单模式，不同步代码到表单
   codeEditorMode.value = false
+  ElMessage.info('已返回表单编辑模式。代码编辑器的修改不会同步到表单。')
 }
 
 // 监听切换到高级模式标签页时，同步表单数据到编辑器
@@ -152,7 +128,7 @@ watch(
           <FileText :size="20" class="shrink-0 mt-0.5 text-blue-600" />
           <div>
             <p class="font-semibold mb-1">代码编辑器提示</p>
-            <p class="text-xs text-gray-700 leading-relaxed">您正在直接编辑规则代码。修改后点击"返回表单编辑"按钮可以将代码同步到表单中。</p>
+            <p class="text-xs text-gray-700 leading-relaxed">您正在直接编辑规则代码。修改不会同步到表单，表单内容保持不变。</p>
           </div>
         </div>
       </div>
@@ -205,6 +181,23 @@ watch(
               </div>
             </template>
             <el-input-number v-model="rule.salience" :min="0" :max="999" :step="1"></el-input-number>
+          </el-form-item>
+
+          <el-form-item>
+            <template #label>
+              <div class="flex items-center gap-2">
+                <MessageSquare :size="16" class="text-blue-600" />
+                <span>规则描述</span>
+              </div>
+            </template>
+            <el-input
+              v-model="rule.description"
+              type="textarea"
+              :rows="2"
+              placeholder="输入规则描述（将生成为单行注释）"
+              maxlength="200"
+              show-word-limit
+            />
           </el-form-item>
 
           <el-divider />

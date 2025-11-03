@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Variable, Code2, Box, Sparkles, Plus, Trash2, Edit, Grip } from 'lucide-vue-next'
+import { Variable, Code2, Box, Sparkles, Plus, Trash2, Edit, Grip, MessageSquare } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassMethod } from '@/utils/classImport'
 import { actionTypes } from '@/constants/actions'
 import { VueDraggable } from 'vue-draggable-plus'
@@ -182,9 +182,22 @@ const generateSingleActionCode = (action: Action): string => {
 const generateDrlCode = (): string => {
   if (actions.value.length === 0) return ''
 
-  const lines = actions.value
-    .map(action => generateSingleActionCode(action))
-    .filter(line => line.length > 0)
+  const lines: string[] = []
+
+  actions.value.forEach(action => {
+    const code = generateSingleActionCode(action)
+    if (code) {
+      // 如果有描述，添加行内注释
+      if (action.description && action.description.trim()) {
+        const codeWithComment = code.trim().endsWith(';')
+          ? code.trim().slice(0, -1) + ` // ${action.description.trim()};`
+          : code + ` // ${action.description.trim()}`
+        lines.push(codeWithComment)
+      } else {
+        lines.push(code)
+      }
+    }
+  })
 
   return lines.join('\n')
 }
@@ -291,23 +304,58 @@ const parseDrlCode = (code: string) => {
   }
 
   try {
-    // 移除缩进并分割语句（按分号和换行分割）
-    const cleanedCode = code.replace(/^\s+/gm, '').trim()
-    const statements = cleanedCode.split(/[;\n]/).map(s => s.trim()).filter(s => s.length > 0)
-
-    if (statements.length === 0) {
-      actions.value = []
-      return
-    }
-
+    // 按行处理，保留注释信息
+    const lines = code.split('\n')
     const parsedActions: Action[] = []
+    let pendingDescription = ''
 
-    statements.forEach((statement, index) => {
-      const action = parseStatement(statement, index)
-      if (action) {
-        parsedActions.push(action)
+    for (let i = 0; i < lines.length; i++) {
+      const currentLine = lines[i]
+      if (!currentLine) continue
+
+      const line = currentLine.trim()
+
+      // 跳过空行
+      if (!line) {
+        pendingDescription = '' // 空行重置待处理的描述
+        continue
       }
-    })
+
+      // 检查是否是注释（动作描述）
+      const commentMatch = line.match(/^\s*\/\/\s*@description:\s*(.+)$/i)
+      if (commentMatch?.[1]) {
+        pendingDescription = commentMatch[1].trim()
+        continue
+      }
+
+      // 移除行首缩进
+      let cleanedLine = line.replace(/^\s+/, '')
+
+      // 提取行内注释（如果有）
+      let inlineDescription = ''
+      const inlineCommentMatch = cleanedLine.match(/\s+\/\/\s+(.+)$/)
+      if (inlineCommentMatch?.[1]) {
+        inlineDescription = inlineCommentMatch[1].trim()
+        cleanedLine = cleanedLine.replace(/\s+\/\/\s+.+$/, '').trim()
+      }
+
+      // 处理完整的语句（可能包含分号）
+      const statements = cleanedLine.split(';').map(s => s.trim()).filter(s => s.length > 0)
+
+      statements.forEach((statement, stmtIndex) => {
+        const action = parseStatement(statement, parsedActions.length + stmtIndex)
+        if (action) {
+          // 优先使用行内注释，其次使用待处理的描述
+          if (inlineDescription) {
+            action.description = inlineDescription
+          } else if (pendingDescription) {
+            action.description = pendingDescription
+            pendingDescription = '' // 使用后清空（每个动作只使用一次描述）
+          }
+          parsedActions.push(action)
+        }
+      })
+    }
 
     actions.value = parsedActions
   } catch (error) {
@@ -636,6 +684,22 @@ const getMethodParams = (action: Action): ClassMethod | undefined => {
                   </template>
                 </el-input>
               </div>
+            </div>
+
+            <!-- 描述 -->
+            <div class="mt-3 pt-3 border-t border-green-200">
+              <label class="text-xs text-gray-600 mb-1 flex items-center gap-1">
+                <MessageSquare :size="12" class="text-green-500" />
+                描述（可选）
+              </label>
+              <el-input
+                v-model="action.description"
+                size="small"
+                placeholder="输入动作描述（将生成为行内注释）"
+                @change="updateDrlCode"
+                maxlength="100"
+                show-word-limit
+              />
             </div>
           </div>
           <div class="flex justify-end">

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { h } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Trash2, Grip, CheckCircle, XCircle, Zap, FileText, ClipboardList, Pencil } from 'lucide-vue-next'
+import { Plus, Trash2, Grip, CheckCircle, XCircle, Zap, FileText, ClipboardList, Pencil, Power, PowerOff } from 'lucide-vue-next'
 import { useEditorStore } from '@/stores/editorStore'
 import { useLayoutStore } from '@/stores/layoutStore'
 import { VueDraggable } from 'vue-draggable-plus'
@@ -23,7 +23,7 @@ const addRule = () => {
   editorStore.rules.push({
     name: 'rule_' + Date.now(),
     enabled: true,
-    salience: 10,
+    salience: 0,
     noLoop: false,
     lockOnActive: false,
     when: '',
@@ -103,29 +103,52 @@ const renameRule = (index: number) => {
   })
 }
 
+// 切换规则的启用/禁用状态
+const toggleRuleEnabled = (index: number) => {
+  const rule = editorStore.rules[index]
+  if (!rule) return
+
+  rule.enabled = !rule.enabled
+  const status = rule.enabled ? '启用' : '禁用'
+  ElMessage.success(`规则已${status}`)
+}
+
 // 处理右键菜单
 const handleContextMenu = (event: MouseEvent, index: number) => {
   event.preventDefault()
   event.stopPropagation()
+
+  const rule = editorStore.rules[index]
+  if (!rule) return
 
   ContextMenu.showContextMenu({
     x: event.clientX,
     y: event.clientY,
     items: [
       {
-        label: '重命名',
-        icon: () => h(Pencil, { size: 14 }),
+        label: rule.enabled ? '禁用规则' : '启用规则',
+        icon: () => h(rule.enabled ? PowerOff : Power, {
+          size: 14,
+          class: rule.enabled ? 'context-menu-icon-disable' : 'context-menu-icon-enable'
+        }),
         onClick: () => {
-          renameRule(index)
+          toggleRuleEnabled(index)
         },
         divided: true
       },
       {
+        label: '重命名',
+        icon: () => h(Pencil, { size: 14, class: 'context-menu-icon-rename' }),
+        onClick: () => {
+          renameRule(index)
+        }
+      },
+      {
         label: '删除',
-        icon: () => h(Trash2, { size: 14 }),
+        icon: () => h(Trash2, { size: 14, class: 'context-menu-icon-delete' }),
         onClick: () => {
           confirmRemoveRule(index)
-        },
+        }
       }
     ]
   })
@@ -217,20 +240,10 @@ const handleContextMenu = (event: MouseEvent, index: number) => {
                     </el-tag>
                   </div>
                   <div class="text-xs text-gray-500 truncate">
-                    {{ rule.when || '无条件' }}
+                    {{ rule.description || '暂无描述' }}
                   </div>
                 </div>
               </div>
-
-              <!-- 删除按钮 -->
-              <!-- <el-button
-                text
-                circle
-                @click.stop="confirmRemoveRule(index)"
-                title="删除规则"
-              >
-                <Trash2 :size="16" class="text-gray-500 hover:text-red-600" />
-              </el-button> -->
             </div>
           </div>
         </VueDraggable>
@@ -244,6 +257,65 @@ const handleContextMenu = (event: MouseEvent, index: number) => {
   opacity: 0.5;
   background: #e5e7eb;
   border: 2px dashed #818cf8;
+}
+</style>
+
+<style lang="css">
+/* 右键菜单项颜色样式 - 通过图标和文字选择器 */
+.context-menu-icon-enable,
+.mx-context-menu-item:has(.context-menu-icon-enable) {
+  color: #16a34a !important;
+}
+
+.mx-context-menu-item:has(.context-menu-icon-enable):hover {
+  background-color: #dcfce7 !important;
+}
+
+.mx-context-menu-item:has(.context-menu-icon-enable):hover .context-menu-icon-enable,
+.mx-context-menu-item:has(.context-menu-icon-enable):hover {
+  color: #15803d !important;
+}
+
+.context-menu-icon-disable,
+.mx-context-menu-item:has(.context-menu-icon-disable) {
+  color: #ea580c !important;
+}
+
+.mx-context-menu-item:has(.context-menu-icon-disable):hover {
+  background-color: #fff7ed !important;
+}
+
+.mx-context-menu-item:has(.context-menu-icon-disable):hover .context-menu-icon-disable,
+.mx-context-menu-item:has(.context-menu-icon-disable):hover {
+  color: #c2410c !important;
+}
+
+.context-menu-icon-rename,
+.mx-context-menu-item:has(.context-menu-icon-rename) {
+  color: #2563eb !important;
+}
+
+.mx-context-menu-item:has(.context-menu-icon-rename):hover {
+  background-color: #dbeafe !important;
+}
+
+.mx-context-menu-item:has(.context-menu-icon-rename):hover .context-menu-icon-rename,
+.mx-context-menu-item:has(.context-menu-icon-rename):hover {
+  color: #1d4ed8 !important;
+}
+
+.context-menu-icon-delete,
+.mx-context-menu-item:has(.context-menu-icon-delete) {
+  color: #dc2626 !important;
+}
+
+.mx-context-menu-item:has(.context-menu-icon-delete):hover {
+  background-color: #fee2e2 !important;
+}
+
+.mx-context-menu-item:has(.context-menu-icon-delete):hover .context-menu-icon-delete,
+.mx-context-menu-item:has(.context-menu-icon-delete):hover {
+  color: #b91c1c !important;
 }
 
 </style>

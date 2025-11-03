@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Box, Hash, Equal, Code2, Filter, Plus, Trash2, Grip } from 'lucide-vue-next'
+import { Box, Hash, Equal, Code2, Filter, Plus, Trash2, Grip, MessageSquare } from 'lucide-vue-next'
 import { loadClassData, type ClassData, type ClassField } from '@/utils/classImport'
 import {
   operators,
@@ -295,6 +295,22 @@ watch(modelValue, (newValue) => {
                   :disabled="conditions.length === 1"
                 />
               </div>
+            </div>
+
+            <!-- 描述 -->
+            <div class="mt-2 pt-2 border-t border-blue-200">
+              <label class="text-xs text-gray-600 mb-1 flex items-center gap-1">
+                <MessageSquare :size="12" class="text-blue-500" />
+                描述（可选）
+              </label>
+              <el-input
+                v-model="condition.description"
+                size="small"
+                placeholder="输入条件描述（将生成为行内注释）"
+                @change="updateDrlCode"
+                maxlength="100"
+                show-word-limit
+              />
             </div>
           </div>
         </div>

@@ -16,6 +16,7 @@ interface Rule {
   when: string
   then: string
   visualMode?: boolean  // 是否使用可视化模式
+  description?: string  // 规则描述
 }
 
 /**
@@ -59,5 +60,6 @@ interface Condition {
   operator: string
   value: string
   logicalOp?: 'and' | 'or'
+  description?: string  // 条件描述（单行注释）
 }
 

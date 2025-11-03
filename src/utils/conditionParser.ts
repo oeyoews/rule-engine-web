@@ -73,19 +73,44 @@ export function parseWhenCode(code: string): Array<Condition & { logicalOp?: 'an
   }
 
   try {
-    // 移除多余的空格，但保留换行
-    const lines = code.split('\n').map(l => l.trim()).filter(l => l.length > 0)
+    // 保留所有行，包括空行和注释
+    const lines = code.split('\n')
     const conditions: Array<Condition & { logicalOp?: 'and' | 'or' }> = []
+    let pendingDescription = ''
 
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i]
+      const currentLine = lines[i]
+      if (!currentLine) continue
+
+      const line = currentLine.trim()
+
+      // 跳过空行
+      if (!line) {
+        pendingDescription = '' // 空行重置待处理的描述
+        continue
+      }
+
+      // 检查是否是注释（条件描述）
+      const commentMatch = line.match(/^\s*\/\/\s*@description:\s*(.+)$/i)
+      if (commentMatch?.[1]) {
+        pendingDescription = commentMatch[1].trim()
+        continue
+      }
 
       // 检查是否是逻辑运算符
-      const isAnd = /^\s*and\s+/i.test(line)
       const isOr = /^\s*or\s+/i.test(line)
 
       // 提取条件（移除 and/or 前缀）
-      const conditionLine = line.replace(/^\s*(and|or)\s+/i, '').trim()
+      let conditionLine = line.replace(/^\s*(and|or)\s+/i, '').trim()
+
+      // 提取行内注释（如果有）
+      let inlineDescription = ''
+      const inlineCommentMatch = conditionLine.match(/\s+\/\/\s+(.+)$/)
+      if (inlineCommentMatch?.[1]) {
+        inlineDescription = inlineCommentMatch[1].trim()
+        conditionLine = conditionLine.replace(/\s+\/\/\s+.+$/, '').trim()
+      }
+
       const conditionMatch = conditionLine.match(/^\s*\$(\w+)\s*:\s*(\w+)\s*\(([^)]+)\)/)
 
       if (conditionMatch) {
@@ -103,11 +128,15 @@ export function parseWhenCode(code: string): Array<Condition & { logicalOp?: 'an
             field: field,
             operator: operator,
             value: value,
-            logicalOp: i > 0 ? (isOr ? 'or' : 'and') : undefined
+            logicalOp: conditions.length > 0 ? (isOr ? 'or' : 'and') : undefined,
+            description: inlineDescription || pendingDescription || undefined
           }
 
           conditions.push(condition)
+          pendingDescription = '' // 使用后清空
         }
+      } else {
+        pendingDescription = '' // 非条件行，重置待处理的描述
       }
     }
 
@@ -171,6 +200,11 @@ export function generateWhenCode(
     }
 
     let line = generateConditionExpression(condition, getClassFields)
+
+    // 如果有描述，添加行内注释
+    if (condition.description && condition.description.trim()) {
+      line += ` // ${condition.description.trim()}`
+    }
 
     // 如果不是第一个条件，添加逻辑运算符
     if (index > 0 && condition.logicalOp) {

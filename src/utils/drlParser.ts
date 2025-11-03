@@ -114,9 +114,21 @@ export function parseSingleRule(content: string): Rule | null {
 
   const ruleName = ruleMatch[1]
   const ruleBody = ruleMatch[2]
+  const beforeRule = content.substring(0, ruleMatch.index)
 
   if (!ruleName || !ruleBody) {
     return null
+  }
+
+  // 提取规则描述（从规则定义前的注释中）
+  let description = ''
+  const linesBeforeRule = beforeRule.trim().split('\n')
+  if (linesBeforeRule.length > 0) {
+    const lastLine = linesBeforeRule[linesBeforeRule.length - 1].trim()
+    const descMatch = lastLine.match(/^\s*\/\/\s*@description:\s*(.+)$/i)
+    if (descMatch?.[1]) {
+      description = descMatch[1].trim()
+    }
   }
 
   // 初始化规则对象
@@ -128,7 +140,8 @@ export function parseSingleRule(content: string): Rule | null {
     lockOnActive: false,
     when: '',
     then: '',
-    visualMode: true // 默认使用可视化模式
+    visualMode: true, // 默认使用可视化模式
+    description: description || undefined
   }
 
   // 提取规则属性
